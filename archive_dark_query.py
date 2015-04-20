@@ -296,8 +296,7 @@ if __name__ == '__main__':
     parser.add_argument('-t', dest='min_exptime', action='store', default=None, 
                         help='Minimum exposure time of component darks (in seconds) [default=960]')
     parser.add_argument('-p', dest='pickle_file', action='store', default=None, 
-                        help='Optional pickle file containing anneal data (skip querying MAST)' + \
-                             '; Don\'t use this with non-default min_exptime!')
+                        help='Optional pickle file containing anneal data (skip querying MAST)')
     parser.add_argument('-v', '--verbose', dest='verbose', action='store_true', 
                         help='Print more information about matching annealing periods.')
     parser.add_argument('-vv', dest='very_verbose', action='store_true', 
