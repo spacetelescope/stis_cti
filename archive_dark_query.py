@@ -169,7 +169,7 @@ def get_anneal_boundaries(delta_days=5, min_exptime=None, verbose=False):
         
         anneals.append(anneal(index=i, start=a, end=b, darks=tuple(darks_within_anneal)))
     
-    if (verbose == 2):
+    if (verbose >= 2):
         # Print information about all annealing periods:
         print "Dark data found for all annealing periods:"
         for i, a in enumerate(anneals):
@@ -233,7 +233,7 @@ def archive_dark_query(files, anneal_data=None, min_exptime=None, verbose=False,
             if verbose:
                 print file
                 print 'Annealing period:  ', match
-                if verbose == 2:
+                if verbose >= 2:
                     print ', '.join([str(i) for i in match.darks])
                 print
     
@@ -304,7 +304,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     
     verbose = False
-    verbose=args.verbose
+    verbose = args.verbose
     
     if args.very_verbose:
         verbose = 2
