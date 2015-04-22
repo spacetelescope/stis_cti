@@ -236,8 +236,11 @@ if __name__ == '__main__':
     
     if verbose:
         print
-        print 'Making superdarks for:'
-        print '   ' + '\n   '.join(filtered_raw_files)
+        if len(superdark_remakes) >= 1:
+            print 'Making superdarks for:'
+            print '   ' + '\n   '.join(filtered_raw_files)
+        else:
+            print 'Not remaking any superdarks.'
         print
     
     # Determine component darks used to make superdarks:
@@ -251,12 +254,13 @@ if __name__ == '__main__':
             expected_dark_expnames.add(dark.exposure)
     
     # Get list of EXPNAMEs from files in the dark_dir.
-    found_dark_files = glob.glob(os.path.join(dark_dir, '*_raw.fits*'))
-    # *** Filter darks through viable_ccd_file()? ***
-    # What about expected expnames that are excluded due to {CCDAMP, CCDGAIN, ...}?
-    # ...
+    found_dark_files = glob.glob(os.path.join(dark_dir, '*_flt.fits*'))  # *** Do something to allow RAW files? ***
     
-    found_dark_expnames = set()
+    # *** Filter darks through viable_ccd_file()? ***
+    # found_dark_files_filtered = filter(viable_ccd_file, found_dark_files)  # *** Also handle --allow case! ***
+    # What about expected expnames that are excluded due to {CCDAMP, CCDGAIN, ...}!?  We don't want to crash... ***
+    
+    found_dark_expnames = set()  # ** Use a dict containing file locations! ***
     for file in found_dark_files:
         with fits.open(file) as f:
             hdr0 = f[0].header
@@ -284,4 +288,10 @@ if __name__ == '__main__':
         print
         raise IOError('Missing component dark files.')
     
+    if verbose:
+        print 'All required component dark FLT files for annealing periods have been located.'
+        print
+    
+    # Get found locations (e.g. including *.gz) and ignore other files in DARK_DIR from dict:
+    # ...
     
