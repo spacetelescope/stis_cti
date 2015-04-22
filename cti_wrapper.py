@@ -85,34 +85,40 @@ if __name__ == '__main__':
     # Get information about the user's system:
     try:
         import multiprocessing
-        cores = "; number of available CPU cores on your system = " + str(multiprocessing.cpu_count())
+        num_available_cores = multiprocessing.cpu_count()
+        cores_str = "; number of available CPU cores on your system = " + str(num_available_cores)
     except (ImportError, NotImplementedError):
-        cores = ""
+        num_available_cores = 1
+        cores_str = ""
     
     # For prettier implementation of help text, see:
     # http://stackoverflow.com/questions/3853722/python-argparse-how-to-insert-newline-in-the-help-text
     
     parser = argparse.ArgumentParser( 
-        description='Run STIS/CCD pixel-based CTI-correction on data specified in science_dir.', 
-        epilog='Author:   ' + __author__ + '; ' + 
+        description='Run STIS/CCD pixel-based CTI-correction on data specified in SCIENCE_DIR. ' + \
+                    'Uncorrected component darks are read from DARK_DIR, and ' + \
+                    'corrected component darks are written there too. ' + \
+                    'Corrected super-darks are read from and stored to REF_DIR.', 
+        epilog='Author:   ' + __author__ + '; ' + \
                'Version:  ' + __version__)
     parser.add_argument(dest='science_dir', action='store', default='./', nargs='?', 
                         metavar='SCIENCE_DIR', 
-                        help='directory containing raw science data (default = \"./\")')
+                        help='directory containing RAW science data (default=\"./\")')
     parser.add_argument('-d', dest='dark_dir', action='store', default=None, 
-                        help='directory of dark data (default = \"science_dir/../darks/\")')
+                        help='directory of dark FLT data (default=\"[SCIENCE_DIR]/../darks/\")')
     parser.add_argument('-r', dest='ref_dir', action='store', default=None, 
                         help='directory of CTI-corrected reference files ' + \
-                             '(default = \"science_dir/../ref/\")')
+                             '(default=\"[SCIENCE_DIR]/../ref/\")')
     parser.add_argument('-n', dest='num_processes', action='store', default=1, metavar='NUM_PROCESSES', 
-                        help='maximum number of parallel processes to run (default = 1)' + \
-                              cores)
+                        help='maximum number of parallel processes to run (default=1)' + \
+                              cores_str)
     parser.add_argument('-v', '--verbose', dest='verbose', action='store_true', default=False, 
-                        help='Print more information')
+                        help='print more information')
     #parser.add_argument('-vv', dest='very_verbose', action='store_true', 
     #                    help='Very verbose')
+    # Allow any amp/gain/offst/date through processing (not well-tested):
     parser.add_argument('--allow', dest='allow', action='store_true', default=False, 
-                        help=argparse.SUPPRESS)  # Allow any file into reduction
+                        help=argparse.SUPPRESS)
     args = parser.parse_args()
     
     verbose = args.verbose
