@@ -97,6 +97,8 @@ if __name__ == '__main__':
     parser.add_argument('-r', dest='ref_dir', action='store', default=None, 
                         help='directory of CTI-corrected reference files ' + \
                              '(default = \"science_dir/../ref/\")')
+    parser.add_argument('-n', dest='num_processes', action='store', default=1, metavar='NUM_PROCESSES', 
+                        help='maximum number of parallel processes to run (default = 1)')
     parser.add_argument('-v', '--verbose', dest='verbose', action='store_true', default=False, 
                         help='Print more information')
     #parser.add_argument('-vv', dest='very_verbose', action='store_true', 
