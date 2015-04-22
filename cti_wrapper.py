@@ -82,6 +82,13 @@ if __name__ == '__main__':
     #import sys
     #import pdb
     
+    # Get information about the user's system:
+    try:
+        import multiprocessing
+        cores = "; number of available CPU cores on your system = " + str(multiprocessing.cpu_count())
+    except (ImportError, NotImplementedError):
+        cores = ""
+    
     # For prettier implementation of help text, see:
     # http://stackoverflow.com/questions/3853722/python-argparse-how-to-insert-newline-in-the-help-text
     
@@ -98,7 +105,8 @@ if __name__ == '__main__':
                         help='directory of CTI-corrected reference files ' + \
                              '(default = \"science_dir/../ref/\")')
     parser.add_argument('-n', dest='num_processes', action='store', default=1, metavar='NUM_PROCESSES', 
-                        help='maximum number of parallel processes to run (default = 1)')
+                        help='maximum number of parallel processes to run (default = 1)' + \
+                              cores)
     parser.add_argument('-v', '--verbose', dest='verbose', action='store_true', default=False, 
                         help='Print more information')
     #parser.add_argument('-vv', dest='very_verbose', action='store_true', 
