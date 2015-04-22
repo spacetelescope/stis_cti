@@ -8,7 +8,12 @@ def available_cpu_count():
     """ Number of available virtual or physical CPUs on this system, i.e.
     user/real as output by time(1) when called with an optimally scaling
     userspace-only program.
-    From http://stackoverflow.com/questions/1006289/how-to-find-out-the-number-of-cpus-using-python"""
+    
+    This function is from:
+        StackOverflow "How to find out the number of CPUs using python"
+        answer by Philipp Hagemeister (phihag)
+        http://stackoverflow.com/a/1006301
+        Licensed under CC BY-SA 3.0"""
     
     # cpuset
     # cpuset may restrict the number of *available* processors
