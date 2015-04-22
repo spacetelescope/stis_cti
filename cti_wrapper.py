@@ -137,6 +137,9 @@ if __name__ == '__main__':
     assert os.path.isdir(dark_dir),    'dark_dir does not exist:  '    + dark_dir
     assert os.path.isdir(ref_dir),     'ref_dir does not exist:  '     + ref_dir
     
+    # Print script name/version, system date/time.
+    # ...
+    
     if verbose:
         print 'science_dir = ', science_dir
         print 'dark_dir    = ', dark_dir
@@ -234,42 +237,45 @@ if __name__ == '__main__':
     # Determine component darks used to make superdarks:
     anneal_data = archive_dark_query.get_anneal_boundaries()  # *** Allow user-options here? ***
     anneals = archive_dark_query.archive_dark_query( \
-                      filtered_raw_files, anneal_data=anneal_data, print_url=verbose)  # print_url?
+                      filtered_raw_files, anneal_data=anneal_data, print_url=False)  # print_url?
     # Set of unique component darks at expected dark_dir/:
     expected_dark_expnames = set()
     for anneal in anneals:
         for dark in anneal.darks:
             expected_dark_expnames.add(dark.exposure)
-    #expected_dark_expnames = list(expected_dark_expnames)
-    #expected_dark_expnames.sort()
     
     # Get list of EXPNAMEs from files in the dark_dir.
     found_dark_files = glob.glob(os.path.join(dark_dir, '*_raw.fits*'))
     # *** Filter darks through viable_ccd_file()? ***
     # What about expected expnames that are excluded due to {CCDAMP, CCDGAIN, ...}?
+    # ...
     
     found_dark_expnames = set()
     for file in found_dark_files:
         with fits.open(file) as f:
             hdr0 = f[0].header
         found_dark_expnames.add(hdr0['ROOTNAME'].strip().upper())
-    #found_dark_expnames = list(found_dark_expnames)
-    #found_dark_expnames.sort()
     # *** Add error handling! ***
     
     # Compare found_dark_expnames and expected_dark_expnames:
-    if verbose:
-        print 'found_dark_expnames:'
-        print ', '.join(found_dark_expnames)
-        print
-        print 'expected_dark_expnames:'
-        print ', '.join(expected_dark_expnames)
-        print
+    #if verbose:
+    #    print 'found_dark_expnames:'
+    #    print ', '.join(found_dark_expnames)
+    #    print
+    #    print 'expected_dark_expnames:'
+    #    print ', '.join(expected_dark_expnames)
+    #    print
     
     missing_darks = expected_dark_expnames - found_dark_expnames
-    print 'ERROR:  These raw component darks are missing from %s:' % dark_dir
-    print ', '.join(missing_darks)
-    print
-    # print useful URL to download darks and throw an exception...
+    if len(missing_darks) != 0:
+        print 'ERROR:  These raw component darks are missing from %s:' % dark_dir
+        print ', '.join(missing_darks)
+        print
+        print 'Please download the missing darks via this link:'
+        print '(or specify the proper dark_dir [' + dark_dir + '])'
+        print
+        print archive_dark_query.darks_url(missing_darks)
+        print
+        raise IOError('Missing component dark files.')
     
     

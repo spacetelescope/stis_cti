@@ -187,6 +187,23 @@ def get_anneal_boundaries(delta_days=5, min_exptime=None, verbose=False):
     return anneals
 
 
+def darks_url(exposures):
+    # Build a URL to retrieve matched datasets from MAST:
+    url = 'http://archive.stsci.edu/hst/search.php?' + urllib.urlencode([
+        ('sci_instrume'         , 'STIS'              ),
+        ('sci_instrument_config', 'STIS/CCD'          ),
+        ('sci_targname'         , 'DARK'              ),
+        ('sci_aec'              , 'C'                 ),
+        ('resolve'              , 'don\'tresolve'     ),
+        ('sci_data_set_name'    , ','.join(exposures) ),
+        ('max_records'          , '50000'             ),
+        ('max_rpp'              , '5000'              ),
+        ('ordercolumn1'         , 'sci_start_time'    ),
+        ('action'               , 'Search'            )])
+    
+    return url
+
+
 def archive_dark_query(files, anneal_data=None, min_exptime=None, verbose=False, print_url=True):
     '''
     Query the archive for the list of individual darks necessary to recreate the
@@ -260,19 +277,7 @@ def archive_dark_query(files, anneal_data=None, min_exptime=None, verbose=False,
         print
     
     if print_url:
-        # Build a URL to retrieve matched datasets from MAST:
-        url = 'http://archive.stsci.edu/hst/search.php?' + urllib.urlencode([
-            ('sci_instrume'         , 'STIS'                 ),
-            ('sci_instrument_config', 'STIS/CCD'             ),
-            ('sci_targname'         , 'DARK'                 ),
-            ('sci_aec'              , 'C'                    ),
-            ('resolve'              , 'don\'tresolve'        ),
-            ('sci_data_set_name'    , ','.join(all_exposures)),
-            ('max_records'          , '50000'                ),
-            ('max_rpp'              , '5000'                 ),
-            ('ordercolumn1'         , 'sci_start_time'       ),
-            ('action'               , 'Search'               )])
-        
+        url = darks_url(all_exposures)
         print 'Download darks via this link:'
         print
         print url
