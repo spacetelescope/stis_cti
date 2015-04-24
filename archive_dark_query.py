@@ -175,7 +175,7 @@ def get_anneal_boundaries(delta_days=5, min_exptime=None, verbose=False):
                       x['exptime'] >= min_exptime,
             darks)
         
-        anneals.append(annealType(index=i, start=a, end=b, darks=tuple(darks_within_anneal)))
+        anneals.append(annealType(index=i, start=a, end=b, darks=list(darks_within_anneal)))
     
     if (verbose >= 2):
         # Print information about all annealing periods:
