@@ -244,7 +244,7 @@ if __name__ == '__main__':
     
     # Determine component darks used to make superdarks:
     #anneal_data = archive_dark_query.get_anneal_boundaries()  # *** Allow user-options here? ***
-    with open('/Users/lockwood/stis_cte/wrapper/anneals.p', 'r') as p:
+    with open('~/stis_cte/wrapper/anneals.p', 'r') as p:
         anneal_data = pickle.load(p)  # *** For testing only!!! ***
     print 'WARNING:  *** Using pickle file anneals.p for testing! ***'
     print
