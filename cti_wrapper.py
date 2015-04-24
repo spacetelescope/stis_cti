@@ -79,7 +79,7 @@ if __name__ == '__main__':
     import os
     import glob
     #import sys
-    #import pdb
+    #import ipdb
     
     # Get information about the user's system:
     try:
@@ -113,8 +113,8 @@ if __name__ == '__main__':
                               cores_str)
     parser.add_argument('-v', '--verbose', dest='verbose', action='store_true', default=False, 
                         help='print more information')
-    #parser.add_argument('-vv', dest='very_verbose', action='store_true', 
-    #                    help='Very verbose')
+    parser.add_argument('-vv', dest='very_verbose', action='store_true', 
+                        help='Very verbose')
     # Allow any amp/gain/offst/date through processing (not well-tested):
     parser.add_argument('--allow', dest='allow', action='store_true', default=False, 
                         help=argparse.SUPPRESS)
@@ -122,8 +122,8 @@ if __name__ == '__main__':
     
     verbose = args.verbose
     
-    #if args.very_verbose:
-    #    verbose = 2
+    if args.very_verbose:
+        verbose = 2
     
     # Determine default dark_dir and ref_dir relative to science_dir:
     if args.dark_dir is None:
@@ -250,28 +250,52 @@ if __name__ == '__main__':
     print
     anneals = archive_dark_query.archive_dark_query( \
                       filtered_raw_files, anneal_data=anneal_data, print_url=False)  # print_url?
-    # Set of unique component darks at expected dark_dir/:
-    expected_dark_expnames = set()
-    for anneal in anneals:
-        for dark in anneal['darks']:
-            expected_dark_expnames.add(dark['exposure'])
     
     # Get list of EXPNAMEs from files in the dark_dir.
     found_dark_files = glob.glob(os.path.join(dark_dir, '*_flt.fits*'))  # *** Do something to allow RAW files? ***
-    
-    # *** Filter darks through viable_ccd_file()? ***
-    # found_dark_files_filtered = filter(viable_ccd_file, found_dark_files)  # *** Also handle --allow case! ***
-    # What about expected expnames that are excluded due to {CCDAMP, CCDGAIN, ...}!?  We don't want to crash... ***
-    
-    found_dark_expnames = set()  # ** Use a dict containing file locations! ***
+    if verbose >= 2:
+        max_file_length = str(max(map(lambda x: len(x), found_dark_files)))
+    found = {}
     for file in found_dark_files:
         with fits.open(file) as f:
             hdr0 = f[0].header
-        found_dark_expnames.add(hdr0['ROOTNAME'].strip().upper())
-    # *** Add error handling! ***
+        found[hdr0['ROOTNAME'].strip().upper()] = (file, hdr0)
     
-    missing_darks = expected_dark_expnames - found_dark_expnames
+    # Loop over expected darks within anneals and populate keyword data, noting missing files:
+    get_keywords = ['CCDAMP', 'CCDGAIN', 'CCDOFFST', 'BIASFILE', 'DARKFILE', 'TELESCOP', 'INSTRUME', 'DETECTOR']
+    missing_darks = set()
+    weekdarks = set()
+    for anneal in anneals:
+        all_weeks = {}  # Count weeks based on old darkfile; reset for each annealing period
+        for dark in anneal['darks']:
+            if found.has_key(dark['exposure']):
+                dark['file'] = found[dark['exposure']][0]
+                for get_keyword in get_keywords:
+                    dark[get_keyword] = found[dark['exposure']][1][get_keyword]
+                
+                # Determine week number (for weekdark separation):
+                if len(all_weeks) == 0:
+                    all_weeks[dark['DARKFILE']] = 1
+                else:
+                    all_weeks[dark['DARKFILE']] = len(all_weeks)
+                dark['week_num'] = all_weeks[dark['DARKFILE']]
+                # Construct a unique tag for each weekdark and assign it to the component darks:
+                dark['weekdark_tag'] = '{}{:03.0f}_{:1.0f}'.format(dark['CCDAMP'].lower(), anneal['index'], dark['week_num'])
+                weekdarks.add(dark['weekdark_tag'])
+                
+                if verbose >= 2:
+                    print ('{:s} {:5s} {:' + max_file_length + 's} {} {} {} {} {:5.0f} {} {} {}').format( \
+                        dark['exposure'], dark['DETECTOR'], dark['file'], dark['CCDAMP'], \
+                        dark['CCDGAIN'], dark['CCDOFFST'], dark['datetime'].isoformat(' '), \
+                        dark['exptime'], dark['week_num'], dark['weekdark_tag'], dark['DARKFILE'])
+            else:
+                missing_darks.add(dark['exposure'])
+    if verbose >= 2:
+        print
+    
     if len(missing_darks) != 0:
+        missing_darks = list(missing_darks)
+        missing_darks.sort()
         print 'ERROR:  These FLT component darks are missing from %s:' % dark_dir
         print ', '.join(missing_darks)
         print
@@ -286,8 +310,20 @@ if __name__ == '__main__':
         print 'All required component dark FLT files for annealing periods have been located on disk.'
         print
     
-    
-    
-    # Get found locations (e.g. including *.gz) and ignore other files in DARK_DIR from dict:
+    # Determine week_num time boundaries (approximate for now)
     # ...
+    
+    # Determine which anneal_period/week_num each science file belongs to
+    # ...
+    
+    # Filter anneals/darks based on science data quantities (time, CCDAMP, week_num, ...)
+    # ...
+    
+    
+    if verbose:
+        # This should be after filtering...
+        print 'Will make weekdarks for:'
+        print '   ' + '\n   '.join(weekdarks)
+        print
+    
     
