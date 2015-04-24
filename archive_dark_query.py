@@ -2,7 +2,7 @@
 
 from astropy.io import fits
 import glob
-from collections import namedtuple, Counter
+from collections import Counter
 import datetime
 import urllib, urllib2
 from numpy import size, shape
@@ -12,18 +12,26 @@ __version__ = '0.1.2'
 
 
 # Data container for our dark exposure search results:
-class dark(namedtuple('dark', ['exposure', 'proposid', 'datetime', 'exptime'])):
+class darkType(dict):
     def __str__(self):
-        return self.exposure
+        try:
+            return self['exposure']
+        except KeyError:
+            return 'undefined'
     def __repr__(self):
         return '<' + self.__str__() + '>'
 
-class anneal(namedtuple('anneal', ['index', 'start', 'end', 'darks'])):
+
+class annealType(dict):
     def __str__(self):
-        return '<' + '{:03d}'.format(self.index) + '; ' + \
-               self.start.isoformat(' ') + ' - ' + self.end.isoformat(' ') + '>'
+        try:
+            return '<' + '{:03d}'.format(self['index']) + '; ' + \
+                   self['start'].isoformat(' ') + ' - ' + self['end'].isoformat(' ') + '>'
+        except KeyError:
+            return '<undefined>'
     def __repr__(self):
         return self.__str__()
+
 
 def get_proposal_ids(abstract='stis, +ccd', title='dark, +monitor'):
     '''
@@ -95,7 +103,7 @@ def read_dark_exposures():
             exptime = float(exptime.split('\n')[0])
             proposid = int(proposid)
             time = datetime.datetime.strptime(time, '%Y-%m-%d %H:%M:%S')
-            darks.append(dark(exposure=exposure, proposid=proposid, datetime=time, exptime=exptime))
+            darks.append(darkType(exposure=exposure, proposid=proposid, datetime=time, exptime=exptime))
     
     return darks
 
@@ -138,36 +146,36 @@ def get_anneal_boundaries(delta_days=5, min_exptime=None, verbose=False):
     print 'Parsing archive results...'
     print
     
-    anneal_exposures = filter(lambda x: x.proposid in anneal_programs, darks)
+    anneal_exposures = filter(lambda x: x['proposid'] in anneal_programs, darks)
     
     # Find delta time between neighboring anneal exposures:
-    anneal_start_boundary = [anneal_exposures[0].datetime - datetime.timedelta(days=60)]
-    anneal_end_boundary = [anneal_exposures[0].datetime]  # Or, use a later exposure < delta_days?
+    anneal_start_boundary = [anneal_exposures[0]['datetime'] - datetime.timedelta(days=60)]
+    anneal_end_boundary = [anneal_exposures[0]['datetime']]  # Or, use a later exposure < delta_days?
     
     previous_anneal = anneal_exposures[0]
     for anneal_exposure in anneal_exposures[1:]:
-        delta = anneal_exposure.datetime - previous_anneal.datetime
+        delta = anneal_exposure['datetime'] - previous_anneal['datetime']
         if (delta.total_seconds() / 3600. / 24.) >= delta_days:
-            anneal_start_boundary.append(previous_anneal.datetime)
-            anneal_end_boundary.append(anneal_exposure.datetime)  # Or, use start time to avoid gaps?
+            anneal_start_boundary.append(previous_anneal['datetime'])
+            anneal_end_boundary.append(anneal_exposure['datetime'])  # Or, use start time to avoid gaps?
             previous_anneal = anneal_exposure
     
     # Add an additional annealing period after the last anneal (end date is approximate):
-    anneal_start_boundary.append(anneal_exposure.datetime)
-    anneal_end_boundary.append(anneal_exposure.datetime + datetime.timedelta(days=60))
+    anneal_start_boundary.append(anneal_exposure['datetime'])
+    anneal_end_boundary.append(anneal_exposure['datetime'] + datetime.timedelta(days=60))
     
     # Determine which darks fall within each annealing period:
     anneals = []
     
     for i, (a, b) in enumerate(zip(anneal_start_boundary, anneal_end_boundary)):
         darks_within_anneal = filter( \
-            lambda x: x.datetime >= a and 
-                      x.datetime < b  and
-                      x.proposid in dark_programs and
-                      x.exptime >= min_exptime,
+            lambda x: x['datetime'] >= a and 
+                      x['datetime'] < b  and
+                      x['proposid'] in dark_programs and
+                      x['exptime'] >= min_exptime,
             darks)
         
-        anneals.append(anneal(index=i, start=a, end=b, darks=tuple(darks_within_anneal)))
+        anneals.append(annealType(index=i, start=a, end=b, darks=tuple(darks_within_anneal)))
     
     if (verbose >= 2):
         # Print information about all annealing periods:
@@ -176,12 +184,12 @@ def get_anneal_boundaries(delta_days=5, min_exptime=None, verbose=False):
             print ('{i:3d} {start:} - {end:} ({length:4d} days), {total_exposures:3d} total: ' + \
                    '{exptimes} {proposals}').format( 
                 i = i, 
-                start = a.start.isoformat(' '), 
-                end = a.end.isoformat(' '), 
-                length = (a.end - a.start).days, 
-                total_exposures = shape(a.darks)[0], 
-                exptimes = Counter(map(lambda x: int(x.exptime), a.darks)), 
-                proposals = list(set(map(lambda x: x.proposid, a.darks))))
+                start = a['start'].isoformat(' '), 
+                end = a['end'].isoformat(' '), 
+                length = (a['end'] - a['start']).days, 
+                total_exposures = shape(a['darks'])[0], 
+                exptimes = Counter(map(lambda x: int(x['exptime']), a['darks'])), 
+                proposals = list(set(map(lambda x: x['proposid'], a['darks']))))
         print
     
     return anneals
@@ -236,7 +244,7 @@ def archive_dark_query(files, anneal_data=None, min_exptime=None, verbose=False,
            print
     
     # Populate matched exposures uniquely:
-    matches = set()
+    matches = list()
     
     for file in files:
         with fits.open(file) as data:
@@ -244,19 +252,21 @@ def archive_dark_query(files, anneal_data=None, min_exptime=None, verbose=False,
             date = hdr0['TDATEOBS']
             time = hdr0['TTIMEOBS']
             dt = datetime.datetime.strptime(date + ' ' + time, '%Y-%m-%d %H:%M:%S')
-            match = filter(lambda x: dt >= x.start and dt < x.end, anneal_data)[0]
-            matches.add(match)
+            match = filter(lambda x: dt >= x['start'] and dt < x['end'], anneal_data)[0]
+            
+            #matches.add(match)  # WON'T WORK WITH MUTABLE SUB-TYPES! ***
+            matches.append(match)
             
             if verbose:
                 print file
                 print 'Annealing period:  ', match
                 if verbose >= 2:
-                    print ', '.join([str(i) for i in match.darks])
+                    print ', '.join([str(i) for i in match['darks']])
                 print
     
-    # Convert set to a list:
-    matches = list(matches)
-    matches.sort()
+    # Remove duplicate entries based on the index field:
+    matches = dict((item['index'], item) for item in matches).values()
+    matches.sort(key=lambda x: x['index'])
     
     if verbose:
         print 'Unique annealing periods (' + str(shape(matches)[0]) + '):'
@@ -266,8 +276,8 @@ def archive_dark_query(files, anneal_data=None, min_exptime=None, verbose=False,
     # Get the unique list of exposure names:
     all_exposures = set()
     for m in matches:
-        for file in m.darks:
-            all_exposures.add(file.exposure)
+        for file in m['darks']:
+            all_exposures.add(file['exposure'])
     all_exposures = list(all_exposures)
     all_exposures.sort()
     

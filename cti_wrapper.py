@@ -219,7 +219,7 @@ if __name__ == '__main__':
                 hdr0 = sd[0].header
                 try:
                     if hdr0['PCTECORR'].strip().upper() == 'PERFORMED':  # *** Or whatever keyword/value combination we decide. ***
-                        pass # filtered_raw_files.pop(0)  # *** TEST THIS!!! ***
+                        pass
                     else:
                         if verbose:
                             print 'Superdark %s is not CTI-corrected.' % superdark_resolved
@@ -230,7 +230,7 @@ if __name__ == '__main__':
                     superdark_remakes.extend(file)
         except IOError:
             if verbose:
-                print 'Superdark %s not found!' % superdark_resolved
+                print 'Superdark %s not found!  Will make a CTI-corrected version.' % superdark_resolved
             superdark_remakes.extend(file)
     
     if verbose:
@@ -244,7 +244,7 @@ if __name__ == '__main__':
     
     # Determine component darks used to make superdarks:
     #anneal_data = archive_dark_query.get_anneal_boundaries()  # *** Allow user-options here? ***
-    with open('~/stis_cte/wrapper/anneals.p', 'r') as p:
+    with open('/Users/lockwood/stis_cte/wrapper/anneals.p', 'rb') as p:
         anneal_data = pickle.load(p)  # *** For testing only!!! ***
     print 'WARNING:  *** Using pickle file anneals.p for testing! ***'
     print
@@ -253,8 +253,8 @@ if __name__ == '__main__':
     # Set of unique component darks at expected dark_dir/:
     expected_dark_expnames = set()
     for anneal in anneals:
-        for dark in anneal.darks:
-            expected_dark_expnames.add(dark.exposure)
+        for dark in anneal['darks']:
+            expected_dark_expnames.add(dark['exposure'])
     
     # Get list of EXPNAMEs from files in the dark_dir.
     found_dark_files = glob.glob(os.path.join(dark_dir, '*_flt.fits*'))  # *** Do something to allow RAW files? ***
@@ -285,6 +285,8 @@ if __name__ == '__main__':
     if verbose:
         print 'All required component dark FLT files for annealing periods have been located on disk.'
         print
+    
+    
     
     # Get found locations (e.g. including *.gz) and ignore other files in DARK_DIR from dict:
     # ...
