@@ -243,7 +243,11 @@ if __name__ == '__main__':
         print
     
     # Determine component darks used to make superdarks:
-    anneal_data = archive_dark_query.get_anneal_boundaries()  # *** Allow user-options here? ***
+    #anneal_data = archive_dark_query.get_anneal_boundaries()  # *** Allow user-options here? ***
+    with open('/Users/lockwood/stis_cte/wrapper/anneals.p', 'r') as p:
+        anneal_data = pickle.load(p)  # *** For testing only!!! ***
+    print 'WARNING:  *** Using pickle file anneals.p for testing! ***'
+    print
     anneals = archive_dark_query.archive_dark_query( \
                       filtered_raw_files, anneal_data=anneal_data, print_url=False)  # print_url?
     # Set of unique component darks at expected dark_dir/:
@@ -266,18 +270,9 @@ if __name__ == '__main__':
         found_dark_expnames.add(hdr0['ROOTNAME'].strip().upper())
     # *** Add error handling! ***
     
-    # Compare found_dark_expnames and expected_dark_expnames:
-    #if verbose:
-    #    print 'found_dark_expnames:'
-    #    print ', '.join(found_dark_expnames)
-    #    print
-    #    print 'expected_dark_expnames:'
-    #    print ', '.join(expected_dark_expnames)
-    #    print
-    
     missing_darks = expected_dark_expnames - found_dark_expnames
     if len(missing_darks) != 0:
-        print 'ERROR:  These raw component darks are missing from %s:' % dark_dir
+        print 'ERROR:  These FLT component darks are missing from %s:' % dark_dir
         print ', '.join(missing_darks)
         print
         print 'Please download the missing darks via this link:'
@@ -285,10 +280,10 @@ if __name__ == '__main__':
         print
         print archive_dark_query.darks_url(missing_darks)
         print
-        raise IOError('Missing component dark files.')
+        raise IOError('Missing component dark FLT files.')
     
     if verbose:
-        print 'All required component dark FLT files for annealing periods have been located.'
+        print 'All required component dark FLT files for annealing periods have been located on disk.'
         print
     
     # Get found locations (e.g. including *.gz) and ignore other files in DARK_DIR from dict:
