@@ -46,9 +46,8 @@ def viable_ccd_file(file,
         dt >= earliest_date_allowed                    and \
         'ACQ' not in hdr0['OBSMODE'].strip()           and \
         hdr0['CCDAMP'].strip() in amplifiers_allowed   and \
-        (hdr0['CCDGAIN'] in gains_allowed  and             \
-         hdr0['CCDOFFST'] in offsts_allowed)            or \
-        hdr0['TARGNAME'].strip() == 'CCDFLAT'
+        hdr0['CCDGAIN'] in gains_allowed               and \
+        hdr0['CCDOFFST'] in offsts_allowed
 
 
 def resolve_iraf_file(file):
