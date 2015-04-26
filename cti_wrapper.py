@@ -277,7 +277,7 @@ if __name__ == '__main__':
                 if len(all_weeks) == 0:
                     all_weeks[dark['DARKFILE']] = 1
                 elif dark['DARKFILE'] not in all_weeks.keys():
-                    all_weeks[dark['DARKFILE']] = len(all_weeks)
+                    all_weeks[dark['DARKFILE']] = len(all_weeks) + 1
                 dark['week_num'] = all_weeks[dark['DARKFILE']]
                 # Construct a unique tag for each weekdark and assign it to the component darks:
                 dark['weekdark_tag'] = '{}{:03.0f}_{:1.0f}'.format(dark['CCDAMP'].lower(), anneal['index'], dark['week_num'])
