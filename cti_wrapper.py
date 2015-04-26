@@ -276,7 +276,7 @@ if __name__ == '__main__':
                 # Determine week number (for weekdark separation):
                 if len(all_weeks) == 0:
                     all_weeks[dark['DARKFILE']] = 1
-                else:
+                elif dark['DARKFILE'] not in all_weeks.keys():
                     all_weeks[dark['DARKFILE']] = len(all_weeks)
                 dark['week_num'] = all_weeks[dark['DARKFILE']]
                 # Construct a unique tag for each weekdark and assign it to the component darks:
@@ -325,5 +325,3 @@ if __name__ == '__main__':
         print 'Will make weekdarks for:'
         print '   ' + '\n   '.join(weekdarks)
         print
-    
-    
