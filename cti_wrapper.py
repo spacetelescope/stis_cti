@@ -2,8 +2,11 @@
 
 import archive_dark_query
 from astropy.io import fits
+from collections import defaultdict
+import numpy as np
 import datetime
 import re
+import ipdb
 
 __author__  = 'Sean Lockwood'
 __version__ = '0.1'
@@ -264,24 +267,30 @@ if __name__ == '__main__':
     # Loop over expected darks within anneals and populate keyword data, noting missing files:
     get_keywords = ['CCDAMP', 'CCDGAIN', 'CCDOFFST', 'BIASFILE', 'DARKFILE', 'TELESCOP', 'INSTRUME', 'DETECTOR']
     missing_darks = set()
-    weekdarks = set()
+    weekdark_types = defaultdict(list)
     for anneal in anneals:
-        all_weeks = {}  # Count weeks based on old darkfile; reset for each annealing period
+        # For each amp, count weeks based on old darkfile; reset for each annealing period:
+        all_weeks = {'A':{}, 'B':{}, 'C':{}, 'D':{}}
         for dark in anneal['darks']:
             if found.has_key(dark['exposure']):
                 dark['file'] = found[dark['exposure']][0]
                 for get_keyword in get_keywords:
                     dark[get_keyword] = found[dark['exposure']][1][get_keyword]
+                    try:
+                        # Strip leading/trailing spaces off of strings:
+                        dark[get_keyword] = dark[get_keyword].strip()
+                    except AttributeError:
+                        pass
                 
-                # Determine week number (for weekdark separation):
-                if len(all_weeks) == 0:
-                    all_weeks[dark['DARKFILE']] = 1
-                elif dark['DARKFILE'] not in all_weeks.keys():
-                    all_weeks[dark['DARKFILE']] = len(all_weeks) + 1
-                dark['week_num'] = all_weeks[dark['DARKFILE']]
+                # Determine week number (for weekdark separation) for each amp:
+                if len(all_weeks[dark['CCDAMP']]) == 0:
+                    all_weeks[dark['CCDAMP']][dark['DARKFILE']] = 1
+                elif dark['DARKFILE'] not in all_weeks[dark['CCDAMP']].keys():
+                    all_weeks[dark['CCDAMP']][dark['DARKFILE']] = len(all_weeks[dark['CCDAMP']]) + 1
+                dark['week_num'] = all_weeks[dark['CCDAMP']][dark['DARKFILE']]
                 # Construct a unique tag for each weekdark and assign it to the component darks:
                 dark['weekdark_tag'] = '{}{:03.0f}_{:1.0f}'.format(dark['CCDAMP'].lower(), anneal['index'], dark['week_num'])
-                weekdarks.add(dark['weekdark_tag'])
+                weekdark_types[dark['weekdark_tag']].append(dark)
                 
                 if verbose >= 2:
                     print ('{:s} {:5s} {:' + max_file_length + 's} {} {} {} {} {:5.0f} {} {} {}').format( \
@@ -313,15 +322,50 @@ if __name__ == '__main__':
     # Determine week_num time boundaries (approximate for now)
     # ...
     
+    weekdarks = {}
+    for weekdark_tag in weekdark_types:
+        weekdarks[weekdark_tag] = {
+            'amp'          : weekdark_tag[0].upper(), 
+            'start'        : min([x['datetime'] for x in weekdark_types[weekdark_tag]]), 
+            'end'          : max([x['datetime'] for x in weekdark_types[weekdark_tag]]), 
+            'darks'        : list(weekdark_types[weekdark_tag]), 
+            'anneal_num'   : int(weekdark_tag[1:4]), 
+            'week_num'     : int(weekdark_tag[5]), 
+            'weekdark_tag' : weekdark_tag }
+    
+    # Loop over each {amp, anneal_num} combination and adjust week boundaries:
+    amps_anneals = list(set([(weekdarks[x]['amp'], weekdarks[x]['anneal_num']) for x in weekdarks]))
+    for amp_anneal in amps_anneals:
+        # Determine which data matches the (amp, anneal) specified in loop iteration:
+        amp_anneal_data = [weekdarks[x] for x in weekdarks 
+            if weekdarks[x]['amp'] == amp_anneal[0] and weekdarks[x]['anneal_num'] == amp_anneal[1]]
+        weeks = list(amp_anneal_data)
+        weeks.sort(key=lambda x: x['week_num'])
+        # Extend start/end boundaries to anneal boundaries:
+        anneal = filter(lambda x: weeks[0]['anneal_num'] == x['index'], anneals)[0]
+        weekdarks[weeks[ 0]['weekdark_tag']]['start'] = anneal['start']  # start of annealing period
+        weekdarks[weeks[-1]['weekdark_tag']]['end']   = anneal['end']    # end of annealing period
+        # Make inter-week boundaries contiguous:
+        if len(weeks) >= 2:
+            for i, week in enumerate(weeks[0:-1]):
+                delta = datetime.timedelta(seconds = round((weeks[i+1]['start'] - weeks[i]['end']).total_seconds() / 2.0))
+                midpt = weeks[i]['end'] + delta
+                weekdarks[weeks[i  ]['weekdark_tag']]['end']   = midpt
+                weekdarks[weeks[i+1]['weekdark_tag']]['start'] = midpt
+    
     # Determine which anneal_period/week_num each science file belongs to
     # ...
     
     # Filter anneals/darks based on science data quantities (time, CCDAMP, week_num, ...)
     # ...
     
-    
     if verbose:
-        # This should be after filtering...
-        print 'Will make weekdarks for:'
-        print '   ' + '\n   '.join(weekdarks)
+        # This should be after filtering by amp...
+        print 'Could make weekdarks for:'
+        for weekdark_tag in weekdarks:
+            print '   {}:  {} - {}'.format(weekdark_tag, 
+                weekdarks[weekdark_tag]['start'], 
+                weekdarks[weekdark_tag]['end'] )
         print
+    
+    
