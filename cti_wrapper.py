@@ -3,9 +3,12 @@
 import archive_dark_query
 from astropy.io import fits
 from collections import defaultdict
-import numpy as np
+#import numpy as np
 import datetime
-import re
+#import re
+import refstis
+#from refstis.weekdark import make_weekdark
+from stistools import StisPixCteCorr
 import ipdb
 
 __author__  = 'Sean Lockwood'
@@ -76,6 +79,40 @@ def resolve_iraf_file(file):
     return new_file
 
 
+def generate_basedark(anneal, ref_dir=''):
+    for file in files:
+        with fits.open(file, 'update') as f:
+            #PCTETAB:
+            try:
+                old_pctetab = f[0].header['PCTETAB']
+            except KeyError:
+                old_pctetab = None
+            
+            if old_pctetab is None:
+                f[0].header.insert('DARKFILE', ('PCTETAB', pctetab))  # Insert after DARKFILE
+            else:
+                f[0].header['PCTETAB'] = pctetab
+            f.flush()
+            
+            if verbose:
+                print 'Updated hdr0 PCTETAB  of {}:  {} --> {}'.format(file, old_pctetab, pctetab)
+    
+    #StisPixCteCorr.CteCorr(files)
+
+
+def generate_weekdark(weekdark, basedark, ref_dir=''):
+    outname = ref_dir + weekdark['weekdark_tag'] + '_drk.fits'
+    files = [x['file'] for x in weekdark['darks']]
+    
+    if verbose:
+        print '{}:'.format(outname)
+        print '   ' + '\n   '.join(files)
+        print
+    
+    
+    
+    #refstis.weekdark.make_weekdark(files, outname, basedark)
+
 if __name__ == '__main__':
     import pickle
     import argparse
@@ -114,12 +151,17 @@ if __name__ == '__main__':
     parser.add_argument('-n', dest='num_processes', action='store', default=1, metavar='NUM_PROCESSES', 
                         help='maximum number of parallel processes to run (default=1)' + \
                               cores_str)
+    parser.add_argument('-p', dest='pctetab', action='store', metavar='PCTETAB', default=None, \
+                        help='name of PCTETAB to use in pixel-based correction ' + \
+                             '(default=\"[REF_DIR]/test_pcte.fits\")')
     parser.add_argument('-v', '--verbose', dest='verbose', action='store_true', default=False, 
                         help='print more information')
     parser.add_argument('-vv', dest='very_verbose', action='store_true', 
-                        help='Very verbose')
+                        help='very verbose')
     # Allow any amp/gain/offst/date through processing (not well-tested):
     parser.add_argument('--allow', dest='allow', action='store_true', default=False, 
+                        help=argparse.SUPPRESS)
+    parser.add_argument('--all_weeks', dest='all_weeks', action='store_true', default=False, 
                         help=argparse.SUPPRESS)
     args = parser.parse_args()
     
@@ -140,10 +182,20 @@ if __name__ == '__main__':
     ref_dir     = os.path.normpath(args.ref_dir)     + os.path.sep
     
     # Check that directories exist:
-    # (*** Convert to 'raise IOError("...")'? ***)
-    assert os.path.isdir(science_dir), 'science_dir does not exist:  ' + science_dir
-    assert os.path.isdir(dark_dir),    'dark_dir does not exist:  '    + dark_dir
-    assert os.path.isdir(ref_dir),     'ref_dir does not exist:  '     + ref_dir
+    if not os.path.isdir(science_dir):
+        raise IOError('science_dir does not exist:  ' + science_dir)
+    if not os.path.isdir(dark_dir):
+        raise IOError('dark_dir does not exist:  '    + dark_dir)
+    if not os.path.isdir(ref_dir):
+        raise IOError('ref_dir does not exist:  '     + ref_dir)
+    
+    # Determine default PCTETAB:
+    if args.pctetab is None:
+        pctetab = os.path.join(ref_dir, 'test_pcte.fits')
+    else:
+        pctetab = args.pctetab
+    if not os.path.exists(pctetab):
+        raise IOError('PCTETAB does not exist:  ' + pctetab)
     
     # Print script name/version, system date/time.
     # ...
@@ -152,6 +204,7 @@ if __name__ == '__main__':
         print 'science_dir = ', science_dir
         print 'dark_dir    = ', dark_dir
         print 'ref_dir     = ', ref_dir
+        print 'PCTETAB     = ', pctetab
         print
     
     # Find science rootnames:
@@ -353,19 +406,77 @@ if __name__ == '__main__':
                 weekdarks[weeks[i  ]['weekdark_tag']]['end']   = midpt
                 weekdarks[weeks[i+1]['weekdark_tag']]['start'] = midpt
     
-    # Determine which anneal_period/week_num each science file belongs to
-    # ...
-    
-    # Filter anneals/darks based on science data quantities (time, CCDAMP, week_num, ...)
-    # ...
-    
-    if verbose:
+    if verbose >= 2:
         # This should be after filtering by amp...
         print 'Could make weekdarks for:'
         for weekdark_tag in weekdarks:
-            print '   {}:  {} - {}'.format(weekdark_tag, 
+            print '   {}:  {} - {}  [{}]'.format(
+                weekdark_tag, 
                 weekdarks[weekdark_tag]['start'], 
-                weekdarks[weekdark_tag]['end'] )
+                weekdarks[weekdark_tag]['end'], 
+                len(weekdarks[weekdark_tag]['darks']) )
         print
+    
+    weekdark = defaultdict(list)
+    for file in filtered_raw_files:
+        with fits.open(file, 'update') as f:
+            hdr0 = f[0].header
+            
+            dt = datetime.datetime.strptime( \
+                hdr0['TDATEOBS'].strip() + ' ' + hdr0['TTIMEOBS'].strip(), '%Y-%m-%d %H:%M:%S')
+            weekdark_tag = [wd['weekdark_tag'] for wd in weekdarks.values() if \
+                wd['start'] <= dt and wd['end'] > dt and \
+                wd['amp'] == hdr0['CCDAMP']][0]
+            weekdark[weekdark_tag].append(file)
+            
+            # Update hdr0 of science file:
+            # DARKFILE:
+            darkfile = os.path.join(ref_dir, weekdark_tag + '_drk.fits')  # Do something smart with system variables here? ***
+            old_darkfile = f[0].header['DARKFILE']
+            f[0].header['DARKFILE'] = darkfile
+            
+            #PCTETAB:
+            try:
+                old_pctetab = f[0].header['PCTETAB']
+            except KeyError:
+                old_pctetab = None
+            if old_pctetab is None:
+                f[0].header.insert('DARKFILE', ('PCTETAB', pctetab))  # Insert after DARKFILE
+            else:
+                f[0].header['PCTETAB'] = pctetab
+            
+            f.flush()
+            if verbose:
+                print 'Updated hdr0 DARKFILE of {}:  {} --> {}'.format(file, old_darkfile, darkfile)
+                print 'Updated hdr0 PCTETAB  of {}:  {} --> {}'.format(file, old_pctetab, pctetab)
+    
+    if verbose:
+        print
+        print 'Weekdarks needed:'
+        for weekdark_tag in weekdark.keys():
+            print '   {} [{}]:'.format(weekdark_tag, len(weekdarks[weekdark_tag]['darks']))
+            print '      ' + '\n      '.join(weekdark[weekdark_tag])
+        print
+    
+    if args.all_weeks:
+        raise NotImplementedError('--all_weeks option not yet implemented.')
+        
+        for weekdark_tag in weekdarks.keys():
+            generate_weekdark(weekdarks[weekdark_tag], pctetab, None, ref_dir=ref_dir)
+    else:
+        for weekdark_tag in weekdark.keys():  # missing 's'
+            amp = weekdarks[weekdark_tag]['amp'].strip().lower()
+            basedark = os.path.join(ref_dir, 'basedark_{}{}_drk.fits'.format( \
+                weekdarks[weekdark_tag]['amp'].strip().lower(), weekdarks[weekdark_tag]['anneal_num']))
+            anneal = [a for a in anneals if a['index'] == weekdarks[weekdark_tag]['anneal_num']][0]
+            files = [f['file'] for f in anneal['darks'] if f['CCDAMP'] == weekdarks[weekdark_tag]['amp']]
+            ipdb.set_trace()
+            #generate_basedark(files, basedark, pctetab, amp)  # Or, do we want to compartmentalize the amp selection?
+                
+            #generate_weekdark(weekdarks[weekdark_tag], pctetab, None, ref_dir=ref_dir)
+            #ipdb.set_trace()
+    
+    # Filter anneals/darks based on science data quantities (time, CCDAMP, week_num, ...)
+    # ...
     
     
