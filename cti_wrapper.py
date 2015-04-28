@@ -3,11 +3,9 @@
 import archive_dark_query
 from astropy.io import fits
 from collections import defaultdict
-#import numpy as np
 import datetime
-#import re
 import refstis
-#from refstis.weekdark import make_weekdark
+from refstis.weekdark import make_weekdark
 from stistools import StisPixCteCorr
 import ipdb
 
@@ -79,7 +77,15 @@ def resolve_iraf_file(file):
     return new_file
 
 
-def generate_basedark(anneal, ref_dir=''):
+def generate_basedark(anneal, basedark, pctetab):
+    # Skip this step if the basedark already exists.
+    if os.path.exists(basedark):
+        if verbose:
+            print 'Skipping regeneration of basedark:  ', basedark
+            print
+        return
+    
+    # Update header keywords of component darks:
     for file in files:
         with fits.open(file, 'update') as f:
             #PCTETAB:
@@ -94,10 +100,38 @@ def generate_basedark(anneal, ref_dir=''):
                 f[0].header['PCTETAB'] = pctetab
             f.flush()
             
+            dark_hdr0 = f[0].header
+            
             if verbose:
                 print 'Updated hdr0 PCTETAB  of {}:  {} --> {}'.format(file, old_pctetab, pctetab)
     
-    #StisPixCteCorr.CteCorr(files)
+    # Run the pixel-based correction on the component darks:
+    StisPixCteCorr.CteCorr(files)
+    corrected_files = [f.replace('_flt.fits', '_cte.fits', 1) for f in files]
+    
+    # Make a basedark from the corrected darks:
+    basedark.make_basedark(corrected_files, refdark_name=basedark)
+    
+    # Copy these keywords from the last component dark to the new basedark:
+    keywords = ['PCTECORR', 'PCTETAB', 'PCTEFRAC', 'PCTERNCL', 'PCTERNCL', 'PCTENSMD', 
+                'PCTETRSH', 'PCTESMIT', 'PCTESHFT', 'CTE_NAME', 'CTE_VER']
+    # Note:  PCTEFRAC is time-dependent; PCTECOR = COMPLETE
+    keywords.reverse()
+    with fits.open(basedark, 'update') as b:
+        for keyword in keywords:
+            try:
+                value = dark_hdr0[keyword]
+            except KeyError:
+                value = 'unknown'
+            
+            if keyword in b[0].header:
+                b[0].header[keyword] = value
+            else:
+                b[0].header.insert('DRK_VS_T', (keyword, value))
+            b.flush()
+    if verbose:
+        print 'Basedark complete:  ', basedark
+        print
 
 
 def generate_weekdark(weekdark, basedark, ref_dir=''):
@@ -118,8 +152,6 @@ if __name__ == '__main__':
     import argparse
     import os
     import glob
-    #import sys
-    #import ipdb
     
     # Get information about the user's system:
     try:
@@ -470,11 +502,11 @@ if __name__ == '__main__':
                 weekdarks[weekdark_tag]['amp'].strip().lower(), weekdarks[weekdark_tag]['anneal_num']))
             anneal = [a for a in anneals if a['index'] == weekdarks[weekdark_tag]['anneal_num']][0]
             files = [f['file'] for f in anneal['darks'] if f['CCDAMP'] == weekdarks[weekdark_tag]['amp']]
+            generate_basedark(files, basedark, pctetab)  # Or, do we want to compartmentalize the amp selection?
+            
+            #weekdark_name = os.path.join(ref_dir, weekdark_tag + '_drk.fits')  # Already included in generate_weekdark
+            #generate_weekdark(weekdarks[weekdark_tag], pctetab, basedark, ref_dir=ref_dir)
             ipdb.set_trace()
-            #generate_basedark(files, basedark, pctetab, amp)  # Or, do we want to compartmentalize the amp selection?
-                
-            #generate_weekdark(weekdarks[weekdark_tag], pctetab, None, ref_dir=ref_dir)
-            #ipdb.set_trace()
     
     # Filter anneals/darks based on science data quantities (time, CCDAMP, week_num, ...)
     # ...
