@@ -294,6 +294,10 @@ if __name__ == '__main__':
     # Get information about the user's system:
     num_available_cores = multiprocessing.cpu_count()
     
+    # The suggested number of cores is num_available_cores - 2, within [1, default_max_cores]:
+    default_max_cores = 15
+    default_cores = min([max([1, num_available_cores - 2]), default_max_cores])
+    
     # For prettier implementation of help text, see:
     # http://stackoverflow.com/questions/3853722/python-argparse-how-to-insert-newline-in-the-help-text
     
@@ -312,9 +316,10 @@ if __name__ == '__main__':
     parser.add_argument('-r', dest='ref_dir', action='store', default=None, 
                         help='directory of CTI-corrected reference files ' + \
                              '(default=\"[SCIENCE_DIR]/../ref/\")')
-    parser.add_argument('-n', dest='num_processes', action='store', default=1, metavar='NUM_PROCESSES', 
-                        type=int, \
-                        help='maximum number of parallel processes to run (default=1)' + \
+    parser.add_argument('-n', dest='num_processes', action='store', default=default_cores, \
+                        metavar='NUM_PROCESSES', type=int, \
+                        help='maximum number of parallel processes to run ' + \
+                             '(default=' + str(default_cores) + ')' + \
                               "; number of available CPU cores on your system = " + str(num_available_cores))
     parser.add_argument('-p', dest='pctetab', action='store', metavar='PCTETAB', default=None, \
                         help='name of PCTETAB to use in pixel-based correction ' + \
