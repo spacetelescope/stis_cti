@@ -5,7 +5,7 @@ from astropy.io import fits
 from collections import defaultdict
 import datetime
 import refstis
-#from refstis.weekdark import make_weekdark
+import multiprocessing
 from stistools import StisPixCteCorr
 from numpy import where
 try:
@@ -129,9 +129,10 @@ def superdark_hash(sim_nit=None, shft_nit=None, rn_clip=None, nsemodel=None, sub
     return hash(hash_str)
 
 
-def perform_cti_correction(files, pctetab, verbose=False):
+def perform_cti_correction(files, pctetab, num_cpu=1, verbose=False):
     # The call to StisPixCteCorr should be done in parallel!
     
+    perform_files = []
     outnames = []
     for file in files:
         outname = file.replace('_flt.fits', '_cte.fits', 1)  # Or whatever intermediate extension is designated ***
@@ -158,9 +159,19 @@ def perform_cti_correction(files, pctetab, verbose=False):
                 if verbose:
                     print 'Updated hdr0 PCTETAB  of {}:  {} --> {}'.format(file, old_pctetab, pctetab)
                 
-                # Run the pixel-based correction on the component darks:
-                StisPixCteCorr.CteCorr(file)
-                # *** Do the corrected files need to be fed through DQICORR again to fix flags? ***
+                # Run the pixel-based correction on these component darks:
+                perform_files.append(file)
+    
+    # Run the CTI-correction:
+    p = multiprocessing.Pool(processes = num_cpu)
+    p.map_async(StisPixCteCorr.CteCorr, perform_files)
+    p.close()
+    p.join()
+    
+    # Single-threaded version:
+    #StisPixCteCorr.CteCorr(perform_files)
+    
+    # *** Do the corrected files need to be fed through DQICORR again to fix flags? ***
     
     if len(outnames) == 0:
         outnames = None
@@ -203,7 +214,7 @@ def copy_dark_keywords(superdark, dark_hdr0, history=None, basedark=None):
                 s[0].header['HISTORY'] = h
 
 
-def generate_basedark(files, outname, pctetab, verbose=False):
+def generate_basedark(files, outname, pctetab, num_cpu, verbose=False):
     # Don't make a basedark if it already exists:
     if os.path.exists(outname):
         if superdark_hash(pctetab=pctetab, files=files) == superdark_hash(superdark=outname):
@@ -217,7 +228,7 @@ def generate_basedark(files, outname, pctetab, verbose=False):
         print
     
     # Correct files component darks, if necessary:
-    corrected_files = perform_cti_correction(files, pctetab, verbose)
+    corrected_files = perform_cti_correction(files, pctetab, num_cpu, verbose)
     
     # Make a basedark from the corrected darks:
     refstis.basedark.make_basedark(corrected_files, refdark_name=outname)
@@ -238,7 +249,7 @@ def generate_basedark(files, outname, pctetab, verbose=False):
         print
 
 
-def generate_weekdark(files, outname, pctetab, basedark, verbose=False):
+def generate_weekdark(files, outname, pctetab, basedark, num_cpu, verbose=False):
     # Don't make a weekdark if it already exists:
     if os.path.exists(outname):
         if superdark_hash(pctetab=pctetab, files=files) == superdark_hash(superdark=outname):
@@ -252,7 +263,7 @@ def generate_weekdark(files, outname, pctetab, basedark, verbose=False):
         print
     
     # Correct files component darks, if necessary:
-    corrected_files = perform_cti_correction(files, pctetab, verbose)
+    corrected_files = perform_cti_correction(files, pctetab, num_cpu, verbose)
     
     # Make a weekdark from the corrected darks:
     refstis.weekdark.make_weekdark(corrected_files, outname, basedark)
@@ -281,13 +292,7 @@ if __name__ == '__main__':
     import glob
     
     # Get information about the user's system:
-    try:
-        import multiprocessing
-        num_available_cores = multiprocessing.cpu_count()
-        cores_str = "; number of available CPU cores on your system = " + str(num_available_cores)
-    except (ImportError, NotImplementedError):
-        num_available_cores = 1
-        cores_str = ""
+    num_available_cores = multiprocessing.cpu_count()
     
     # For prettier implementation of help text, see:
     # http://stackoverflow.com/questions/3853722/python-argparse-how-to-insert-newline-in-the-help-text
@@ -308,8 +313,9 @@ if __name__ == '__main__':
                         help='directory of CTI-corrected reference files ' + \
                              '(default=\"[SCIENCE_DIR]/../ref/\")')
     parser.add_argument('-n', dest='num_processes', action='store', default=1, metavar='NUM_PROCESSES', 
+                        type=int, \
                         help='maximum number of parallel processes to run (default=1)' + \
-                              cores_str)
+                              "; number of available CPU cores on your system = " + str(num_available_cores))
     parser.add_argument('-p', dest='pctetab', action='store', metavar='PCTETAB', default=None, \
                         help='name of PCTETAB to use in pixel-based correction ' + \
                              '(default=\"[REF_DIR]/test_pcte.fits\")')
@@ -633,11 +639,11 @@ if __name__ == '__main__':
             weekdarks[weekdark_tag]['amp'].strip().lower(), weekdarks[weekdark_tag]['anneal_num']))
         anneal = [a for a in anneals if a['index'] == weekdarks[weekdark_tag]['anneal_num']][0]
         files = [f['file'] for f in anneal['darks'] if f['CCDAMP'] == weekdarks[weekdark_tag]['amp']]
-        generate_basedark(files, basedark, pctetab, verbose)  # Or, do we want to compartmentalize the amp selection?
+        generate_basedark(files, basedark, pctetab, args.num_processes, verbose)  # Or, do we want to compartmentalize the amp selection?
         
         # Make weekdark:
         weekdark_name = os.path.join(ref_dir, weekdark_tag + '_drk.fits')
         files = [f['file'] for f in weekdarks[weekdark_tag]['darks']]  # Already selected for amp
-        generate_weekdark(files, weekdark_name, pctetab, basedark, verbose)
+        generate_weekdark(files, weekdark_name, pctetab, basedark, args.num_processes, verbose)
     
     pdb.set_trace()
