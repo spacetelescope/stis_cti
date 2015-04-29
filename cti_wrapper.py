@@ -25,7 +25,7 @@ def viable_ccd_file(file,
     
     # Set defaults:
     if earliest_date_allowed is None:
-        earliest_date_allowed = datetime.datetime(2009, 5, 1, 0, 0, 0)  # *** Or when? ***
+        earliest_date_allowed = datetime.datetime(2009, 5, 1, 0, 0, 0)  # Or when? ***
     if type(earliest_date_allowed) is not datetime.datetime:
         raise TypeError('earliest_date_allowed must be a datetime.datetime, not a %s' % type(earliest_date_allowed))
     
@@ -33,7 +33,7 @@ def viable_ccd_file(file,
         amplifiers_allowed = ['D']
     
     if gains_allowed is None:
-        gains_allowed = [1]  # *** Or include 4? ***
+        gains_allowed = [1]  # Or include 4? ***
     
     if offsts_allowed is None:
         offsts_allowed = [3]
@@ -134,12 +134,13 @@ def perform_cti_correction(files, pctetab, verbose=False):
     
     outnames = []
     for file in files:
-        outname = file.replace('_flt.fits', '_cte.fits', 1)
+        outname = file.replace('_flt.fits', '_cte.fits', 1)  # Or whatever intermediate extension is designated ***
+        #outname = file.replace('_raw.fits', '_cte.fits', 1) # Needed as well? ***
         outnames.append(outname)
-        # Do more extensive testing of file header keywords against the PCTETAB to see if the same correction was performed. ***
         if os.path.exists(outname):
-            if verbose:
-                print 'Skipping regeneration of CTI-corrected component dark:  ',  outname
+            if superdark_hash(pctetab=pctetab, files=[]) == superdark_hash(superdark=outname, files=[]):
+                if verbose:
+                    print 'Skipping regeneration of CTI-corrected component dark:  ',  outname
         else:
             with fits.open(file, 'update') as f:
                 #Update PCTETAB header keyword:
@@ -432,7 +433,7 @@ if __name__ == '__main__':
             with fits.open(superdark_resolved) as sd:
                 hdr0 = sd[0].header
                 try:
-                    if hdr0['PCTECORR'].strip().upper() == 'PERFORMED':  # *** Or whatever keyword/value combination we decide. ***
+                    if hdr0['PCTECORR'].strip().upper() == 'PERFORMED':
                         pass
                     else:
                         if verbose:
@@ -457,7 +458,7 @@ if __name__ == '__main__':
         print
     
     # Determine component darks used to make superdarks:
-    #anneal_data = archive_dark_query.get_anneal_boundaries()  # *** Allow user-options here? ***
+    #anneal_data = archive_dark_query.get_anneal_boundaries()
     with open('/Users/lockwood/stis_cte/wrapper/anneals.p', 'rb') as p:
         anneal_data = pickle.load(p)  # *** For testing only!!! ***
     print 'WARNING:  *** Using pickle file anneals.p for testing! ***'
@@ -466,7 +467,7 @@ if __name__ == '__main__':
                       filtered_raw_files, anneal_data=anneal_data, print_url=False)  # print_url?
     
     # Get list of EXPNAMEs from files in the dark_dir.
-    found_dark_files = glob.glob(os.path.join(dark_dir, '*_flt.fits*'))  # *** Do something to allow RAW files? ***
+    found_dark_files = glob.glob(os.path.join(dark_dir, '*_flt.fits*'))  # Do something to allow RAW files? ***
     if verbose >= 2:
         max_file_length = str(max(map(lambda x: len(x), found_dark_files)))
     found = {}
