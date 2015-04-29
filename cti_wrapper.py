@@ -7,7 +7,11 @@ import datetime
 import refstis
 #from refstis.weekdark import make_weekdark
 from stistools import StisPixCteCorr
-import ipdb
+from numpy import where
+try:
+    import ipdb as pdb
+except ImportError:
+    import pdb
 
 __author__  = 'Sean Lockwood'
 __version__ = '0.1'
@@ -75,6 +79,54 @@ def resolve_iraf_file(file):
     new_file = os.path.normpath(os.path.join(dir, rootname))
     
     return new_file
+
+
+def superdark_hash(sim_nit=None, shft_nit=None, rn_clip=None, nsemodel=None, subthrsh=None,
+                            pctetab=None,
+                            superdark=None, files=None):
+    if pctetab is not None:
+        with fits.open(pctetab) as f:
+            sim_nit  = f[0].header['SIM_NIT']
+            shft_nit = f[0].header['SHFT_NIT']
+            rn_clip  = f[0].header['RN_CLIP']
+            nsemodel = f[0].header['NSEMODEL']
+            subthrsh = f[0].header['SUBTHRSH']
+        if files is None:
+            raise IOError('Must specify files with pctetab.')
+    elif superdark is not None:
+        with fits.open(superdark) as f:
+            sim_nit  = f[0].header['PCTESMIT']
+            shft_nit = f[0].header['PCTESHFT']
+            rn_clip  = f[0].header['PCTERNCL']
+            nsemodel = f[0].header['PCTENSMD']
+            subthrsh = f[0].header['PCTETRSH']
+            if files is None:
+                # Parse superdark header for files used:
+                hist = f[0].header['HISTORY']
+                beginning = where(['The following input files were used:' in line for line in hist])[0][0] + 1
+                end = where([line == '' for line in hist[beginning:]])[0][0] + beginning
+                files = hist[beginning:end]
+    else:
+        if sim_nit  == None or \
+           shft_nit == None or \
+           rn_clip  == None or \
+           nsemodel == None or \
+           subthrsh == None:
+            raise IOError('Please specify either pctetab or the proper set of parameters!')
+        if files is None:
+            raise IOError('Must specify files with pctetab.')
+    
+    # Turn list of filenames into a sorted list of exposures:
+    exposures = [os.path.basename(file).rsplit('_',1)[0].upper() for file in files]
+    exposures.sort()
+    exposures = ','.join(exposures)
+    
+    hash_str = '{};{};{};{};{};{}'.format( \
+        exposures, \
+        sim_nit, shft_nit, rn_clip, nsemodel, subthrsh)
+    
+    #return hash_str
+    return hash(hash_str)
 
 
 def perform_cti_correction(files, pctetab, verbose=False):
@@ -151,13 +203,12 @@ def copy_dark_keywords(superdark, dark_hdr0, history=None, basedark=None):
 
 
 def generate_basedark(files, outname, pctetab, verbose=False):
-    # Skip this step if the basedark already exists.
-    # (Actually, we should check header keywords in basedark to see if they are up to date. ***)
+    # Don't make a basedark if it already exists:
     if os.path.exists(outname):
-        if verbose:
-            print 'Skipping regeneration of basedark:  ', outname
-            print
-        return
+        if superdark_hash(pctetab=pctetab, files=files) == superdark_hash(superdark=outname):
+            if verbose:
+                print 'Skipping regeneration of basedark:  ', outname
+            return
     
     if verbose >= 2:
         print 'Working on basedark {}:'.format(outname)
@@ -187,13 +238,12 @@ def generate_basedark(files, outname, pctetab, verbose=False):
 
 
 def generate_weekdark(files, outname, pctetab, basedark, verbose=False):
-    # Skip this step if the weekdark already exists.
-    # (Actually, we should check header keywords in weekdark to see if they are up to date. ***)
+    # Don't make a weekdark if it already exists:
     if os.path.exists(outname):
-        if verbose:
-            print 'Skipping regeneration of weekdark:  ', outname
-            print
-        return
+        if superdark_hash(pctetab=pctetab, files=files) == superdark_hash(superdark=outname):
+            if verbose:
+                print 'Skipping regeneration of weekdark:  ', outname
+            return
     
     if verbose >= 2:
         print 'Working on weekdark {}:'.format(outname)
@@ -567,7 +617,6 @@ if __name__ == '__main__':
         print
     
     if args.all_weeks:
-        raise NotImplementedError('--all_weeks option not yet implemented.')  # Test me! ***
         weekdark_tags = weekdarks.keys()
         if verbose:
             print 'Generating superdarks for all amps/weeks available.'
@@ -577,6 +626,7 @@ if __name__ == '__main__':
     
     # Generate specified basedarks and weekdarks, based on weekdark_tags:
     for weekdark_tag in weekdark_tags:
+        # Make basedark:
         amp = weekdarks[weekdark_tag]['amp'].strip().lower()
         basedark = os.path.join(ref_dir, 'basedark_{}{}_drk.fits'.format( \
             weekdarks[weekdark_tag]['amp'].strip().lower(), weekdarks[weekdark_tag]['anneal_num']))
@@ -584,8 +634,9 @@ if __name__ == '__main__':
         files = [f['file'] for f in anneal['darks'] if f['CCDAMP'] == weekdarks[weekdark_tag]['amp']]
         generate_basedark(files, basedark, pctetab, verbose)  # Or, do we want to compartmentalize the amp selection?
         
+        # Make weekdark:
         weekdark_name = os.path.join(ref_dir, weekdark_tag + '_drk.fits')
         files = [f['file'] for f in weekdarks[weekdark_tag]['darks']]  # Already selected for amp
         generate_weekdark(files, weekdark_name, pctetab, basedark, verbose)
     
-    ipdb.set_trace()
+    pdb.set_trace()
