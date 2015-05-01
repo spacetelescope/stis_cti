@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 
 import os
+import sys
 import multiprocessing
 import datetime
 from astropy.io import fits
@@ -27,6 +28,7 @@ __version__ = '0.1'
 # generate_basedark()
 # generate_weekdark()
 # populate_darkfiles()
+# class Logger
 # main
 
 
@@ -59,19 +61,33 @@ def cti_wrapper(science_dir, dark_dir, ref_dir, pctetab, num_processes,
                             (default="[REF_DIR]/test_pcte.fits")
           -v, --verbose     print more information
           -vv               very verbose
-    '''
     
-    # Print script name/version, system date/time.
-    # ...
+    Note that 'all_week_flag' and 'allow' options have not been fully tested!
+    '''
+    # Open a log file and copy {STDOUT, STDERR} to it:
+    log = Logger(os.path.join(science_dir, 'cti_{}.log'.format(datetime.datetime.now().isoformat('_'))))
+    
+    try:
+        from platform import node, platform
+        sys_info = '{}; {}'.format(node(), platform())
+    except ImportError:
+        sys_info = 'Indeterminate'
+    
+    # Print system information:
+    print 'Running CTI-correction script:  {} v{}'.format(os.path.basename(__file__), __version__)
+    print 'System:                         {}'.format(sys_info)
+    print 'Start time:                     {}\n'.format(datetime.datetime.now().isoformat(' '))
     
     if verbose:
         print 'science_dir = {}'.format(science_dir)
         print 'dark_dir    = {}'.format(dark_dir)
         print 'ref_dir     = {}'.format(ref_dir)
         print 'PCTETAB     = {}\n'.format(pctetab)
+    log.flush()
     
     raw_files = determine_input_science(science_dir, allow, verbose)
-        
+    log.flush()
+    
     # Check for original MAST data results:
     # ...
     
@@ -80,6 +96,8 @@ def cti_wrapper(science_dir, dark_dir, ref_dir, pctetab, num_processes,
     
     # Check science files for uncorrected super-darks:
     populate_darkfiles(raw_files, dark_dir, ref_dir, num_processes, all_weeks_flag, verbose)
+    
+    log.close()
 
 
 def determine_input_science(science_dir, allow=False, verbose=False):
@@ -351,6 +369,15 @@ def generate_basedark(files, outname, pctetab, num_cpu, verbose=False):
     refstis.basedark.make_basedark(corrected_files, refdark_name=outname)
     # Print results of "[REF_DIR]/[basedark_name - '.fits']_joined_bd_calstis_log.txt"? ***
     
+    if verbose:
+        calstis_log = outname.replace('.fits','_joined_bd_calstis_log.txt', 1)
+        print 'Calstis log file for CRJ processing [{}]:'.format(calstis_log)
+        with open(calstis_log, 'r') as cs_log:
+            for line in cs_log.readlines():
+                print '     ' + line.strip()
+        print
+    #os.remove(calstis_log)  # ***
+    
     # Copy the last file's ext=0 header into a variable to use in populating the basedark header:
     # (Maybe we should read all headers and make sure the keywords are the same [except PCTEFRAC]? ***)
     with fits.open(corrected_files[-1]) as file:
@@ -383,7 +410,15 @@ def generate_weekdark(files, outname, pctetab, basedark, num_cpu, verbose=False)
     
     # Make a weekdark from the corrected darks:
     refstis.weekdark.make_weekdark(corrected_files, outname, basedark)
-    # Print results of "[REF_DIR]/[weekdark_name - '.fits']_joined_bd_calstis_log.txt"? ***
+    
+    if verbose:
+        calstis_log = outname.replace('.fits','_joined_bd_calstis_log.txt', 1)
+        print 'Calstis log file for CRJ processing [{}]:'.format(calstis_log)
+        with open(calstis_log, 'r') as cs_log:
+            for line in cs_log.readlines():
+                print '     ' + line.strip()
+        print
+    #os.remove(calstis_log)  # ***
     
     # Copy the last file's ext=0 header into a variable to use in populating the basedark header:
     # (Maybe we should read all headers and make sure the keywords are the same [except PCTEFRAC]? ***)
@@ -616,6 +651,51 @@ def populate_darkfiles(raw_files, dark_dir, ref_dir, num_processes, all_weeks_fl
         generate_weekdark(files, weekdark_name, pctetab, basedark, num_processes, verbose)
 
 
+class Logger(object):
+    '''Lumberjack class - Duplicates sys.stdout to a log file and it's okay
+       source: http://stackoverflow.com/a/24583265
+       Modified to include STDERR.
+    '''
+    def __init__(self, filename='cti_{}.log'.format(datetime.datetime.now().isoformat('_')), mode="a", buff=0):
+        self.stdout = sys.stdout
+        self.stderr = sys.stderr
+        self.file = open(filename, mode, buff)
+        sys.stdout = self
+        sys.stderr = self
+    
+    def __del__(self):
+        self.close()
+    
+    def __enter__(self):
+        pass
+    
+    def __exit__(self, *args):
+        pass
+    
+    def write(self, message):
+        self.stdout.write(message)  # Both STDOUT and STDERR get directed to STDOUT!
+        self.file.write(message)
+    
+    def flush(self):
+        self.stdout.flush()
+        self.stderr.flush()
+        self.file.flush()
+        os.fsync(self.file.fileno())
+    
+    def close(self):
+        if self.stdout != None:
+            sys.stdout = self.stdout
+            self.stdout = None
+        
+        if self.stderr != None:
+            sys.stderr = self.stderr
+            self.stderr = None
+        
+        if self.file != None:
+            self.file.close()
+            self.file = None
+
+
 if __name__ == '__main__':
     import argparse
     
@@ -669,9 +749,9 @@ if __name__ == '__main__':
     
     # Determine default dark_dir and ref_dir relative to science_dir:
     if args.dark_dir is None:
-        args.dark_dir = os.path.join(args.science_dir, '../darks')
+        args.dark_dir = os.path.join(args.science_dir, os.path.pardir + os.path.sep + 'darks')
     if args.ref_dir is None:
-        args.ref_dir = os.path.join(args.science_dir, '../ref')
+        args.ref_dir = os.path.join(args.science_dir, os.path.pardir + os.path.sep + 'ref')
     
     # Normalize redundant relative path variables:
     science_dir = os.path.normpath(args.science_dir) + os.path.sep
