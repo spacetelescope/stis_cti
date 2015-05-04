@@ -8,7 +8,7 @@ from astropy.io import fits
 from collections import defaultdict
 import archive_dark_query
 import refstis
-from stistools import StisPixCteCorr, basic2d
+from stistools import StisPixCteCorr, basic2d, calstis
 #try:
 #    import ipdb as pdb
 #except ImportError:
@@ -20,9 +20,14 @@ __version__ = '0.1'
 
 # cti_wrapper()
 # determine_input_science()
+# determine_input_science()
 # viable_ccd_file()
+# bias_correct_science_files()
+# run_calstis_on_science()
 # resolve_iraf_file()
 # superdark_hash()
+# func()
+# func_star()
 # perform_cti_correction()
 # copy_dark_keywords()
 # generate_basedark()
@@ -85,6 +90,14 @@ def cti_wrapper(science_dir, dark_dir, ref_dir, pctetab, num_processes,
         print 'PCTETAB     = {}\n'.format(pctetab)
     log.flush()
     
+    # Put dark_dir and PCTETAB's dir in environmental variables:
+    if '$' not in ref_dir:
+        os.environ['ctirefs'] = os.path.abspath(ref_dir) + os.path.sep
+        ref_dir = '$ctirefs' + os.path.sep
+    if '$' not in pctetab:
+        os.environ['pctetab'] = os.path.abspath(os.path.dirname(pctetab)) + os.path.sep
+        pctetab = os.path.join('$pctetab', os.path.basename(pctetab))
+    
     raw_files = determine_input_science(science_dir, allow, verbose)
     log.flush()
     
@@ -96,8 +109,18 @@ def cti_wrapper(science_dir, dark_dir, ref_dir, pctetab, num_processes,
     
     # Check science files for uncorrected super-darks:
     populate_darkfiles(raw_files, dark_dir, ref_dir, num_processes, all_weeks_flag, verbose)
+    log.flush()
     
+    # Bias-correct the science files:
     bias_corrected = bias_correct_science_files(raw_files, verbose)
+    log.flush()
+    
+    # Perform the CTI correction in parallel on the science data:
+    cti_corrected = perform_cti_correction(bias_corrected, pctetab, num_processes, verbose)
+    log.flush()
+    
+    # Finish running CalSTIS on the CTI-corrected science data:
+    flts = run_calstis_on_science(cti_corrected, verbose)
     
     log.close()
 
@@ -199,7 +222,7 @@ def bias_correct_science_files(raw_files, verbose):
         print 'Bias-correcting science files...\n'
     
     outnames = [f.replace('_raw.fits', '_blt.fits', 1) for f in raw_files]
-    trailers = [f.replace('_raw.fits', '_blt_tra.txt', 1) for f in raw_files]
+    trailers = [os.path.abspath(os.path.expandvars(f.replace('_raw.fits', '_blt_tra.txt', 1))) for f in raw_files]
     
     # Check for previous _blt.fits files first:
     for outname in outnames:
@@ -219,12 +242,51 @@ def bias_correct_science_files(raw_files, verbose):
             raise RuntimeError('basic2d returned non-zero status on {}:  {}'.format(raw_file, status))
         
         if verbose:
-            with open(trailer) as tra:
+            with open(os.path.expandvars(trailer)) as tra:
                 for line in tra.readlines():
                     print '     ' + line.strip()
         # Remove trailer file?
         
     return outnames
+
+
+def run_calstis_on_science(files, verbose):
+    if verbose:
+        print 'Running CalSTIS on science files...\n'
+    
+    outnames = [f.replace('_cte.fits', '_cte_flt.fits', 1) for f in files]  # Replicating CalSTIS' behavior
+    trailers = [os.path.abspath(os.path.expandvars(f.replace('_cte.fits', '_cte_tra.txt', 1))) for f in files]
+    #trailers = [os.path.basename(f.replace('_cte.fits', '_cte_tra.txt',  1)) for f in files]  # Also remove path
+    
+    # Check for previous _blt.fits files first:
+    for outname in outnames:
+        if os.path.exists(outname):
+            raise IOError('File {} already exists!'.format(outname))
+    
+    for file, outname, trailer in zip(files, outnames, trailers):
+        if verbose:
+            print 'Running calstis on {} --> {}.'.format(file, outname)
+        if os.path.exists(trailer):
+            os.remove(trailer)
+        # Note that outname is determined by CalSTIS, and not this call:
+        cwd = os.getcwd()
+        try:
+            # Need to change to science directory to find associated wavecals.
+            os.chdir(os.path.dirname(file))
+            status = calstis.calstis(os.path.basename(file), verbose=(verbose >= 2), trailer=trailer)
+        finally:
+            os.chdir(cwd)
+        
+        if status != 0:
+            raise RuntimeError('CalSTIS returned non-zero status on {}:  {}'.format(file, status))
+        
+        if verbose:
+            with open(os.path.expandvars(trailer)) as tra:
+                for line in tra.readlines():
+                    print '     ' + line.strip()
+        
+    return outnames
+
 
 def resolve_iraf_file(file):
     # Email sent to phil to get the proper version of this routine...
@@ -255,7 +317,7 @@ def superdark_hash(sim_nit=None, shft_nit=None, rn_clip=None, nsemodel=None, sub
     from numpy import where
     
     if pctetab is not None:
-        with fits.open(pctetab) as f:
+        with fits.open(os.path.expandvars(pctetab)) as f:
             sim_nit  = f[0].header['SIM_NIT']
             shft_nit = f[0].header['SHFT_NIT']
             rn_clip  = f[0].header['RN_CLIP']
@@ -264,7 +326,7 @@ def superdark_hash(sim_nit=None, shft_nit=None, rn_clip=None, nsemodel=None, sub
         if files is None:
             raise IOError('Must specify files with pctetab.')
     elif superdark is not None:
-        with fits.open(superdark) as f:
+        with fits.open(os.path.expandvars(superdark)) as f:
             sim_nit  = f[0].header['PCTESMIT']
             shft_nit = f[0].header['PCTESHFT']
             rn_clip  = f[0].header['PCTERNCL']
@@ -299,42 +361,58 @@ def superdark_hash(sim_nit=None, shft_nit=None, rn_clip=None, nsemodel=None, sub
     return hash(hash_str)
 
 
+# These functions are needed here for calling from a multiprocessing pool.
+def func(in_f, out_f):
+    StisPixCteCorr.CteCorr(in_f, outFits=out_f)
+
+def func_star(a_b):
+    """Convert `f([1,2])` to `f(1,2)` call."""
+    return func(*a_b)
+
+
 def perform_cti_correction(files, pctetab, num_cpu=1, verbose=False):
     # The call to StisPixCteCorr should be done in parallel!
     
     perform_files = []
     outnames = []
+    perform_outnames = []
     for file in files:
         outname = file.replace('_flt.fits', '_cte.fits', 1)  # Or whatever intermediate extension is designated ***
-        #outname = file.replace('_raw.fits', '_cte.fits', 1) # Needed as well? ***
+        outname = file.replace('_blt.fits', '_cte.fits', 1)
         outnames.append(outname)
         if os.path.exists(outname):
             if superdark_hash(pctetab=pctetab, files=[]) == superdark_hash(superdark=outname, files=[]):
                 if verbose:
-                    print 'Skipping regeneration of CTI-corrected component dark:  {}'.format(outname)
+                    print 'Skipping regeneration of CTI-corrected file:  {}'.format(outname)
         else:
             with fits.open(file, 'update') as f:
                 #Update PCTETAB header keyword:
-                try:
-                    old_pctetab = f[0].header['PCTETAB']
-                except KeyError:
-                    old_pctetab = None
+                old_pctetab = f[0].header.get('PCTETAB', default=None)
+                f[0].header.insert('DARKFILE', ('PCTETAB', pctetab, 'Pixel-based CTI param table'), after=True)
                 
-                if old_pctetab is None:
-                    f[0].header.insert('DARKFILE', ('PCTETAB', pctetab))  # Insert after DARKFILE
-                else:
-                    f[0].header['PCTETAB'] = pctetab
+                # Turn off the empirical CTI correction flag if it is set to PERFORM:
+                old_ctecorr = f[0].header.get('CTECORR', default='unknown').strip()
+                if old_ctecorr == 'COMPLETE':
+                    raise ValueError('Empirical CTI correction correction flag, CTECORR, is set in file {}.'.format(file))
+                elif old_ctecorr == 'PERFORM':
+                    f[0].header['CTECORR'] = 'OMIT'
+                
                 f.flush()
-                
                 if verbose:
                     print 'Updated hdr0 PCTETAB  of {}:  {} --> {}'.format(file, old_pctetab, pctetab)
+                    if old_ctecorr != 'unknown':
+                        print 'Updated hdr0 CTECORR  of {}:  {} --> {}'.format(
+                            file, old_ctecorr, f[0].header['CTECORR'])
                 
-                # Run the pixel-based correction on these component darks:
+                # Run the pixel-based correction on these files:
                 perform_files.append(file)
+                perform_outnames.append(outname)
     
     # Run the CTI-correction:
     p = multiprocessing.Pool(processes = num_cpu)
-    p.map_async(StisPixCteCorr.CteCorr, perform_files)
+    # Iterator of input/output files:
+    file_args = ((x, y) for x, y in zip(perform_files, perform_outnames))
+    p.map_async(func_star, file_args)
     p.close()
     p.join()
     
@@ -357,7 +435,7 @@ def copy_dark_keywords(superdark, dark_hdr0, history=None, basedark=None):
     # Note:  PCTEFRAC is time-dependent; PCTECOR = COMPLETE
     keywords.reverse()
     
-    with fits.open(superdark, 'update') as s:
+    with fits.open(os.path.expandvars(superdark), 'update') as s:
         for keyword in keywords:
             value = dark_hdr0.get(keyword, default='unknown')
             try:
@@ -386,7 +464,7 @@ def copy_dark_keywords(superdark, dark_hdr0, history=None, basedark=None):
 
 def generate_basedark(files, outname, pctetab, num_cpu, verbose=False):
     # Don't make a basedark if it already exists:
-    if os.path.exists(outname):
+    if os.path.exists(os.path.expandvars(outname)):
         if superdark_hash(pctetab=pctetab, files=files) == superdark_hash(superdark=outname):
             if verbose:
                 print 'Skipping regeneration of basedark:  {}'.format(outname)
@@ -406,7 +484,7 @@ def generate_basedark(files, outname, pctetab, num_cpu, verbose=False):
     if verbose:
         calstis_log = outname.replace('.fits','_joined_bd_calstis_log.txt', 1)
         print 'Calstis log file for CRJ processing [{}]:'.format(calstis_log)
-        with open(calstis_log, 'r') as cs_log:
+        with open(os.path.expandvars(calstis_log), 'r') as cs_log:
             for line in cs_log.readlines():
                 print '     ' + line.strip()
         print
@@ -429,7 +507,7 @@ def generate_basedark(files, outname, pctetab, num_cpu, verbose=False):
 
 def generate_weekdark(files, outname, pctetab, basedark, num_cpu, verbose=False):
     # Don't make a weekdark if it already exists:
-    if os.path.exists(outname):
+    if os.path.exists(os.path.expandvars(outname)):
         if superdark_hash(pctetab=pctetab, files=files) == superdark_hash(superdark=outname):
             if verbose:
                 print 'Skipping regeneration of weekdark:  {}'.format(outname)
@@ -448,7 +526,7 @@ def generate_weekdark(files, outname, pctetab, basedark, num_cpu, verbose=False)
     if verbose:
         calstis_log = outname.replace('.fits','_joined_bd_calstis_log.txt', 1)
         print 'Calstis log file for CRJ processing [{}]:'.format(calstis_log)
-        with open(calstis_log, 'r') as cs_log:
+        with open(os.path.expandvars(calstis_log), 'r') as cs_log:
             for line in cs_log.readlines():
                 print '     ' + line.strip()
         print
@@ -641,19 +719,19 @@ def populate_darkfiles(raw_files, dark_dir, ref_dir, num_processes, all_weeks_fl
             f[0].header['DARKFILE'] = darkfile
             
             #PCTETAB:
-            try:
-                old_pctetab = f[0].header['PCTETAB']
-            except KeyError:
-                old_pctetab = None
-            if old_pctetab is None:
-                f[0].header.insert('DARKFILE', ('PCTETAB', pctetab))  # Insert after DARKFILE
-            else:
-                f[0].header['PCTETAB'] = pctetab
+            #try:
+            #    old_pctetab = f[0].header['PCTETAB']
+            #except KeyError:
+            #    old_pctetab = None
+            #if old_pctetab is None:
+            #    f[0].header.insert('DARKFILE', ('PCTETAB', pctetab))  # Insert after DARKFILE
+            #else:
+            #    f[0].header['PCTETAB'] = pctetab
             
             f.flush()
             if verbose:
                 print 'Updated hdr0 DARKFILE of {}:  {} --> {}'.format(file, old_darkfile, darkfile)
-                print 'Updated hdr0 PCTETAB  of {}:  {} --> {}'.format(file, old_pctetab, pctetab)
+                #print 'Updated hdr0 PCTETAB  of {}:  {} --> {}'.format(file, old_pctetab, pctetab)
     
     if verbose:
         print '\nWeekdarks needed:'
