@@ -327,11 +327,11 @@ def superdark_hash(sim_nit=None, shft_nit=None, rn_clip=None, nsemodel=None, sub
             raise IOError('Must specify files with pctetab.')
     elif superdark is not None:
         with fits.open(os.path.expandvars(superdark)) as f:
-            sim_nit  = f[0].header['PCTESMIT']
-            shft_nit = f[0].header['PCTESHFT']
-            rn_clip  = f[0].header['PCTERNCL']
-            nsemodel = f[0].header['PCTENSMD']
-            subthrsh = f[0].header['PCTETRSH']
+            sim_nit  = f[0].header.get('PCTESMIT', default='undefined')
+            shft_nit = f[0].header.get('PCTESHFT', default='undefined')
+            rn_clip  = f[0].header.get('PCTERNCL', default='undefined')
+            nsemodel = f[0].header.get('PCTENSMD', default='undefined')
+            subthrsh = f[0].header.get('PCTETRSH', default='undefined')
             if files is None:
                 # Parse superdark header for files used:
                 hist = f[0].header['HISTORY']
@@ -377,8 +377,7 @@ def perform_cti_correction(files, pctetab, num_cpu=1, verbose=False):
     outnames = []
     perform_outnames = []
     for file in files:
-        outname = file.replace('_flt.fits', '_cte.fits', 1)  # Or whatever intermediate extension is designated ***
-        outname = file.replace('_blt.fits', '_cte.fits', 1)
+        outname = file.replace('_flt.fits', '_cte.fits', 1).replace('_blt.fits', '_cte.fits', 1)
         outnames.append(outname)
         if os.path.exists(outname):
             if superdark_hash(pctetab=pctetab, files=[]) == superdark_hash(superdark=outname, files=[]):
@@ -751,14 +750,14 @@ def populate_darkfiles(raw_files, dark_dir, ref_dir, num_processes, all_weeks_fl
     for weekdark_tag in weekdark_tags:
         # Make basedark:
         amp = weekdarks[weekdark_tag]['amp'].strip().lower()
-        basedark = os.path.join(ref_dir, 'basedark_{}{}_drk.fits'.format( \
-            weekdarks[weekdark_tag]['amp'].strip().lower(), weekdarks[weekdark_tag]['anneal_num']))
+        basedark = os.path.abspath(os.path.expandvars(os.path.join(ref_dir, 'basedark_{}{}_drk.fits'.format( \
+            weekdarks[weekdark_tag]['amp'].strip().lower(), weekdarks[weekdark_tag]['anneal_num']))))
         anneal = [a for a in anneals if a['index'] == weekdarks[weekdark_tag]['anneal_num']][0]
         files = [f['file'] for f in anneal['darks'] if f['CCDAMP'] == weekdarks[weekdark_tag]['amp']]
         generate_basedark(files, basedark, pctetab, num_processes, verbose)  # Or, do we want to compartmentalize the amp selection?
         
         # Make weekdark:
-        weekdark_name = os.path.join(ref_dir, weekdark_tag + '_drk.fits')
+        weekdark_name = os.path.abspath(os.path.expandvars(os.path.join(ref_dir, weekdark_tag + '_drk.fits')))
         files = [f['file'] for f in weekdarks[weekdark_tag]['darks']]  # Already selected for amp
         generate_weekdark(files, weekdark_name, pctetab, basedark, num_processes, verbose)
 
