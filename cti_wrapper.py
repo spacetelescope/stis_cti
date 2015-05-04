@@ -196,25 +196,35 @@ def viable_ccd_file(file,
 
 def bias_correct_science_files(raw_files, verbose):
     if verbose:
-        tmp = basic2d.basic2d('', print_revision=True)
+        print 'Bias-correcting science files...\n'
     
     outnames = [f.replace('_raw.fits', '_blt.fits', 1) for f in raw_files]
+    trailers = [f.replace('_raw.fits', '_blt_tra.txt', 1) for f in raw_files]
     
     # Check for previous _blt.fits files first:
-    for file in outnames:
+    for outname in outnames:
         if os.path.exists(outname):
             raise IOError('File {} already exists!'.format(outname))
     
-    for raw_file, outname in zip(raw_files, outnames):
+    for raw_file, outname, trailer in zip(raw_files, outnames, trailers):
         if verbose:
             print 'Running basic2d on {} --> {}.'.format(raw_file, outname)
+        if os.path.exists(trailer):
+            os.remove(trailer)
         status = basic2d.basic2d(raw_file, output=outname, dqicorr=True, 
             blevcorr=True, biascorr=True, doppcorr=False, lorscorr=False, glincorr=False, 
             lflgcorr=False, darkcorr=False, flatcorr=False, photcorr=False, statflag=True, 
-            verbose=(verbose >= 2))
+            verbose=(verbose >= 2), trailer=trailer)
         if status != 0:
             raise RuntimeError('basic2d returned non-zero status on {}:  {}'.format(raw_file, status))
-
+        
+        if verbose:
+            with open(trailer) as tra:
+                for line in tra.readlines():
+                    print '     ' + line.strip()
+        # Remove trailer file?
+        
+    return outnames
 
 def resolve_iraf_file(file):
     # Email sent to phil to get the proper version of this routine...
