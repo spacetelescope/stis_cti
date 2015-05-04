@@ -8,7 +8,7 @@ from astropy.io import fits
 from collections import defaultdict
 import archive_dark_query
 import refstis
-from stistools import StisPixCteCorr
+from stistools import StisPixCteCorr, basic2d
 #try:
 #    import ipdb as pdb
 #except ImportError:
@@ -96,6 +96,8 @@ def cti_wrapper(science_dir, dark_dir, ref_dir, pctetab, num_processes,
     
     # Check science files for uncorrected super-darks:
     populate_darkfiles(raw_files, dark_dir, ref_dir, num_processes, all_weeks_flag, verbose)
+    
+    bias_corrected = bias_correct_science_files(raw_files, verbose)
     
     log.close()
 
@@ -192,8 +194,30 @@ def viable_ccd_file(file,
         hdr0['CCDOFFST'] in offsts_allowed
 
 
+def bias_correct_science_files(raw_files, verbose):
+    if verbose:
+        tmp = basic2d.basic2d('', print_revision=True)
+    
+    outnames = [f.replace('_raw.fits', '_blt.fits', 1) for f in raw_files]
+    
+    # Check for previous _blt.fits files first:
+    for file in outnames:
+        if os.path.exists(outname):
+            raise IOError('File {} already exists!'.format(outname))
+    
+    for raw_file, outname in zip(raw_files, outnames):
+        if verbose:
+            print 'Running basic2d on {} --> {}.'.format(raw_file, outname)
+        status = basic2d.basic2d(raw_file, output=outname, dqicorr=True, 
+            blevcorr=True, biascorr=True, doppcorr=False, lorscorr=False, glincorr=False, 
+            lflgcorr=False, darkcorr=False, flatcorr=False, photcorr=False, statflag=True, 
+            verbose=(verbose >= 2))
+        if status != 0:
+            raise RuntimeError('basic2d returned non-zero status on {}:  {}'.format(raw_file, status))
+
+
 def resolve_iraf_file(file):
-    # Email sent to phil to get this routine...
+    # Email sent to phil to get the proper version of this routine...
     
     dir = ''
     rootname = file
