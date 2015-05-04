@@ -96,7 +96,8 @@ def cti_wrapper(science_dir, dark_dir, ref_dir, pctetab, num_processes,
         ref_dir = '$ctirefs' + os.path.sep
     if '$' not in pctetab:
         os.environ['pctetab'] = os.path.abspath(os.path.dirname(pctetab)) + os.path.sep
-        pctetab = os.path.join('$pctetab', os.path.basename(pctetab))
+        # dir$file format needed for StisPixCteCorr()...
+        pctetab = 'pctetab$' + os.path.basename(pctetab)  # This won't work with os.path.expandvars()!
     
     raw_files = determine_input_science(science_dir, allow, verbose)
     log.flush()
@@ -108,7 +109,7 @@ def cti_wrapper(science_dir, dark_dir, ref_dir, pctetab, num_processes,
     # ...
     
     # Check science files for uncorrected super-darks:
-    populate_darkfiles(raw_files, dark_dir, ref_dir, num_processes, all_weeks_flag, verbose)
+    populate_darkfiles(raw_files, dark_dir, ref_dir, pctetab, num_processes, all_weeks_flag, verbose)
     log.flush()
     
     # Bias-correct the science files:
@@ -317,7 +318,7 @@ def superdark_hash(sim_nit=None, shft_nit=None, rn_clip=None, nsemodel=None, sub
     from numpy import where
     
     if pctetab is not None:
-        with fits.open(os.path.expandvars(pctetab)) as f:
+        with fits.open(resolve_iraf_file(pctetab)) as f:
             sim_nit  = f[0].header['SIM_NIT']
             shft_nit = f[0].header['SHFT_NIT']
             rn_clip  = f[0].header['RN_CLIP']
@@ -477,7 +478,7 @@ def generate_basedark(files, outname, pctetab, num_cpu, verbose=False):
     corrected_files = perform_cti_correction(files, pctetab, num_cpu, verbose)
     
     # Make a basedark from the corrected darks:
-    refstis.basedark.make_basedark(corrected_files, refdark_name=outname)
+    refstis.basedark.make_basedark(corrected_files, refdark_name=os.path.expandvars(outname))
     # Print results of "[REF_DIR]/[basedark_name - '.fits']_joined_bd_calstis_log.txt"? ***
     
     if verbose:
@@ -498,7 +499,7 @@ def generate_basedark(files, outname, pctetab, num_cpu, verbose=False):
     history = [
         'Basedark created from CTI-corrected component darks by script',
         'cti_wrapper.py on {}.'.format(datetime.datetime.now().isoformat(' ')) ]
-    copy_dark_keywords(outname, dark_hdr0, history=history)
+    copy_dark_keywords(os.path.expandvars(outname), dark_hdr0, history=history)
         
     if verbose:
         print 'Basedark complete:  {}\n'.format(outname)
@@ -520,7 +521,8 @@ def generate_weekdark(files, outname, pctetab, basedark, num_cpu, verbose=False)
     corrected_files = perform_cti_correction(files, pctetab, num_cpu, verbose)
     
     # Make a weekdark from the corrected darks:
-    refstis.weekdark.make_weekdark(corrected_files, outname, basedark)
+    refstis.weekdark.make_weekdark(corrected_files, os.path.expandvars(outname), 
+        os.path.abspath(os.path.expandvars(basedark)))
     
     if verbose:
         calstis_log = outname.replace('.fits','_joined_bd_calstis_log.txt', 1)
@@ -541,13 +543,13 @@ def generate_weekdark(files, outname, pctetab, basedark, num_cpu, verbose=False)
         'Weekdark created from CTI-corrected component darks by script',
         'cti_wrapper.py on {}'.format(datetime.datetime.now().isoformat(' ')),
         'using basedark file {}.'.format(basedark)]
-    copy_dark_keywords(outname, dark_hdr0, history=history, basedark=basedark)
+    copy_dark_keywords(os.path.expandvars(outname), dark_hdr0, history=history, basedark=basedark)
     
     if verbose:
         print 'Weekdark complete:  {}\n'.format(outname)
 
 
-def populate_darkfiles(raw_files, dark_dir, ref_dir, num_processes, all_weeks_flag=False, verbose=False):
+def populate_darkfiles(raw_files, dark_dir, ref_dir, pctetab, num_processes, all_weeks_flag=False, verbose=False):
     '''Check science files for uncorrected super-darks; and, if necessary, generate them and
        populate the science file headers.'''
     
@@ -750,8 +752,8 @@ def populate_darkfiles(raw_files, dark_dir, ref_dir, num_processes, all_weeks_fl
     for weekdark_tag in weekdark_tags:
         # Make basedark:
         amp = weekdarks[weekdark_tag]['amp'].strip().lower()
-        basedark = os.path.abspath(os.path.expandvars(os.path.join(ref_dir, 'basedark_{}{}_drk.fits'.format( \
-            weekdarks[weekdark_tag]['amp'].strip().lower(), weekdarks[weekdark_tag]['anneal_num']))))
+        basedark = os.path.join(ref_dir, 'basedark_{}{}_drk.fits'.format( \
+            weekdarks[weekdark_tag]['amp'].strip().lower(), weekdarks[weekdark_tag]['anneal_num']))
         anneal = [a for a in anneals if a['index'] == weekdarks[weekdark_tag]['anneal_num']][0]
         files = [f['file'] for f in anneal['darks'] if f['CCDAMP'] == weekdarks[weekdark_tag]['amp']]
         generate_basedark(files, basedark, pctetab, num_processes, verbose)  # Or, do we want to compartmentalize the amp selection?
@@ -888,4 +890,3 @@ if __name__ == '__main__':
     cti_wrapper(science_dir, dark_dir, ref_dir, pctetab, args.num_processes, 
                 args.all_weeks_flag, args.allow, verbose)
     
-    #pdb.set_trace()
