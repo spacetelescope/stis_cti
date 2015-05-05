@@ -1,0 +1,92 @@
+'cti_wrapper.py' Testing List
+2015May05
+
+
+can run with other configurations:
+	ssbrel (development has been done in ssbx)
+	
+	Other supported Python versions?
+	
+	Linux
+	MacOS (> 10.8.5 not tested)
+	Windows?  (Does CalSTIS work in Cygwin?)
+	Solaris?
+	...
+
+can import and run from within Python
+	[import cti_wrapper; cti_wrapper.cti_wrapper(...)]
+
+installation issues:
+	check for errors installing refstis & stistools.StisPixCteCorr
+	cti_wrapper.py added to $PATH & Python package list (check versions in "pip freeze"?)
+	only default libraries need to be installed (except StisPixCteCorr, refstis)
+	...
+
+"cti_wrapper.py -h" or "cti_wrapper.py --help" generates some help text
+
+misc error handling (check that script exits somewhat gracefully):
+	test various bad inputs (including num_processes)
+	can't reach internet/MAST
+	$oref not reachable
+	...
+
+paths:
+	run with default paths
+	run with non-default paths
+	run with paths = shell variables [not fully implemented yet]
+	useful error message if a path is not writable [not yet implemented]
+
+log file matches STDOUT
+
+code version number is set as expected
+
+version matching between PCTETAB & code [*** not currently implemented ***]:
+	behavior of code if PCTETAB with future major version number used
+		(should halt execution gracefully)
+	behavior of code if PCTETAB with past major version number used
+	(What about basedark/weekdark scripts and versions of those files?)
+
+science data:
+	sanity check that science files were corrected (and non-CR tails were not vastly over-corrected)
+	
+	un-correctable files were filtered out (pre-recovery, ACQs, ...)
+	correctable files were not filtered out
+	
+	science data reduced correctly from a month with both ampA & ampD dark data
+	
+	correct weekdark was chosen and populated into science file headers
+		(given that inter-week boundaries may be a bit fuzzy)
+	
+	headers:
+		PCTETAB populated correctly
+		empirical CTECORR flag set to OMIT if it exists
+		PCTE* header keywords properly populated by StisPixCteCorr()
+			{PCTECORR, PCTEFRAC, PCTERNCL, PCTENSMD, PCTETRSH, PCTESMIT, PCTESHFT, CTE_NAME, CTE_VER}
+	
+	DQ & error arrays populated correctly (DQICORR implicitly run again after CTI-correction?)
+	
+	behavior of code if high-level pipeline products exist in science_dir/
+	behavior of code if previously CTI-corrected science files exist in science_dir/
+	
+	behavior of code if updated PCTETAB used with old files present
+		(will it try to clobber old files or halt execution?)
+	
+	(Secondary) running on non-ampD data with "--allow" option doesn't crash code
+
+super-darks:
+	sanity check that basedarks and weekdarks are CTI-corrected
+	
+	weekdarks made using correct component darks (rootnames; *_cte.fits, not *_flt.fits; exptimes)
+	weekdarks made using correct basedarks
+	weekdark headers populated with correct CTI-correction parameters
+	
+	basedarks made using correct component darks (rootnames; *_cte.fits, not *_flt.fits; exptimes)
+	basedark headers populated with correct CTI-correction parameters
+	
+	basedarks/weekdarks not recreated if they exist in the ref/ directory
+	component darks not re-corrected through StisPixCteCorr if they already exist
+	
+	basedarks/weekdarks made correctly from a month with both ampA & ampD dark data
+	
+	DQ & error arrays populated correctly (not correct right now)
+		(we are NOT currently re-running DQICORR after CTI-correction)
