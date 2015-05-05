@@ -2,6 +2,8 @@
 2015May05
 
 
+run on a large set of data
+
 can run with other configurations:
 	ssbrel (development has been done in ssbx)
 	
