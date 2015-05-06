@@ -15,7 +15,7 @@ from stistools import StisPixCteCorr, basic2d, calstis
 #    import pdb
 
 __author__  = 'Sean Lockwood'
-__version__ = '0.1'
+__version__ = '0.1_alpha'
 
 
 # cti_wrapper()
@@ -26,6 +26,7 @@ __version__ = '0.1'
 # run_calstis_on_science()
 # resolve_iraf_file()
 # superdark_hash()
+# check_pctetab_version()
 # func()
 # func_star()
 # perform_cti_correction()
@@ -98,6 +99,10 @@ def cti_wrapper(science_dir, dark_dir, ref_dir, pctetab, num_processes,
         os.environ['pctetab'] = os.path.abspath(os.path.dirname(pctetab)) + os.path.sep
         # dir$file format needed for StisPixCteCorr()...
         pctetab = 'pctetab$' + os.path.basename(pctetab)  # This won't work with os.path.expandvars()!
+    
+    # Check PCTETAB's version against min/max allowed by this code:
+    if not allow:
+        check_pctetab_version(pctetab)
     
     raw_files = determine_input_science(science_dir, allow, verbose)
     log.flush()
@@ -310,6 +315,47 @@ def resolve_iraf_file(file):
     new_file = os.path.normpath(os.path.join(dir, rootname))
     
     return new_file
+
+
+def check_pctetab_version(pctetab, version_min='0.1', version_max='1.999'):
+    '''
+    Make sure the version keyword in the PCTETAB is within the acceptable boundaries
+    for this version of the cti_wrapper.py code.
+    
+    This comparison works for version = "<int>.<int>" (e.g. "1.10" > "1.1").
+    '''
+    class VersionError(Exception):
+        pass
+    
+    if type(version_min) != 'str' or type(version_max) != 'str':
+        raise TypeError('Versions must be strings.')
+    
+    # Handle environmental variables in the PCTETAB:
+    pctetab = os.path.normpath(os.path.expandvars(pctetab))
+    
+    # Read header keyword VERSION and strip anything after '_':
+    with fits.open(pctetab) as p:
+        pctetab_version = p[0].header.get('VERSION', default='').strip().split('_')[0]
+    
+    if pctetab_version == '':
+        print '*** VERSION KEYWORD NOT FOUND IN PCTETAB! ***' # ***
+        return
+        #raise VersionError('VERSION keyword not found in PCTETAB {}.'.format(pctetab))
+    
+    pctetab_version_major = int(pctetab_version.split('.')[0])
+    pctetab_version_minor = int(pctetab_version.split('.')[1])
+    
+    if (pctetab_version_major   < int(version_min.split('.')[0])  or
+        (pctetab_version_major == int(version_min.split('.')[0]) and
+         pctetab_version_minor  < int(version_min.split('.')[1]))):
+        raise VersionError(('PCTETAB {} is too old for this version of cti_wrapper.py.\n' + 
+            'Please download a more recent version of this reference file!').format(pctetab))
+       
+    if (pctetab_version_major   > int(version_max.split('.')[0])  or
+        (pctetab_version_major == int(version_max.split('.')[0]) and
+         pctetab_version_minor  > int(version_max.split('.')[1]))):
+        raise VersionError(('This code is too old to work with PCTETAB {}.\n' +
+            'Please upgrade!').format(pctetab))\
 
 
 def superdark_hash(sim_nit=None, shft_nit=None, rn_clip=None, nsemodel=None, subthrsh=None,
