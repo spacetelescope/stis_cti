@@ -327,11 +327,11 @@ def check_pctetab_version(pctetab, version_min='0.1', version_max='1.999'):
     class VersionError(Exception):
         pass
     
-    if type(version_min) != 'str' or type(version_max) != 'str':
+    if type(version_min) != str or type(version_max) != str:
         raise TypeError('Versions must be strings.')
     
     # Handle environmental variables in the PCTETAB:
-    pctetab = os.path.normpath(os.path.expandvars(pctetab))
+    pctetab = os.path.normpath(resolve_iraf_file(pctetab))
     
     # Read header keyword VERSION and strip anything after '_':
     with fits.open(pctetab) as p:
