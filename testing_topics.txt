@@ -42,11 +42,9 @@ log file matches STDOUT
 
 code version number is set as expected
 
-version matching between PCTETAB & code [*** not currently implemented ***]:
-	behavior of code if PCTETAB with future major version number used
-		(should halt execution gracefully)
-	behavior of code if PCTETAB with past major version number used
-	(What about basedark/weekdark scripts and versions of those files?)
+version matching between PCTETAB & code
+	behavior of code if PCTETAB's VERSION is outside allowed range (should halt execution gracefully)
+(What about basedark/weekdark scripts and versions of those files?)
 
 science data:
 	sanity check that science files were corrected (and non-CR tails were not vastly over-corrected)
