@@ -102,7 +102,7 @@ def cti_wrapper(science_dir, dark_dir, ref_dir, pctetab, num_processes,
     
     # Check PCTETAB's version against min/max allowed by this code:
     if not allow:
-        check_pctetab_version(pctetab)
+        check_pctetab_version(pctetab, verbose)
     
     raw_files = determine_input_science(science_dir, allow, verbose)
     log.flush()
@@ -317,7 +317,7 @@ def resolve_iraf_file(file):
     return new_file
 
 
-def check_pctetab_version(pctetab, version_min='0.1', version_max='1.999'):
+def check_pctetab_version(pctetab, verbose=False, version_min='0.1', version_max='1.999'):
     '''
     Make sure the version keyword in the PCTETAB is within the acceptable boundaries
     for this version of the cti_wrapper.py code.
@@ -335,12 +335,11 @@ def check_pctetab_version(pctetab, version_min='0.1', version_max='1.999'):
     
     # Read header keyword VERSION and strip anything after '_':
     with fits.open(pctetab) as p:
-        pctetab_version = p[0].header.get('VERSION', default='').strip().split('_')[0]
+        pctetab_version_raw = p[0].header.get('VERSION', default='').strip()
+        pctetab_version = pctetab_version_raw.split('_')[0]
     
     if pctetab_version == '':
-        print '*** VERSION KEYWORD NOT FOUND IN PCTETAB! ***' # ***
-        return
-        #raise VersionError('VERSION keyword not found in PCTETAB {}.'.format(pctetab))
+        raise VersionError('VERSION keyword not found in PCTETAB {}.'.format(pctetab))
     
     pctetab_version_major = int(pctetab_version.split('.')[0])
     pctetab_version_minor = int(pctetab_version.split('.')[1])
@@ -348,14 +347,17 @@ def check_pctetab_version(pctetab, version_min='0.1', version_max='1.999'):
     if (pctetab_version_major   < int(version_min.split('.')[0])  or
         (pctetab_version_major == int(version_min.split('.')[0]) and
          pctetab_version_minor  < int(version_min.split('.')[1]))):
-        raise VersionError(('PCTETAB {} is too old for this version of cti_wrapper.py.\n' + 
-            'Please download a more recent version of this reference file!').format(pctetab))
+        raise VersionError(('Version mismatch between PCTETAB {} and cti_wrapper.py code.\n' + 
+            'Please download a more recent version of this reference file!\n').format(pctetab))
        
     if (pctetab_version_major   > int(version_max.split('.')[0])  or
         (pctetab_version_major == int(version_max.split('.')[0]) and
          pctetab_version_minor  > int(version_max.split('.')[1]))):
-        raise VersionError(('This code is too old to work with PCTETAB {}.\n' +
-            'Please upgrade!').format(pctetab))\
+        raise VersionError(('Version mismatch between PCTETAB {} and cti_wrapper.py code.\n' +
+            'Please upgrade this code!\n').format(pctetab))\
+    
+    if verbose:
+        print 'Version of PCTETAB:  {}\n'.format(pctetab_version_raw)
 
 
 def superdark_hash(sim_nit=None, shft_nit=None, rn_clip=None, nsemodel=None, subthrsh=None,
@@ -462,8 +464,9 @@ def perform_cti_correction(files, pctetab, num_cpu=1, verbose=False):
     p.close()
     p.join()
     
-    # Single-threaded version:
-    #StisPixCteCorr.CteCorr(perform_files)
+    ## Single-threaded version:
+    #for perform_file, outname in zip(perform_files, outnames):
+    #    StisPixCteCorr.CteCorr(perform_file, outFits=outname)
     
     # *** Do the corrected files need to be fed through DQICORR again to fix flags? ***
     
