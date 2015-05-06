@@ -360,27 +360,29 @@ def check_pctetab_version(pctetab, verbose=False, version_min='0.1', version_max
         print 'Version of PCTETAB:  {}\n'.format(pctetab_version_raw)
 
 
-def superdark_hash(sim_nit=None, shft_nit=None, rn_clip=None, nsemodel=None, subthrsh=None,
+def superdark_hash(sim_nit=None, shft_nit=None, rn_clip=None, nsemodel=None, subthrsh=None, pctever=None,
                             pctetab=None,
                             superdark=None, files=None):
     from numpy import where
     
     if pctetab is not None:
         with fits.open(resolve_iraf_file(pctetab)) as f:
-            sim_nit  = f[0].header['SIM_NIT']
-            shft_nit = f[0].header['SHFT_NIT']
-            rn_clip  = f[0].header['RN_CLIP']
-            nsemodel = f[0].header['NSEMODEL']
-            subthrsh = f[0].header['SUBTHRSH']
+            sim_nit  = f[0].header['SIM_NIT' ].strip()
+            shft_nit = f[0].header['SHFT_NIT'].strip()
+            rn_clip  = f[0].header['RN_CLIP' ].strip()
+            nsemodel = f[0].header['NSEMODEL'].strip()
+            subthrsh = f[0].header['SUBTHRSH'].strip()
+            pctever  = f[0].get('VERSION', default=0)
         if files is None:
             raise IOError('Must specify files with pctetab.')
     elif superdark is not None:
         with fits.open(os.path.expandvars(superdark)) as f:
-            sim_nit  = f[0].header.get('PCTESMIT', default='undefined')
-            shft_nit = f[0].header.get('PCTESHFT', default='undefined')
-            rn_clip  = f[0].header.get('PCTERNCL', default='undefined')
-            nsemodel = f[0].header.get('PCTENSMD', default='undefined')
-            subthrsh = f[0].header.get('PCTETRSH', default='undefined')
+            sim_nit  = f[0].header.get('PCTESMIT', default='undefined').strip()
+            shft_nit = f[0].header.get('PCTESHFT', default='undefined').strip()
+            rn_clip  = f[0].header.get('PCTERNCL', default='undefined').strip()
+            nsemodel = f[0].header.get('PCTENSMD', default='undefined').strip()
+            subthrsh = f[0].header.get('PCTETRSH', default='undefined').strip()
+            pctever  = f[0].header.get('PCTEVER',  default=0)
             if files is None:
                 # Parse superdark header for files used:
                 hist = f[0].header['HISTORY']
@@ -392,7 +394,8 @@ def superdark_hash(sim_nit=None, shft_nit=None, rn_clip=None, nsemodel=None, sub
            shft_nit == None or \
            rn_clip  == None or \
            nsemodel == None or \
-           subthrsh == None:
+           subthrsh == None or \
+           pctever  == None:
             raise IOError('Please specify either pctetab or the proper set of parameters!')
         if files is None:
             raise IOError('Must specify files with pctetab.')
@@ -402,9 +405,9 @@ def superdark_hash(sim_nit=None, shft_nit=None, rn_clip=None, nsemodel=None, sub
     exposures.sort()
     exposures = ','.join(exposures)
     
-    hash_str = '{};{};{};{};{};{}'.format( \
+    hash_str = '{};{};{};{};{};{};{}'.format( \
         exposures, \
-        sim_nit, shft_nit, rn_clip, nsemodel, subthrsh)
+        sim_nit, shft_nit, rn_clip, nsemodel, subthrsh, pctever)
     
     #return hash_str
     return hash(hash_str)
