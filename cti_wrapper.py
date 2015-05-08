@@ -82,6 +82,7 @@ def cti_wrapper(science_dir, dark_dir, ref_dir, pctetab, num_processes,
     # Print system information:
     print 'Running CTI-correction script:  {} v{}'.format(os.path.basename(__file__), __version__)
     print 'System:                         {}'.format(sys_info)
+    print 'Number of parallel processes:   {}'.format(num_processes)
     print 'Start time:                     {}\n'.format(datetime.datetime.now().isoformat(' '))
     
     if verbose:
@@ -127,6 +128,9 @@ def cti_wrapper(science_dir, dark_dir, ref_dir, pctetab, num_processes,
     
     # Finish running CalSTIS on the CTI-corrected science data:
     flts = run_calstis_on_science(cti_corrected, verbose)
+    log.flush()
+    
+    print '\nCompletion time:                {}\n'.format(datetime.datetime.now().isoformat(' '))
     
     log.close()
 
@@ -707,7 +711,7 @@ def populate_darkfiles(raw_files, dark_dir, ref_dir, pctetab, num_processes, all
         missing_darks.sort()
         print 'ERROR:  These FLT component darks are missing from {}:'.format(dark_dir)
         print ', '.join(missing_darks) + '\n'
-        print 'Please download the missing darks via this link:'
+        print 'Please download the missing darks (calibrated FLTs) via this link:'
         print '(or specify the proper dark_dir [{}])\n'.format(dark_dir)
         print archive_dark_query.darks_url(missing_darks) + '\n'
         raise IOError('Missing component dark FLT files.')
