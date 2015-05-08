@@ -335,11 +335,11 @@ def check_pctetab_version(pctetab, verbose=False, version_min='0.1', version_max
     
     # Read header keyword VERSION and strip anything after '_':
     with fits.open(pctetab) as p:
-        pctetab_version_raw = p[0].header.get('VERSION', default='').strip()
+        pctetab_version_raw = p[0].header.get('PCTE_VER', default='').strip()
         pctetab_version = pctetab_version_raw.split('_')[0]
     
     if pctetab_version == '':
-        raise VersionError('VERSION keyword not found in PCTETAB {}.'.format(pctetab))
+        raise VersionError('PCTE_VER keyword not found in PCTETAB {}.'.format(pctetab))
     
     pctetab_version_major = int(pctetab_version.split('.')[0])
     pctetab_version_minor = int(pctetab_version.split('.')[1])
@@ -360,29 +360,29 @@ def check_pctetab_version(pctetab, verbose=False, version_min='0.1', version_max
         print 'Version of PCTETAB:  {}\n'.format(pctetab_version_raw)
 
 
-def superdark_hash(sim_nit=None, shft_nit=None, rn_clip=None, nsemodel=None, subthrsh=None, pctever=None,
+def superdark_hash(sim_nit=None, shft_nit=None, rn_clip=None, nsemodel=None, subthrsh=None, pcte_ver=None,
                             pctetab=None,
                             superdark=None, files=None):
     from numpy import where
     
     if pctetab is not None:
         with fits.open(resolve_iraf_file(pctetab)) as f:
-            sim_nit  = f[0].header['SIM_NIT' ].strip()
-            shft_nit = f[0].header['SHFT_NIT'].strip()
-            rn_clip  = f[0].header['RN_CLIP' ].strip()
-            nsemodel = f[0].header['NSEMODEL'].strip()
-            subthrsh = f[0].header['SUBTHRSH'].strip()
-            pctever  = f[0].get('VERSION', default=0)
+            sim_nit  = f[0].header['SIM_NIT' ]
+            shft_nit = f[0].header['SHFT_NIT']
+            rn_clip  = f[0].header['RN_CLIP' ]
+            nsemodel = f[0].header['NSEMODEL']
+            subthrsh = f[0].header['SUBTHRSH']
+            pcte_ver = f[0].header.get('PCTE_VER', default='0.0').strip()
         if files is None:
-            raise IOError('Must specify files with pctetab.')
+            raise IOError('Must specify file list with pctetab.')
     elif superdark is not None:
         with fits.open(os.path.expandvars(superdark)) as f:
-            sim_nit  = f[0].header.get('PCTESMIT', default='undefined').strip()
-            shft_nit = f[0].header.get('PCTESHFT', default='undefined').strip()
-            rn_clip  = f[0].header.get('PCTERNCL', default='undefined').strip()
-            nsemodel = f[0].header.get('PCTENSMD', default='undefined').strip()
-            subthrsh = f[0].header.get('PCTETRSH', default='undefined').strip()
-            pctever  = f[0].header.get('PCTEVER',  default=0)
+            sim_nit  = f[0].header.get('PCTESMIT', default='undefined')
+            shft_nit = f[0].header.get('PCTESHFT', default='undefined')
+            rn_clip  = f[0].header.get('PCTERNCL', default='undefined')
+            nsemodel = f[0].header.get('PCTENSMD', default='undefined')
+            subthrsh = f[0].header.get('PCTETRSH', default='undefined')
+            pcte_ver = f[0].header.get('PCTE_VER', default='0.0').strip()
             if files is None:
                 # Parse superdark header for files used:
                 hist = f[0].header['HISTORY']
@@ -395,7 +395,7 @@ def superdark_hash(sim_nit=None, shft_nit=None, rn_clip=None, nsemodel=None, sub
            rn_clip  == None or \
            nsemodel == None or \
            subthrsh == None or \
-           pctever  == None:
+           pcte_ver == None:
             raise IOError('Please specify either pctetab or the proper set of parameters!')
         if files is None:
             raise IOError('Must specify files with pctetab.')
@@ -407,7 +407,7 @@ def superdark_hash(sim_nit=None, shft_nit=None, rn_clip=None, nsemodel=None, sub
     
     hash_str = '{};{};{};{};{};{};{}'.format( \
         exposures, \
-        sim_nit, shft_nit, rn_clip, nsemodel, subthrsh, pctever)
+        sim_nit, shft_nit, rn_clip, nsemodel, subthrsh, pcte_ver)
     
     #return hash_str
     return hash(hash_str)
@@ -480,7 +480,7 @@ def perform_cti_correction(files, pctetab, num_cpu=1, verbose=False):
     return outnames
 
 
-def copy_dark_keywords(superdark, dark_hdr0, history=None, basedark=None):
+def copy_dark_keywords(superdark, dark_hdr0, pctetab, history=None, basedark=None):
     # Copy these keywords from the last component dark to the new superdark:
     keywords = ['PCTECORR', 'PCTETAB', 'PCTEFRAC', 'PCTERNCL', 'PCTERNCL', 'PCTENSMD', 
                 'PCTETRSH', 'PCTESMIT', 'PCTESHFT', 'CTE_NAME', 'CTE_VER']
@@ -507,6 +507,11 @@ def copy_dark_keywords(superdark, dark_hdr0, history=None, basedark=None):
             else:
                 s[0].header.insert(keywords[0], ('BASEDARK', basedark, 'Used to make weekdark'), after=True)
         
+        # Insert PCTETAB version number into superdark (until this is added to StisPixCteCorr):
+        with fits.open(os.path.normpath(resolve_iraf_file(pctetab))) as p:
+            pcte_ver = p[0].header.get('PCTE_VER', default='unknown').strip()
+        s[0].header.insert('CTE_VER', ('PCTE_VER', pcte_ver, 'version of PCTE'), after=True)
+        
         # Add HISTORY to superdark hdr0 here:
         if history is not None:
             s[0].header['HISTORY'] = ' '
@@ -530,7 +535,7 @@ def generate_basedark(files, outname, pctetab, num_cpu, verbose=False):
     corrected_files = perform_cti_correction(files, pctetab, num_cpu, verbose)
     
     # Make a basedark from the corrected darks:
-    refstis.basedark.make_basedark(corrected_files, refdark_name=os.path.expandvars(outname))
+    refstis.basedark.make_basedark(corrected_files, refdark_name=os.path.normpath(os.path.expandvars(outname)))
     # Print results of "[REF_DIR]/[basedark_name - '.fits']_joined_bd_calstis_log.txt"? ***
     
     if verbose:
@@ -551,7 +556,7 @@ def generate_basedark(files, outname, pctetab, num_cpu, verbose=False):
     history = [
         'Basedark created from CTI-corrected component darks by script',
         'cti_wrapper.py on {}.'.format(datetime.datetime.now().isoformat(' ')) ]
-    copy_dark_keywords(os.path.expandvars(outname), dark_hdr0, history=history)
+    copy_dark_keywords(os.path.expandvars(outname), dark_hdr0, pctetab, history=history)
         
     if verbose:
         print 'Basedark complete:  {}\n'.format(outname)
@@ -573,7 +578,7 @@ def generate_weekdark(files, outname, pctetab, basedark, num_cpu, verbose=False)
     corrected_files = perform_cti_correction(files, pctetab, num_cpu, verbose)
     
     # Make a weekdark from the corrected darks:
-    refstis.weekdark.make_weekdark(corrected_files, os.path.expandvars(outname), 
+    refstis.weekdark.make_weekdark(corrected_files, os.path.normpath(os.path.expandvars(outname)), 
         os.path.abspath(os.path.expandvars(basedark)))
     
     if verbose:
@@ -595,7 +600,7 @@ def generate_weekdark(files, outname, pctetab, basedark, num_cpu, verbose=False)
         'Weekdark created from CTI-corrected component darks by script',
         'cti_wrapper.py on {}'.format(datetime.datetime.now().isoformat(' ')),
         'using basedark file {}.'.format(basedark)]
-    copy_dark_keywords(os.path.expandvars(outname), dark_hdr0, history=history, basedark=basedark)
+    copy_dark_keywords(os.path.expandvars(outname), dark_hdr0, pctetab, history=history, basedark=basedark)
     
     if verbose:
         print 'Weekdark complete:  {}\n'.format(outname)
