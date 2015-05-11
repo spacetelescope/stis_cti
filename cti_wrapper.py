@@ -248,13 +248,16 @@ def bias_correct_science_files(raw_files, verbose):
             blevcorr=True, biascorr=True, doppcorr=False, lorscorr=False, glincorr=False, 
             lflgcorr=False, darkcorr=False, flatcorr=False, photcorr=False, statflag=True, 
             verbose=(verbose >= 2), trailer=trailer)
-        if status != 0:
-            raise RuntimeError('basic2d returned non-zero status on {}:  {}'.format(raw_file, status))
         
-        if verbose:
+        if verbose or status != 0:
             with open(os.path.expandvars(trailer)) as tra:
                 for line in tra.readlines():
                     print '     ' + line.strip()
+        
+        if status != 0:
+            raise RuntimeError('basic2d returned non-zero status on {}:  {}'.format(raw_file, status))
+        
+
         # Remove trailer file?
         
     return outnames
@@ -287,14 +290,14 @@ def run_calstis_on_science(files, verbose):
         finally:
             os.chdir(cwd)
         
-        if status != 0:
-            raise RuntimeError('CalSTIS returned non-zero status on {}:  {}'.format(file, status))
-        
-        if verbose:
+        if verbose or status != 0:
             with open(os.path.expandvars(trailer)) as tra:
                 for line in tra.readlines():
                     print '     ' + line.strip()
         
+        if status != 0:
+            raise RuntimeError('CalSTIS returned non-zero status on {}:  {}'.format(file, status))
+    
     return outnames
 
 
