@@ -38,6 +38,9 @@ __version__ = '0.1_alpha'
 # main
 
 
+class FileError(Exception):
+    pass
+
 def cti_wrapper(science_dir, dark_dir, ref_dir, pctetab, num_processes, 
                 all_weeks_flag=False, allow=False, verbose=False):
     '''
@@ -171,13 +174,13 @@ def determine_input_science(science_dir, allow=False, verbose=False):
     
     # Make sure some files exist:
     if len(filtered_raw_files) == 0:
-        raise IOError('No viable STIS CCD files were present in the directory!\n' + \
-                       '   ' + science_dir + '\n'                                 + \
-                       'Please make sure science data are:\n'                     + \
-                       '   -- post-May 01 2009\n'                                 + \
-                       '   -- CCDAMP = D\n'                                       + \
-                       '   -- CCDGAIN = 1\n'                                      + \
-                       '   -- Not OBSMODE = ACQ*')
+        raise FileError('No viable STIS CCD files were present in the directory!\n' + \
+                        '   ' + science_dir + '\n'                                  + \
+                        'Please make sure science data are:\n'                      + \
+                        '   -- post-May 01 2009\n'                                  + \
+                        '   -- CCDAMP = D\n'                                        + \
+                        '   -- CCDGAIN = 1\n'                                       + \
+                        '   -- Not OBSMODE = ACQ*')
     
     if verbose:
         print 'Input _raw.fits files being corrected:'
@@ -664,7 +667,7 @@ def populate_darkfiles(raw_files, dark_dir, ref_dir, pctetab, num_processes, all
     # Get list of EXPNAMEs from files in the dark_dir.
     found_dark_files = glob.glob(os.path.join(dark_dir, '*_flt.fits*'))  # Do something to allow RAW files? ***
     if verbose >= 2:
-        max_file_length = str(max(map(lambda x: len(x), found_dark_files)))
+        max_file_length = str(max(map(lambda x: len(x), found_dark_files) + [1]))
     found = {}
     for file in found_dark_files:
         with fits.open(file) as f:
@@ -717,7 +720,7 @@ def populate_darkfiles(raw_files, dark_dir, ref_dir, pctetab, num_processes, all
         print 'Please download the missing darks (calibrated FLTs) via this link:'
         print '(or specify the proper dark_dir [{}])\n'.format(dark_dir)
         print archive_dark_query.darks_url(missing_darks) + '\n'
-        raise IOError('Missing component dark FLT files.')
+        raise FileError('Missing component dark FLT files.')
     
     if verbose:
         print 'All required component dark FLT files for annealing periods have been located on disk.\n'
@@ -937,11 +940,11 @@ if __name__ == '__main__':
     
     # Check that directories exist:
     if not os.path.isdir(science_dir):
-        raise IOError('science_dir does not exist:  ' + science_dir)
+        raise FileError('science_dir does not exist:  ' + science_dir)
     if not os.path.isdir(dark_dir):
-        raise IOError('dark_dir does not exist:  '    + dark_dir)
+        raise FileError('dark_dir does not exist:  '    + dark_dir)
     if not os.path.isdir(ref_dir):
-        raise IOError('ref_dir does not exist:  '     + ref_dir)
+        raise FileError('ref_dir does not exist:  '     + ref_dir)
     
     # Determine default PCTETAB:
     if args.pctetab is None:
@@ -949,7 +952,7 @@ if __name__ == '__main__':
     else:
         pctetab = args.pctetab
     if not os.path.exists(pctetab):
-        raise IOError('PCTETAB does not exist:  ' + pctetab)
+        raise FileError('PCTETAB does not exist:  ' + pctetab)
     
     cti_wrapper(science_dir, dark_dir, ref_dir, pctetab, args.num_processes, 
                 args.all_weeks_flag, args.allow, verbose)
