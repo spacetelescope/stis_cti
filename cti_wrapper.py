@@ -133,7 +133,8 @@ def cti_wrapper(science_dir, dark_dir, ref_dir, pctetab, num_processes,
     flts = run_calstis_on_science(cti_corrected, verbose)
     log.flush()
     
-    print '\nCompletion time:                {}\n'.format(datetime.datetime.now().isoformat(' '))
+    print '\nCompletion time:                {}'.format(datetime.datetime.now().isoformat(' '))
+    print 'cti_wrapper.py complete!\n'
     
     log.close()
 
@@ -256,6 +257,7 @@ def bias_correct_science_files(raw_files, verbose):
             with open(os.path.expandvars(trailer)) as tra:
                 for line in tra.readlines():
                     print '     ' + line.strip()
+            print
         
         if status != 0:
             raise RuntimeError('basic2d returned non-zero status on {}:  {}'.format(raw_file, status))
@@ -297,6 +299,7 @@ def run_calstis_on_science(files, verbose):
             with open(os.path.expandvars(trailer)) as tra:
                 for line in tra.readlines():
                     print '     ' + line.strip()
+            print
         
         if status != 0:
             raise RuntimeError('CalSTIS returned non-zero status on {}:  {}'.format(file, status))
