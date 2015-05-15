@@ -205,7 +205,7 @@ def viable_ccd_file(file,
         amplifiers_allowed = ['D']
     
     if gains_allowed is None:
-        gains_allowed = [1]  # Or include 4? ***
+        gains_allowed = [1, 4]
     
     if offsts_allowed is None:
         offsts_allowed = [3]
