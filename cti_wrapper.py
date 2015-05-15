@@ -2,6 +2,7 @@
 
 import os
 import sys
+import glob
 import multiprocessing
 import datetime
 from astropy.io import fits
@@ -67,7 +68,7 @@ def cti_wrapper(science_dir, dark_dir, ref_dir, pctetab, num_processes,
           -n NUM_PROCESSES  maximum number of parallel processes to run (default=X);
                             number of available CPU cores on your system = Y
           -p PCTETAB        name of PCTETAB to use in pixel-based correction
-                            (default="[REF_DIR]/test_pcte.fits")
+                            (default="[REF_DIR]/[MOST_RECENT]_pcte.fits")
           -v, --verbose     print more information
           -vv               very verbose
     
@@ -140,8 +141,6 @@ def cti_wrapper(science_dir, dark_dir, ref_dir, pctetab, num_processes,
 
 
 def determine_input_science(science_dir, allow=False, verbose=False):
-    import glob
-    
     # Find science rootnames:
     raw_files = glob.glob(os.path.join(science_dir, '*_raw.fits*'))
     if verbose:
@@ -624,7 +623,6 @@ def populate_darkfiles(raw_files, dark_dir, ref_dir, pctetab, num_processes, all
        populate the science file headers.'''
     
     #import pickle
-    import glob
     
     superdark_remakes = []
     for file in raw_files:
@@ -914,7 +912,7 @@ if __name__ == '__main__':
                               "; number of available CPU cores on your system = " + str(num_available_cores))
     parser.add_argument('-p', dest='pctetab', action='store', metavar='PCTETAB', default=None, \
                         help='name of PCTETAB to use in pixel-based correction ' + \
-                             '(default=\"[REF_DIR]/test_pcte.fits\")')
+                             '(default=\"[REF_DIR]/[MOST_RECENT]_pcte.fits\")')
     parser.add_argument('-v', '--verbose', dest='verbose', action='store_true', default=False, 
                         help='print more information')
     parser.add_argument('-vv', dest='very_verbose', action='store_true', 
@@ -949,9 +947,14 @@ if __name__ == '__main__':
     if not os.path.isdir(ref_dir):
         raise FileError('ref_dir does not exist:  '     + ref_dir)
     
-    # Determine default PCTETAB:
+    # Determine default PCTETAB (default = last alphabetical _pcte.fits from ref_dir):
     if args.pctetab is None:
-        pctetab = os.path.join(ref_dir, 'test_pcte.fits')
+        pctetabs = glob.glob(os.path.join(ref_dir, '*_pcte.fits*'))
+        pctetabs.sort()
+        if len(pctetabs) > 0:
+            pctetab = pctetabs[-1]
+        else:
+            raise FileError('No PCTETAB file found in {}.'.format(ref_dir))
     else:
         pctetab = args.pctetab
     if not os.path.exists(pctetab):
