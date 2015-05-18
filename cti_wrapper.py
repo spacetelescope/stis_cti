@@ -386,7 +386,7 @@ def superdark_hash(sim_nit=None, shft_nit=None, rn_clip=None, nsemodel=None, sub
             rn_clip  = f[0].header['RN_CLIP' ]
             nsemodel = f[0].header['NSEMODEL']
             subthrsh = f[0].header['SUBTHRSH']
-            pcte_ver = f[0].header.get('PCTE_VER', default='0.0').strip()
+            pcte_ver = f[0].header['PCTE_VER'].strip()
         if files is None:
             raise IOError('Must specify file list with pctetab.')
     elif superdark is not None:
@@ -413,6 +413,9 @@ def superdark_hash(sim_nit=None, shft_nit=None, rn_clip=None, nsemodel=None, sub
             raise IOError('Please specify either pctetab or the proper set of parameters!')
         if files is None:
             raise IOError('Must specify files with pctetab.')
+    
+    # Ignore PCTETAB version text after underscore:
+    pcte_ver = pcte_ver.split('_',1)[0]
     
     # Turn list of filenames into a sorted list of exposures:
     exposures = [os.path.basename(file).rsplit('_',1)[0].upper() for file in files]
@@ -445,15 +448,14 @@ def perform_cti_correction(files, pctetab, num_cpu=1, verbose=False):
     for file in files:
         outname = file.replace('_flt.fits', '_cte.fits', 1).replace('_blt.fits', '_cte.fits', 1)
         outnames.append(outname)
-        if os.path.exists(outname):
-            if superdark_hash(pctetab=pctetab, files=[]) == superdark_hash(superdark=outname, files=[]):
-                if verbose:
-                    print 'Skipping regeneration of CTI-corrected file:  {}'.format(outname)
+        if os.path.exists(outname) and (superdark_hash(pctetab=pctetab, files=[]) == superdark_hash(superdark=outname, files=[])):
+            if verbose:
+                print 'Skipping regeneration of CTI-corrected file:  {}'.format(outname)
         else:
             with fits.open(file, 'update') as f:
                 #Update PCTETAB header keyword:
                 old_pctetab = f[0].header.get('PCTETAB', default=None)
-                f[0].header.insert('DARKFILE', ('PCTETAB', pctetab, 'Pixel-based CTI param table'), after=True)
+                f[0].header.set('PCTETAB', pctetab, 'Pixel-based CTI param table', after='DARKFILE')
                 
                 # Turn off the empirical CTI correction flag if it is set to PERFORM:
                 old_ctecorr = f[0].header.get('CTECORR', default='unknown').strip()
@@ -497,8 +499,8 @@ def perform_cti_correction(files, pctetab, num_cpu=1, verbose=False):
 def copy_dark_keywords(superdark, dark_hdr0, pctetab, history=None, basedark=None):
     # Copy these keywords from the last component dark to the new superdark:
     keywords = ['PCTECORR', 'PCTETAB', 'PCTEFRAC', 'PCTERNCL', 'PCTERNCL', 'PCTENSMD', 
-                'PCTETRSH', 'PCTESMIT', 'PCTESHFT', 'CTE_NAME', 'CTE_VER']
-    # Note:  PCTEFRAC is time-dependent; PCTECOR = COMPLETE
+                'PCTETRSH', 'PCTESMIT', 'PCTESHFT', 'CTE_NAME', 'CTE_VER', 'PCTE_VER']
+    # Note:  PCTEFRAC is time-dependent; PCTECORR = COMPLETE
     keywords.reverse()
     
     with fits.open(os.path.expandvars(superdark), 'update') as s:
@@ -512,19 +514,14 @@ def copy_dark_keywords(superdark, dark_hdr0, pctetab, history=None, basedark=Non
             if keyword in s[0].header:
                 s[0].header[keyword] = value
             else:
-                s[0].header.insert('DRK_VS_T', (keyword, value, comment), after=True)
+                s[0].header.set(keyword, value, comment, after='DRK_VS_T')
             s.flush()
         
         if basedark is not None:
             if 'BASEDARK' in s[0].header:
                 s[0].header['BASEDARK'] = basedark
             else:
-                s[0].header.insert(keywords[0], ('BASEDARK', basedark, 'Used to make weekdark'), after=True)
-        
-        # Insert PCTETAB version number into superdark (until this is added to StisPixCteCorr):
-        with fits.open(os.path.normpath(resolve_iraf_file(pctetab))) as p:
-            pcte_ver = p[0].header.get('PCTE_VER', default='unknown').strip()
-        s[0].header.insert('CTE_VER', ('PCTE_VER', pcte_ver, 'version of PCTE'), after=True)
+                s[0].header.set('BASEDARK', basedark, 'Used to make weekdark', after=keywords[0])
         
         # Add HISTORY to superdark hdr0 here:
         if history is not None:
@@ -545,7 +542,7 @@ def generate_basedark(files, outname, pctetab, num_cpu, verbose=False):
         print 'Working on basedark {}:'.format(outname)
         print '   ' + '\n   '.join(files) + '\n'
     
-    # Correct files component darks, if necessary:
+    # Correct component darks, if necessary:
     corrected_files = perform_cti_correction(files, pctetab, num_cpu, verbose)
     
     # Make a basedark from the corrected darks:
@@ -588,7 +585,7 @@ def generate_weekdark(files, outname, pctetab, basedark, num_cpu, verbose=False)
         print 'Working on weekdark {}:'.format(outname)
         print '   ' + '\n   '.join(files) + '\n'
     
-    # Correct files component darks, if necessary:
+    # Correct component darks, if necessary:
     corrected_files = perform_cti_correction(files, pctetab, num_cpu, verbose)
     
     # Make a weekdark from the corrected darks:
@@ -790,14 +787,8 @@ def populate_darkfiles(raw_files, dark_dir, ref_dir, pctetab, num_processes, all
             f[0].header['DARKFILE'] = darkfile
             
             #PCTETAB:
-            #try:
-            #    old_pctetab = f[0].header['PCTETAB']
-            #except KeyError:
-            #    old_pctetab = None
-            #if old_pctetab is None:
-            #    f[0].header.insert('DARKFILE', ('PCTETAB', pctetab))  # Insert after DARKFILE
-            #else:
-            #    f[0].header['PCTETAB'] = pctetab
+            #old_pctetab = f[0].header.get('PCTETAB', default=None)
+            #f[0].header.set('PCTETAB', pctetab, after='DARKFILE')
             
             f.flush()
             if verbose:
