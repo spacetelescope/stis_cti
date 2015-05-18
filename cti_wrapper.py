@@ -180,7 +180,8 @@ def determine_input_science(science_dir, allow=False, verbose=False):
                         '   -- post-May 01 2009\n'                                  + \
                         '   -- CCDAMP = D\n'                                        + \
                         '   -- CCDGAIN = 1\n'                                       + \
-                        '   -- Not OBSMODE = ACQ*')
+                        '   -- Not OBSMODE = ACQ*\n'                                + \
+                        '   -- Full-frame')
     
     if verbose:
         print 'Input _raw.fits files being corrected:'
@@ -227,7 +228,8 @@ def viable_ccd_file(file,
         'ACQ' not in hdr0['OBSMODE'].strip()           and \
         hdr0['CCDAMP'].strip() in amplifiers_allowed   and \
         hdr0['CCDGAIN'] in gains_allowed               and \
-        hdr0['CCDOFFST'] in offsts_allowed
+        hdr0['CCDOFFST'] in offsts_allowed             and \
+        not hdr0['SUBARRAY']
 
 
 def bias_correct_science_files(raw_files, verbose):
