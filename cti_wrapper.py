@@ -249,10 +249,16 @@ def bias_correct_science_files(raw_files, verbose):
             print 'Running basic2d on {} --> {}.'.format(raw_file, outname)
         if os.path.exists(trailer):
             os.remove(trailer)
-        status = basic2d.basic2d(raw_file, output=outname, dqicorr=True, 
-            blevcorr=True, biascorr=True, doppcorr=False, lorscorr=False, glincorr=False, 
-            lflgcorr=False, darkcorr=False, flatcorr=False, photcorr=False, statflag=True, 
-            verbose=(verbose >= 2), trailer=trailer)
+        cwd = os.getcwd()
+        try:
+            # Need to change to science directory to find associated epc files.
+            os.chdir(os.path.dirname(raw_file))
+            status = basic2d.basic2d(os.path.basename(raw_file), output=os.path.basename(outname), 
+                dqicorr=True, blevcorr=True, biascorr=True, doppcorr=False, lorscorr=False, 
+                glincorr=False, lflgcorr=False, darkcorr=False, flatcorr=False, photcorr=False, 
+                statflag=True, verbose=(verbose >= 2), trailer=trailer)
+        finally:
+            os.chdir(cwd)
         
         if verbose or status != 0:
             with open(os.path.expandvars(trailer)) as tra:
