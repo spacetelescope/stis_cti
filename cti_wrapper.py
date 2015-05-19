@@ -71,8 +71,8 @@ def cti_wrapper(science_dir, dark_dir, ref_dir, pctetab, num_processes,
                             (default="[SCIENCE_DIR]/../darks/")
           -r REF_DIR        directory of CTI-corrected reference files
                             (default="[SCIENCE_DIR]/../ref/")
-          -n NUM_PROCESSES  maximum number of parallel processes to run (default=15);
-                            number of available CPU cores on your system = 40
+          -n NUM_PROCESSES  maximum number of parallel processes to run (default=X);
+                            number of available CPU cores on your system = Y
           -p PCTETAB        name of PCTETAB to use in pixel-based correction
                             (default="[REF_DIR]/[MOST_RECENT]_pcte.fits")
           --clean           remove intermediate and final products from previous runs
