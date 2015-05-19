@@ -16,11 +16,10 @@ from stistools import StisPixCteCorr, basic2d, calstis
 #    import pdb
 
 __author__  = 'Sean Lockwood'
-__version__ = '0.1_alpha'
+__version__ = '0.2_alpha'
 
 
 # cti_wrapper()
-# determine_input_science()
 # determine_input_science()
 # viable_ccd_file()
 # bias_correct_science_files()
@@ -35,6 +34,8 @@ __version__ = '0.1_alpha'
 # generate_basedark()
 # generate_weekdark()
 # populate_darkfiles()
+# check_for_old_output_files()
+# map_outputs()
 # class Logger
 # main
 
@@ -43,7 +44,7 @@ class FileError(Exception):
     pass
 
 def cti_wrapper(science_dir, dark_dir, ref_dir, pctetab, num_processes, 
-                all_weeks_flag=False, allow=False, verbose=False):
+                all_weeks_flag=False, allow=False, clean=False, verbose=False):
     '''
     Run STIS/CCD pixel-based CTI-correction on data specified in SCIENCE_DIR.
     
@@ -53,8 +54,13 @@ def cti_wrapper(science_dir, dark_dir, ref_dir, pctetab, num_processes,
     
     From the command line:
         usage: cti_wrapper.py [-h] [-d DARK_DIR] [-r REF_DIR] [-n NUM_PROCESSES]
-                              [-p PCTETAB] [-v | -vv]
+                              [-p PCTETAB] [--clean] [-v | -vv]
                               [SCIENCE_DIR]
+        
+        Run STIS/CCD pixel-based CTI-correction on data specified in SCIENCE_DIR.
+        Uncorrected component darks are read from DARK_DIR, and corrected component
+        darks are written there too. Corrected super-darks are read from and stored to
+        REF_DIR.
         
         positional arguments:
           SCIENCE_DIR       directory containing RAW science data (default="./")
@@ -65,10 +71,12 @@ def cti_wrapper(science_dir, dark_dir, ref_dir, pctetab, num_processes,
                             (default="[SCIENCE_DIR]/../darks/")
           -r REF_DIR        directory of CTI-corrected reference files
                             (default="[SCIENCE_DIR]/../ref/")
-          -n NUM_PROCESSES  maximum number of parallel processes to run (default=X);
-                            number of available CPU cores on your system = Y
+          -n NUM_PROCESSES  maximum number of parallel processes to run (default=15);
+                            number of available CPU cores on your system = 40
           -p PCTETAB        name of PCTETAB to use in pixel-based correction
                             (default="[REF_DIR]/[MOST_RECENT]_pcte.fits")
+          --clean           remove intermediate and final products from previous runs
+                            of this script ('*.txt' files are skipped and clobbered)
           -v, --verbose     print more information
           -vv               very verbose
     
@@ -112,11 +120,26 @@ def cti_wrapper(science_dir, dark_dir, ref_dir, pctetab, num_processes,
     raw_files = determine_input_science(science_dir, allow, verbose)
     log.flush()
     
-    # Check for original MAST data results:
+    # Rename output files according to this:
+    output_mapping = {
+        'cte_flt.fits' : 'flc.fits' ,
+        'cte_crj.fits' : 'crc.fits' ,
+        'cte_sx2.fits' : 's2c.fits' ,
+        'cte_x2d.fits' : 'x2c.fits' ,
+        'cte_sx1.fits' : 's1c.fits' ,
+        'cte_x1d.fits' : 'x1c.fits' ,
+        'blt_tra.txt'  : 'trb.txt'  ,
+        'cte_tra.txt'  : 'trc.txt'  ,
+        'blt.fits'     : '<remove>' ,
+        'cte.fits'     : '<pass>'   }
+    
+    # Check for original MAST data results (*** Not needed? ***):
     # ...
     
-    # Check for results from previous run:
-    # ...
+    # Check for results from previous runs:
+    rootnames = [os.path.basename(f).split('_',1)[0] for f in raw_files]
+    check_for_old_output_files(rootnames, science_dir, output_mapping, clean, verbose)
+    # (Note that the 'clean' option doesn't remove '*.txt' files.)
     
     # Check science files for uncorrected super-darks:
     populate_darkfiles(raw_files, dark_dir, ref_dir, pctetab, num_processes, all_weeks_flag, verbose)
@@ -132,6 +155,10 @@ def cti_wrapper(science_dir, dark_dir, ref_dir, pctetab, num_processes,
     
     # Finish running CalSTIS on the CTI-corrected science data:
     flts = run_calstis_on_science(cti_corrected, verbose)
+    log.flush()
+    
+    # Delete intermediate products and rename final products:
+    map_outputs(rootnames, science_dir, output_mapping, verbose)
     log.flush()
     
     print '\nCompletion time:                {}'.format(datetime.datetime.now().isoformat(' '))
@@ -831,6 +858,85 @@ def populate_darkfiles(raw_files, dark_dir, ref_dir, pctetab, num_processes, all
         generate_weekdark(files, weekdark_name, pctetab, basedark, num_processes, verbose)
 
 
+def check_for_old_output_files(rootnames, science_dir, output_mapping, clean=False, verbose=False):
+    # Combine science path with rootnames:
+    path_rootnames = [os.path.join(science_dir, r) for r in rootnames]
+    
+    # Combine rootnames with temporary and final output names:
+    old_files = []
+    for ext in output_mapping.keys():
+        old_files.extend([f + '_' + ext for f in path_rootnames
+                          if '.txt' not in ext])
+        old_files.extend([f + '_' + output_mapping[ext] for f in path_rootnames
+                          if '<' not in output_mapping[ext] and '.txt' not in output_mapping[ext]])
+    
+    # Include gzipped versions of filenames:
+    tmp = [f + '.gz' for f in old_files]
+    tmp.extend([f + '.GZ' for f in old_files])
+    
+    # Check for the existence of these files:
+    error_files = []
+    old_files.extend(tmp)
+    for old_file in old_files:
+        if os.path.exists(old_file) or os.path.islink(old_file):
+            if clean:
+                if verbose:
+                    print 'Removing old file:  {}'.format(old_file)
+                os.remove(old_file)
+            else:
+                error_files.append(old_file)
+    if len(error_files) > 0:
+        error_files.sort()
+        raise IOError('Files exist from previous run of cti_wrapper.py:  \n{}'.format( \
+                      '   ' + '\n   '.join(error_files) + \
+                      '\nYou might consider running with the \'--clean\' option specified.'))
+    if verbose:
+        print 'The science_dir is clear of files from previous runs.\n'
+
+
+def map_outputs(rootnames, science_dir, output_mapping, verbose=False):
+    for rootname in rootnames:
+        if verbose:
+            print 'Renaming files with rootname {}:'.format(rootname)
+        files = glob.glob(os.path.join(science_dir, rootname + '*'))
+        for file in files:
+            cwd = os.getcwd()
+            try:
+                os.chdir(os.path.dirname(file))
+                file = os.path.basename(file)
+                
+                # Determine file extension:
+                try:
+                    ext = file.split('_',1)[1]
+                except IndexError:
+                    ext = '<undefined>'  # No underscore in name
+                
+                # Handle gzipped filenames:
+                if ext[-3:] in ['.gz', '.GZ']:
+                    gzip = ext[-3:]
+                    ext = ext[-3:]
+                else:
+                    gzip = ''
+                
+                # Map action to file:
+                if ext not in output_mapping.keys():
+                    pass
+                elif output_mapping[ext] == '<pass>':
+                    pass
+                elif output_mapping[ext] == '<remove>':
+                    if verbose:
+                        print 'Deleting:  {}'.format(file)
+                    os.remove(file)
+                else:
+                    new_file = rootname + '_' + output_mapping[ext] + gzip
+                    if verbose:
+                        print 'Renaming:  {}\t-->\t{}'.format(file, new_file)
+                    os.rename(file, new_file)
+                    # *** What about the filename keyword? ***
+            finally:
+                os.chdir(cwd)
+
+
 class Logger(object):
     '''Lumberjack class - Duplicates sys.stdout to a log file and it's okay
        source: http://stackoverflow.com/a/24583265
@@ -912,6 +1018,9 @@ if __name__ == '__main__':
     parser.add_argument('-p', dest='pctetab', action='store', metavar='PCTETAB', default=None, \
                         help='name of PCTETAB to use in pixel-based correction ' + \
                              '(default=\"[REF_DIR]/[MOST_RECENT]_pcte.fits\")')
+    parser.add_argument('--clean', dest='clean', action='store_true', default=False, 
+                        help='remove intermediate and final products from previous runs of ' + \
+                             'this script (\'*.txt\' files are skipped and clobbered)')
     parser.add_argument('-v', '--verbose', dest='verbose', action='store_true', default=False, 
                         help='print more information')
     parser.add_argument('-vv', dest='very_verbose', action='store_true', 
@@ -960,5 +1069,5 @@ if __name__ == '__main__':
         raise FileError('PCTETAB does not exist:  ' + pctetab)
     
     cti_wrapper(science_dir, dark_dir, ref_dir, pctetab, args.num_processes, 
-                args.all_weeks_flag, args.allow, verbose)
+                args.all_weeks_flag, args.allow, args.clean, verbose)
     
