@@ -188,11 +188,6 @@ def determine_input_science(science_dir, allow=False, verbose=False):
         # Normal filtering on files:
         filtered_raw_files = [file for file in raw_files if viable_ccd_file(file)]
     
-    # *** What about CCDFLATs? ***
-    # e.g. lockwood:/Users/lockwood/frontend/stis_12512/obpz06020_raw.fits
-    #     {CCDAMP=D, CCDGAIN=4, CCDOFFST=3} with valid science data
-    #     Allowed for now.
-    
     not_correcting = list(set(raw_files) - set(filtered_raw_files))
     if len(not_correcting) > 0:
         not_correcting.sort()
@@ -213,6 +208,20 @@ def determine_input_science(science_dir, allow=False, verbose=False):
     if verbose:
         print 'Input _raw.fits files being corrected:'
         print '   ' + '\n   '.join(filtered_raw_files) + '\n'
+    
+    # Check to see if IMPHTTAB is defined for files that will run PHOTCORR:
+    missing_imphttab = []
+    for file in filtered_raw_files:
+        with fits.open(file) as f:
+            if (f[0].header.get('PHOTCORR', default='').strip() == 'PERFORM' and \
+                f[0].header.get('IMPHTTAB', default=None) is None):
+                missing_imphttab.append(file)
+    if len(missing_imphttab) > 0:
+        raise IOError('These files will fail CalSTIS reduction:\n' + \
+                      '   ' + '\n   '.join(missing_imphttab) + \
+                      '\nPlease set the IMPHTTAB keyword in files that will perform PHOTCORR.')
+    if verbose:
+        print 'All files running PHOTCORR have the IMPHTTAB set.\n'
     
     return filtered_raw_files
 
