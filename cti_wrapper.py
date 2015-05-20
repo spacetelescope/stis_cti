@@ -130,7 +130,7 @@ def cti_wrapper(science_dir, dark_dir, ref_dir, pctetab, num_processes,
         'cte_x1d.fits' : 'x1c.fits' ,
         'blt_tra.txt'  : 'trb.txt'  ,
         'cte_tra.txt'  : 'trc.txt'  ,
-        'blt.fits'     : '<remove>' ,
+        'blt.fits'     : '<pass>'   ,
         'cte.fits'     : '<pass>'   }
     
     # Check for original MAST data results (*** Not needed? ***):
