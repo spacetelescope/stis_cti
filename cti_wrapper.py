@@ -533,8 +533,7 @@ def perform_cti_correction(files, pctetab, num_cpu=1, verbose=False):
     
     if len(outnames) == 0:
         outnames = None
-    elif len(outnames) == 1:
-        outnames = outnames[0]
+    
     return outnames
 
 
@@ -817,9 +816,14 @@ def populate_darkfiles(raw_files, dark_dir, ref_dir, pctetab, num_processes, all
             
             dt = datetime.datetime.strptime( \
                 hdr0['TDATEOBS'].strip() + ' ' + hdr0['TTIMEOBS'].strip(), '%Y-%m-%d %H:%M:%S')
-            weekdark_tag = [wd['weekdark_tag'] for wd in weekdarks.values() if \
+            matched_weekdark_tags = [wd['weekdark_tag'] for wd in weekdarks.values() if \
                 wd['start'] <= dt and wd['end'] > dt and \
-                wd['amp'] == hdr0['CCDAMP']][0]
+                wd['amp'] == hdr0['CCDAMP']]
+            if len(matched_weekdark_tags) == 0:
+                raise IOError(('No matching component darks found to make needed weekdark for amp {}\n' + \
+                    'within annealing period boundaries corresponding to science set {}.')\
+                    .format(hdr0['CCDAMP'], os.path.basename(file)))
+            weekdark_tag = matched_weekdark_tags[0]
             weekdark[weekdark_tag].append(file)
             
             # Update hdr0 of science file:
