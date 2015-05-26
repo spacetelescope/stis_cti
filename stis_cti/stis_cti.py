@@ -237,7 +237,7 @@ def viable_ccd_file(file,
     if earliest_date_allowed is None:
         earliest_date_allowed = datetime.datetime(2009, 5, 1, 0, 0, 0)  # Or when? ***
     if type(earliest_date_allowed) is not datetime.datetime:
-        raise TypeError('earliest_date_allowed must be a datetime.datetime, not a %s' % type(earliest_date_allowed))
+        raise TypeError('earliest_date_allowed must be a datetime.datetime, not a {}.'.format(type(earliest_date_allowed)))
     
     if amplifiers_allowed is None:
         amplifiers_allowed = ['D']
@@ -266,7 +266,8 @@ def viable_ccd_file(file,
         hdr0['CCDAMP'].strip() in amplifiers_allowed   and \
         hdr0['CCDGAIN'] in gains_allowed               and \
         hdr0['CCDOFFST'] in offsts_allowed             and \
-        not hdr0['SUBARRAY']
+        not hdr0['SUBARRAY']                           and \
+        hdr0['BINAXIS1'] == 1 and hdr0['BINAXIS2'] == 1
 
 
 def bias_correct_science_files(raw_files, verbose):
@@ -367,7 +368,7 @@ def resolve_iraf_file(file):
     if dir != '':
         dir_resolved = os.getenv(dir)
         if dir_resolved is None:
-            raise IOError('Can\'t resolve environmental variable \'%s\'.' % dir)
+            raise IOError('Can\'t resolve environmental variable \'{}\'.'.format(dir))
         else:
             dir = dir_resolved
     
