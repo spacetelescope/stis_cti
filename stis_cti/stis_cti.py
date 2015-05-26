@@ -290,9 +290,9 @@ def bias_correct_science_files(raw_files, verbose):
         try:
             # Need to change to science directory to find associated epc files.
             os.chdir(os.path.dirname(raw_file))
-            status = basic2d.basic2d(os.path.basename(raw_file), output=os.path.basename(outname), 
-                dqicorr=True, blevcorr=True, biascorr=True, doppcorr=False, lorscorr=False, 
-                glincorr=False, lflgcorr=False, darkcorr=False, flatcorr=False, photcorr=False, 
+            status = basic2d.basic2d(os.path.basename(raw_file), output=os.path.basename(outname), \
+                dqicorr=True, blevcorr=True, biascorr=True, doppcorr=False, lorscorr=False, \
+                glincorr=False, lflgcorr=False, darkcorr=False, flatcorr=False, photcorr=False, \
                 statflag=True, verbose=(verbose >= 2), trailer=trailer)
         finally:
             os.chdir(cwd)
