@@ -413,11 +413,11 @@ def YCte(inFits, outFits='', read_noise=None, noise_model=None,
     
     # Close output file
     pf_out.close()
-    print os.linesep, outFits, 'written'
+    print outFits, 'written'
 
     # Stop timer
     timeEnd = time.time()
-    print os.linesep, 'Run time:', timeEnd - timeBeg, 'secs'
+    print 'Run time:', timeEnd - timeBeg, 'secs'
 
 
 #--------------------------
