@@ -290,10 +290,11 @@ def bias_correct_science_files(raw_files, verbose):
         try:
             # Need to change to science directory to find associated epc files.
             os.chdir(os.path.dirname(raw_file))
-            status = basic2d.basic2d(os.path.basename(raw_file), output=os.path.basename(outname), \
-                dqicorr=True, blevcorr=True, biascorr=True, doppcorr=False, lorscorr=False, \
-                glincorr=False, lflgcorr=False, darkcorr=False, flatcorr=False, photcorr=False, \
-                statflag=True, verbose=(verbose >= 2), trailer=trailer)
+            basic2d.basic2d(os.path.basename(raw_file), output=os.path.basename(outname), 
+                dqicorr='perform', atodcorr='omit', blevcorr='perform', biascorr='perform', 
+                doppcorr='omit', lorscorr='omit', glincorr='omit', lflgcorr='omit', 
+                darkcorr='omit', flatcorr='omit', shadcorr='omit', photcorr='omit', 
+                statflag=True, verbose=(verbose >= 2), timestamps=False, trailer=trailer)
         finally:
             os.chdir(cwd)
         
@@ -335,7 +336,8 @@ def run_calstis_on_science(files, verbose):
         try:
             # Need to change to science directory to find associated wavecals.
             os.chdir(os.path.dirname(file))
-            status = calstis.calstis(os.path.basename(file), verbose=(verbose >= 2), trailer=trailer)
+            status = calstis.calstis(os.path.basename(file), verbose=(verbose >= 2), 
+                timestamps=False, trailer=trailer)
         finally:
             os.chdir(cwd)
         
