@@ -42,9 +42,9 @@ if __name__ == '__main__':
     else:
         anneal_data = None
     
-    if size(args.file) <= 0:
+    if len(args.file) <= 0:
         print 'Error:  No files found!'
         sys.exit()
     
-    tmp = archive_dark_query.archive_dark_query(args.file, anneal_data=anneal_data, 
+    tmp = archive_dark_query(args.file, anneal_data=anneal_data, 
         min_exptime=args.min_exptime, verbose=verbose, print_url=True)
