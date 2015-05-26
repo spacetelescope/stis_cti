@@ -249,7 +249,7 @@ def YCte(inFits, outFits='', read_noise=None, noise_model=None,
     # Store in same path as input.
     outPath = os.path.dirname( os.path.abspath(inFits) ) + os.sep
     rootname = pyfits.getval(inFits, 'ROOTNAME')
-    print os.linesep, 'Performing pixel-based CTE correction on', rootname
+    print 'Performing pixel-based CTE correction on', rootname
     rootname = outPath + rootname
 
     # Construct output filename
@@ -270,13 +270,7 @@ def YCte(inFits, outFits='', read_noise=None, noise_model=None,
     ccdamp = pf_out['PRIMARY'].header.get('CCDAMP', default='D')
     if ccdamp != 'D':
         print 'Non-standard amplifer %s being corrected!' % ccdamp
-        #raise ValueError("Amplifier is '%s'; currently only 'D' is supported."
-        #                 % ccdamp)
-    
-    # For STIS (Replicated below in later function):
-    #all_gains = {'A': 0.70, 'B':1.00, 'C': 1.08, 'D':1.00}  # B is unknown
-    #atodgain = all_gains[ccdamp]
-    
+        
     if ccdamp == 'A' or ccdamp == 'B':
         readout_dir = 1
     elif ccdamp == 'C' or ccdamp == 'D':
@@ -907,18 +901,17 @@ def AddYCte(infile, outfile, shift_nit=None, units=None):
     shutil.copyfile(infile, outfile)
 
     # open file for blurring
-    fits = pyfits.open(outfile, mode='update')
+    pf_out = pyfits.open(outfile, mode='update')
 
     # For checking that the detector is supported
-    detector = fits['PRIMARY'].header['DETECTOR']
+    detector = pf_out['PRIMARY'].header['DETECTOR']
 
-    atodgain = fits['PRIMARY'].header.get('ATODGAIN', default=1.)
+    atodgain = pf_out['PRIMARY'].header.get('ATODGAIN', default=1.)
 
     # For epoch-specific operations
-    expstart = fits['PRIMARY'].header['TEXPSTRT']
+    expstart = pf_out['PRIMARY'].header['TEXPSTRT']
     
-    # Modified (SL):  pf_out --> fits
-    nextend = fits['PRIMARY'].header.get('NEXTEND', default=EXTN_PER_IMSET)
+    nextend = pf_out['PRIMARY'].header.get('NEXTEND', default=EXTN_PER_IMSET)
     nimsets = nextend // EXTN_PER_IMSET
     if nextend != nimsets * EXTN_PER_IMSET:
         raise ValueError('Number of extensions is %d; must be a multiple'
@@ -931,7 +924,7 @@ def AddYCte(infile, outfile, shift_nit=None, units=None):
                               ' supports STIS CCD.')
 
     # Read CTE params from file
-    pctefile = fits['PRIMARY'].header['PCTETAB']
+    pctefile = pf_out['PRIMARY'].header['PCTETAB']
     pardict = _PixCteParams(pctefile, expstart)
 
     cte_frac = pardict['cte_frac']
@@ -967,17 +960,13 @@ def AddYCte(infile, outfile, shift_nit=None, units=None):
       pcfy.FillLevelArrays(chg_leak_kt, chg_open_kt, dtde_q, levels)
     del chg_leak_kt, chg_open_kt, dtde_q
     
-    ccdamp = fits['PRIMARY'].header.get('CCDAMP', default='D')
+    ccdamp = pf_out['PRIMARY'].header.get('CCDAMP', default='D')
     if ccdamp == 'A' or ccdamp == 'B':
         readout_dir = 1
     elif ccdamp == 'C' or ccdamp == 'D':
         readout_dir = -1
     else:
         raise ValueError("Amplifier %s is unrecognized!" % ccdamp)
-    
-    # For STIS (Replicated from earlier function):
-    #all_gains = {'A': 0.70, 'B':1.00, 'C': 1.08, 'D':1.00}  # B is unknown
-    #atodgain = all_gains[ccdamp]
     
     ########################################
     # perform CTE blurring for each image set
@@ -989,7 +978,7 @@ def AddYCte(infile, outfile, shift_nit=None, units=None):
         # the readout, since that's what the algorithm expects
         # (this assumes STIS amp D was used)
         # Modified (SL):  Does readout_dir==+1 work for 'A' and 'B'?
-        scidata = fits[extn].data[::readout_dir,::readout_dir].copy().astype(numpy.float)
+        scidata = pf_out[extn].data[::readout_dir,::readout_dir].copy().astype(numpy.float)
         # convert to electrons
         scidata *= atodgain
 
@@ -1015,18 +1004,18 @@ def AddYCte(infile, outfile, shift_nit=None, units=None):
         cordata /= atodgain
 
         # copy blurred data back to image, flipping to its original orientation
-        fits[extn].data[:,:] = cordata.astype(numpy.float32)[::readout_dir,::readout_dir]
+        pf_out[extn].data[:,:] = cordata.astype(numpy.float32)[::readout_dir,::readout_dir]
         # end for imset in range(nimsets)
 
     # Update header
-    fits['PRIMARY'].header['PCTEFRAC'] = cte_frac
-    fits['PRIMARY'].header['PCTERNCL'] = rn_clip
-    fits['PRIMARY'].header['PCTESMIT'] = sim_nit
-    fits['PRIMARY'].header['PCTESHFT'] = shft_nit
-    fits['PRIMARY'].header.add_history('CTE blurring performed by PixCteCorr.AddYCte')
+    pf_out['PRIMARY'].header['PCTEFRAC'] = cte_frac
+    pf_out['PRIMARY'].header['PCTERNCL'] = rn_clip
+    pf_out['PRIMARY'].header['PCTESMIT'] = sim_nit
+    pf_out['PRIMARY'].header['PCTESHFT'] = shft_nit
+    pf_out['PRIMARY'].header.add_history('CTE blurring performed by PixCteCorr.AddYCte')
 
     # close image
-    fits.close()
+    pf_out.close()
 
 
 def _AddYCte(detector, input_data, cte_frac, shft_nit, levels, dpde_l,
