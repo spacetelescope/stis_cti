@@ -376,8 +376,7 @@ def YCte(inFits, outFits='', read_noise=None, noise_model=None,
                                chg_open_lt)
         t2 = time.time()
 
-        print 'FixYCte took %f seconds for science extension %d.' % \
-              (t2-t1, extn)
+        print 'FixYCte took {:.3f} seconds for science extension {:d}.'.format(t2-t1, extn)
 
         # add noise back in
         findata = cordata + nsedata
@@ -997,8 +996,7 @@ def AddYCte(infile, outfile, shift_nit=None, units=None):
                            levels, dpde_l, chg_leak_lt, chg_open_lt)
         t2 = time.time()
 
-        print 'AddYCte took %f seconds for science extension %d.' % \
-              (t2-t1, extn)
+        print 'AddYCte took {:.3f} seconds for science extension {:d}.'.format(t2-t1, extn)
 
         # convert blurred data back to DN
         cordata /= atodgain
