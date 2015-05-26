@@ -22,6 +22,7 @@ setup(
                    'Development Status :: 2 - Pre-Alpha',
                    'Operating System :: OS Independent',
                    'Intended Audience :: Science/Research',
+                   'License :: OSI Approved :: BSD License',
                    'Topic :: Scientific/Engineering :: Astronomy',
                    'Topic :: Scientific/Engineering :: Physics',
                    'Topic :: Software Development :: Libraries :: Python Modules'],
@@ -29,5 +30,4 @@ setup(
     requires = ['numpy', 'astropy', 'refstis'],
     scripts =  ['scripts/stis_cti', 'scripts/archive_dark_query'],
     ext_modules = [StisPixCteCorr_module],
-    license = 'TBD -- all rights reserved'
     )
