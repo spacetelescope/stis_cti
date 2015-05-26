@@ -7,19 +7,20 @@ import multiprocessing
 import datetime
 from astropy.io import fits
 from collections import defaultdict
-import archive_dark_query
 import refstis
-from stistools import StisPixCteCorr, basic2d, calstis
+from stistools import basic2d, calstis
+import archive_dark_query
+import StisPixCteCorr
 #try:
 #    import ipdb as pdb
 #except ImportError:
 #    import pdb
 
 __author__  = 'Sean Lockwood'
-__version__ = '0.2_alpha'
+__version__ = '0.3_alpha'
 
 
-# cti_wrapper()
+# stis_cti()
 # determine_input_science()
 # viable_ccd_file()
 # bias_correct_science_files()
@@ -43,8 +44,8 @@ __version__ = '0.2_alpha'
 class FileError(Exception):
     pass
 
-def cti_wrapper(science_dir, dark_dir, ref_dir, pctetab, num_processes, 
-                all_weeks_flag=False, allow=False, clean=False, verbose=False):
+def stis_cti(science_dir, dark_dir, ref_dir, pctetab, num_processes, 
+             all_weeks_flag=False, allow=False, clean=False, verbose=False):
     '''
     Run STIS/CCD pixel-based CTI-correction on data specified in SCIENCE_DIR.
     
@@ -53,9 +54,9 @@ def cti_wrapper(science_dir, dark_dir, ref_dir, pctetab, num_processes,
     REF_DIR.
     
     From the command line:
-        usage: cti_wrapper.py [-h] [-d DARK_DIR] [-r REF_DIR] [-n NUM_PROCESSES]
-                              [-p PCTETAB] [--clean] [-v | -vv]
-                              [SCIENCE_DIR]
+        usage: stis_cti.py [-h] [-d DARK_DIR] [-r REF_DIR] [-n NUM_PROCESSES]
+                           [-p PCTETAB] [--clean] [-v | -vv]
+                           [SCIENCE_DIR]
         
         Run STIS/CCD pixel-based CTI-correction on data specified in SCIENCE_DIR.
         Uncorrected component darks are read from DARK_DIR, and corrected component
@@ -162,7 +163,7 @@ def cti_wrapper(science_dir, dark_dir, ref_dir, pctetab, num_processes,
     log.flush()
     
     print '\nCompletion time:                {}'.format(datetime.datetime.now().isoformat(' '))
-    print 'cti_wrapper.py complete!\n'
+    print 'stis_cti.py complete!\n'
     
     log.close()
 
@@ -376,7 +377,7 @@ def resolve_iraf_file(file):
 def check_pctetab_version(pctetab, verbose=False, version_min='0.1', version_max='1.999'):
     '''
     Make sure the version keyword in the PCTETAB is within the acceptable boundaries
-    for this version of the cti_wrapper.py code.
+    for this version of the stis_cti.py code.
     
     This comparison works for version = "<int>.<int>" (e.g. "1.10" > "1.1").
     '''
@@ -403,13 +404,13 @@ def check_pctetab_version(pctetab, verbose=False, version_min='0.1', version_max
     if (pctetab_version_major   < int(version_min.split('.')[0])  or
         (pctetab_version_major == int(version_min.split('.')[0]) and
          pctetab_version_minor  < int(version_min.split('.')[1]))):
-        raise VersionError(('Version mismatch between PCTETAB {} and cti_wrapper.py code.\n' + 
+        raise VersionError(('Version mismatch between PCTETAB {} and stis_cti.py code.\n' + 
             'Please download a more recent version of this reference file!\n').format(pctetab))
        
     if (pctetab_version_major   > int(version_max.split('.')[0])  or
         (pctetab_version_major == int(version_max.split('.')[0]) and
          pctetab_version_minor  > int(version_max.split('.')[1]))):
-        raise VersionError(('Version mismatch between PCTETAB {} and cti_wrapper.py code.\n' +
+        raise VersionError(('Version mismatch between PCTETAB {} and stis_cti.py code.\n' +
             'Please upgrade this code!\n').format(pctetab))\
     
     if verbose:
@@ -607,7 +608,7 @@ def generate_basedark(files, outname, pctetab, num_cpu, verbose=False):
     # Update keywords in new basedark from component dark:
     history = [
         'Basedark created from CTI-corrected component darks by script',
-        'cti_wrapper.py on {}.'.format(datetime.datetime.now().isoformat(' ')) ]
+        'stis_cti.py on {}.'.format(datetime.datetime.now().isoformat(' ')) ]
     copy_dark_keywords(os.path.expandvars(outname), dark_hdr0, pctetab, history=history)
         
     if verbose:
@@ -650,7 +651,7 @@ def generate_weekdark(files, outname, pctetab, basedark, num_cpu, verbose=False)
     # Update keywords in new basedark from component dark:
     history = [
         'Weekdark created from CTI-corrected component darks by script',
-        'cti_wrapper.py on {}'.format(datetime.datetime.now().isoformat(' ')),
+        'stis_cti.py on {}'.format(datetime.datetime.now().isoformat(' ')),
         'using basedark file {}.'.format(basedark)]
     copy_dark_keywords(os.path.expandvars(outname), dark_hdr0, pctetab, history=history, basedark=basedark)
     
@@ -900,7 +901,7 @@ def check_for_old_output_files(rootnames, science_dir, output_mapping, clean=Fal
                 error_files.append(old_file)
     if len(error_files) > 0:
         error_files.sort()
-        raise IOError('Files exist from previous run of cti_wrapper.py:  \n{}'.format( \
+        raise IOError('Files exist from previous run of stis_cti.py:  \n{}'.format( \
                       '   ' + '\n   '.join(error_files) + \
                       '\nYou might consider running with the \'--clean\' option specified.'))
     if verbose:
@@ -1081,6 +1082,6 @@ if __name__ == '__main__':
     if not os.path.exists(pctetab):
         raise FileError('PCTETAB does not exist:  ' + pctetab)
     
-    cti_wrapper(science_dir, dark_dir, ref_dir, pctetab, args.num_processes, 
-                args.all_weeks_flag, args.allow, args.clean, verbose)
+    stis_cti(science_dir, dark_dir, ref_dir, pctetab, args.num_processes, 
+             args.all_weeks_flag, args.allow, args.clean, verbose)
     
