@@ -2,6 +2,7 @@
 
 import os
 import argparse
+import glob
 from multiprocessing import cpu_count
 import stis_cti
 
