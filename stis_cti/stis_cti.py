@@ -99,6 +99,7 @@ def stis_cti(science_dir, dark_dir, ref_dir, pctetab, num_processes,
     print 'Start time:                     {}\n'.format(datetime.datetime.now().isoformat(' '))
     
     if verbose:
+        print 'cwd         = {}'.format(os.getcwd() + os.path.sep)
         print 'science_dir = {}'.format(science_dir)
         print 'dark_dir    = {}'.format(dark_dir)
         print 'ref_dir     = {}'.format(ref_dir)
