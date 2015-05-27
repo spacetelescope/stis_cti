@@ -203,9 +203,9 @@ def determine_input_science(science_dir, allow=False, verbose=False):
                         'Please make sure science data are:\n'                      + \
                         '   -- post-May 01 2009\n'                                  + \
                         '   -- CCDAMP = D\n'                                        + \
-                        '   -- CCDGAIN = 1\n'                                       + \
+                        '   -- CCDGAIN = {1, 4}\n'                                  + \
                         '   -- Not OBSMODE = ACQ*\n'                                + \
-                        '   -- Full-frame')
+                        '   -- Full-frame and not binned')
     
     if verbose:
         print 'Input _raw.fits files being corrected:'
