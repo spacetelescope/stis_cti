@@ -44,6 +44,9 @@ __version__ = '0.3_alpha'
 class FileError(Exception):
     pass
 
+class VersionError(Exception):
+    pass
+
 def stis_cti(science_dir, dark_dir, ref_dir, pctetab, num_processes, 
              all_weeks_flag=False, allow=False, clean=False, verbose=False):
     '''
@@ -385,9 +388,6 @@ def check_pctetab_version(pctetab, verbose=False, version_min='0.1', version_max
     
     This comparison works for version = "<int>.<int>" (e.g. "1.10" > "1.1").
     '''
-    class VersionError(Exception):
-        pass
-    
     if type(version_min) != str or type(version_max) != str:
         raise TypeError('Versions must be strings.')
     
