@@ -419,6 +419,8 @@ def check_pctetab_version(pctetab, verbose=False, version_min='0.1', version_max
     
     if verbose:
         print 'Version of PCTETAB:  {}\n'.format(pctetab_version_raw)
+    
+    return True
 
 
 def superdark_hash(sim_nit=None, shft_nit=None, rn_clip=None, nsemodel=None, subthrsh=None, pcte_ver=None,
