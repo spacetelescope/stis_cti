@@ -7,6 +7,7 @@ from astropy.io import fits
 
 #from stis_cti import resolve_iraf_file, viable_ccd_file, superdark_hash
 from stis_cti import *
+from archive_dark_query import archive_dark_query
 
 
 class TestPaths:
@@ -162,6 +163,29 @@ class Test_determine_input_science:
         assert_equals(determine_input_science(self.test_dir, False, False), [self.test_file])
 
 
+def write_pctetab(pctetab):
+    if not os.access(os.path.curdir, os.W_OK):
+        raise Exception('Can\'t write test PCTETAB file to CWD!')
+    
+    hdu = fits.PrimaryHDU()
+    hdu.header['FILENAME'] = pctetab
+    hdu.header['FILETYPE'] = 'PIXCTE'                                                            
+    hdu.header['TELESCOP'] = 'HST'                                                            
+    hdu.header['USEAFTER'] = 'Oct 01 1996 00:00:00'                                                
+    hdu.header['PEDIGREE'] = 'INFLIGHT 01/10/1996 25/06/2012'                                      
+    hdu.header['DESCRIP']  = 'Parameters needed for pixel-based CTE correction ------------------' 
+    hdu.header['NCHGLEAK'] = (1, 'number of chg_leak extensions')
+    hdu.header['INSTRUME'] = 'STIS'                                                            
+    hdu.header['DETECTOR'] = 'CCD'                                                            
+    hdu.header['SIM_NIT '] = (7, 'number of readout simulations done per column')
+    hdu.header['SHFT_NIT'] = (4, 'the number of shifts each column readout simula')
+    hdu.header['RN_CLIP']  = (5.6, 'Read noise level in electrons.')
+    hdu.header['NSEMODEL'] = (1, 'Read noise smoothing algorithm.')
+    hdu.header['SUBTHRSH'] = (-30.0, 'Over-subtraction correction threshold.')
+    hdu.header['PCTE_VER'] = ('0.1_alpha', 'Version of PCTETAB')
+    hdu.writeto(pctetab, output_verify='exception', clobber=True)
+
+
 class Test_check_pctetab_version:
     '''
     Tests functionality of stis_cti.check_pctetab_version
@@ -169,26 +193,7 @@ class Test_check_pctetab_version:
     pctetab = 'a00_stis_000test37155_pcte.fits'
     
     def setup(self):
-        if not os.access(os.path.curdir, os.W_OK):
-            raise Exception('Can\'t write test PCTETAB file to CWD!')
-        
-        hdu = fits.PrimaryHDU()
-        hdu.header['FILENAME'] = self.pctetab
-        hdu.header['FILETYPE'] = 'PIXCTE'                                                            
-        hdu.header['TELESCOP'] = 'HST'                                                            
-        hdu.header['USEAFTER'] = 'Oct 01 1996 00:00:00'                                                
-        hdu.header['PEDIGREE'] = 'INFLIGHT 01/10/1996 25/06/2012'                                      
-        hdu.header['DESCRIP']  = 'Parameters needed for pixel-based CTE correction ------------------' 
-        hdu.header['NCHGLEAK'] = (1, 'number of chg_leak extensions')
-        hdu.header['INSTRUME'] = 'STIS'                                                            
-        hdu.header['DETECTOR'] = 'CCD'                                                            
-        hdu.header['SIM_NIT '] = (7, 'number of readout simulations done per column')
-        hdu.header['SHFT_NIT'] = (4, 'the number of shifts each column readout simula')
-        hdu.header['RN_CLIP']  = (5.6, 'Read noise level in electrons.')
-        hdu.header['NSEMODEL'] = (1, 'Read noise smoothing algorithm.')
-        hdu.header['SUBTHRSH'] = (-30.0, 'Over-subtraction correction threshold.')
-        hdu.header['PCTE_VER'] = ('0.1_alpha', 'Version of PCTETAB')
-        hdu.writeto(self.pctetab, output_verify='exception', clobber=True)
+        write_pctetab(self.pctetab)
     
     def teardown(self):
         os.remove(self.pctetab)
@@ -201,8 +206,47 @@ class Test_check_pctetab_version:
     
     def test_pctetab_ver_file_reject(self):
         fits.setval(self.pctetab, 'PCTE_VER', value='3.0_beta')
-        assert_raises(VersionError, check_pctetab_version, self.pctetab, False, '1.0', '1.999')
+        assert_raises(VersionError, check_pctetab_version, self.pctetab, False, '0.1', '1.999')
 
+
+class Test_archive_dark_query:
+    '''
+    Tests functionality of stis_cti.archive_dark_query
+    '''
+    test_file = 'testfits_2334134667_raw.fits'
+    
+    @classmethod
+    def setup_class(cls):
+        setup_file(cls.test_file)
+        cls.anneal = archive_dark_query([cls.test_file], None, None, False, False)
+    
+    @classmethod
+    def teardown_class(cls):
+        os.remove(cls.test_file)
+    
+    def test_number_of_anneals(self):
+        assert_equals(len(self.anneal), 1)
+    
+    def test_anneal_index(self):
+        assert_equals(self.anneal[0]['index'], 133)
+    
+    def test_anneal_darks(self):
+        darks = [d['exposure'] for d in self.anneal[0]['darks']]
+        assert_equals(set(darks), \
+            set(['OBVM3XH9Q', 'OBVM3YHHQ', 'OBVM3ZN5Q', 'OBVM40NCQ', 'OBVM41T2Q', 'OBVM42TFQ', 
+                 'OBVM43YEQ', 'OBVM44YOQ', 'OBVM45FQQ', 'OBVM46G7Q', 'OBVM47LNQ', 'OBVM48MCQ', 
+                 'OBVM49ANQ', 'OBVM4AAVQ', 'OBVM4BH5Q', 'OBVM4CHJQ', 'OBVM4DLRQ', 'OBVM4EM2Q', 
+                 'OBVM4FRJQ', 'OBVM4GRQQ', 'OBVM4HYVQ', 'OBVM4IZ5Q', 'OBVM4JG4Q', 'OBVM4KGCQ', 
+                 'OBVM4LO1S', 'OBVM4MOIS', 'OBVM4NABQ', 'OBVM4OAMQ', 'OBVM4PI2Q', 'OBVM4QIAQ', 
+                 'OBVM4RPDQ', 'OBVM4SPJQ', 'OBVM4TW9Q', 'OBVM4UWDQ', 'OBVM4VCOQ', 'OBVM4WCXQ', 
+                 'OBVM4XJ6Q', 'OBVM4YJCQ', 'OBVM4ZOMQ', 'OBVM50POQ', 'OBVM51A4Q', 'OBVM52ABQ', 
+                 'OBVM53FIQ', 'OBVM54FNQ', 'OBVM55LTQ', 'OBVM56M5Q', 'OBVM57T3S', 'OBVM58T8S', 
+                 'OBVM59W6S', 'OBVM5AWDS', 'OBVM5BBQQ', 'OBVM5CBUQ', 'OBVM5DG7Q', 'OBVM5EGBQ', 
+                 'OBVM5FALQ', 'OBVM5GAUQ', 'OBVM5HFTQ', 'OBVM5IFPQ', 'OBVM5JKLQ', 'OBVM5KLPQ']))
+    
+    def test_undefined_fits_file(self):
+        undefined_filename = 'testfits_undefined_28739723_raw.fits'
+        assert_raises(IOError, archive_dark_query, [undefined_filename], None, None, False, False)
 
 
 if __name__ == '__main__':
