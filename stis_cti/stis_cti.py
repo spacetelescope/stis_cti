@@ -912,6 +912,8 @@ def check_for_old_output_files(rootnames, science_dir, output_mapping, clean=Fal
                       '\nYou might consider running with the \'--clean\' option specified.'))
     if verbose:
         print 'The science_dir is clear of files from previous runs.\n'
+    
+    return True
 
 
 def map_outputs(rootnames, science_dir, output_mapping, verbose=False):
