@@ -2,6 +2,7 @@
 
 from nose.tools import assert_equals, assert_false, assert_raises, assert_not_equals
 import os
+import copy
 import datetime
 from astropy.io import fits
 
@@ -409,6 +410,85 @@ class Test_archive_dark_query:
     def test_undefined_fits_file(self):
         undefined_filename = 'testfits_undefined_28739723_raw.fits'
         assert_raises(IOError, archive_dark_query, [undefined_filename], None, None, False, False)
+
+
+class Test_check_for_old_output_files:
+    '''
+    Tests functionality of stis_cti.check_for_old_output_files
+    '''
+    test_dir = 'dir_8364834236'
+    rootname = 'testfits67733'
+    
+    test_files_leave  = [rootname + '_raw.fits', rootname + '_flt.fits']
+    test_files_remove = [rootname + '_s2c.fits', rootname + '_flc.fits',
+                         rootname + '_blt.fits', rootname + '_cte_flt.fits']
+    # Prepend these files with test_dir:
+    test_files_leave  = [os.path.join(test_dir, f) for f in test_files_leave]
+    test_files_remove = [os.path.join(test_dir, f) for f in test_files_remove]
+    
+    # Combine both of these arrays into one:
+    test_files = copy.deepcopy(test_files_leave)
+    test_files.extend(test_files_remove)
+    
+    output_mapping = {
+        'cte_flt.fits' : 'flc.fits' ,
+        'cte_crj.fits' : 'crc.fits' ,
+        'cte_sx2.fits' : 's2c.fits' ,
+        'cte_x2d.fits' : 'x2c.fits' ,
+        'cte_sx1.fits' : 's1c.fits' ,
+        'cte_x1d.fits' : 'x1c.fits' ,
+        'blt_tra.txt'  : 'trb.txt'  ,
+        'cte_tra.txt'  : 'trc.txt'  ,
+        'blt.fits'     : '<pass>'   ,
+        'cte.fits'     : '<pass>'   }
+    
+    def setup(self):
+        if os.path.exists(self.test_dir):
+            raise IOError('test_dir already exists: {}'.format(self.test_dir))
+        else:
+            os.mkdir(self.test_dir)
+    
+    def teardown(self):
+        for file in self.test_files:
+            if os.path.exists(file):
+                os.remove(file)
+        os.rmdir(self.test_dir)
+    
+    def test_only_good_files(self):
+        for file in self.test_files_leave:
+            write_file(file)
+        assert check_for_old_output_files([self.rootname], self.test_dir, 
+            self.output_mapping, False, False)
+    
+    def test_files_already_exist_exception(self):
+        for file in self.test_files:
+            write_file(file)
+        assert_raises(IOError, check_for_old_output_files, [self.rootname], self.test_dir, 
+            self.output_mapping, False, False)
+    
+    def test_files_already_exist_exception_none_left(self):
+        for file in self.test_files_remove:
+            write_file(file)
+        assert_raises(IOError, check_for_old_output_files, [self.rootname], self.test_dir, 
+            self.output_mapping, False, False)
+    
+    def test_files_already_exist_clean(self):
+        for file in self.test_files:
+            write_file(file)
+        assert check_for_old_output_files([self.rootname], self.test_dir, 
+            self.output_mapping, True, False)
+    
+    def test_only_good_files_clean(self):
+        for file in self.test_files_leave:
+            write_file(file)
+        assert check_for_old_output_files([self.rootname], self.test_dir, 
+            self.output_mapping, True, False)
+    
+    def test_only_bad_files_clean(self):
+        for file in self.test_files_remove:
+            write_file(file)
+        assert check_for_old_output_files([self.rootname], self.test_dir, 
+            self.output_mapping, True, False)
 
 
 # ----------------------------------------------------------------------------------------
