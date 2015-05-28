@@ -8,15 +8,115 @@ from astropy.io import fits
 from stis_cti import *
 from archive_dark_query import archive_dark_query
 
+# ----------------------------------------------------------------------------------------
+# These functions are used to write test files used by the unit tests
+
+def write_file(test_file):
+    # Create and write out a test FITS file:
+    if not os.access(os.path.curdir, os.W_OK):
+        raise Exception('Can\'t write test file to CWD!')
+    
+    hdu = fits.PrimaryHDU()
+    
+    hdu.header['TELESCOP'] = ('HST',           'telescope used to acquire data')
+    hdu.header['INSTRUME'] = ('STIS',          'identifier for instrument used to acquire data')
+    hdu.header['TDATEOBS'] = ('2012-07-14',    'UT date of start of first exposure in file')
+    hdu.header['TTIMEOBS'] = ('04:35:52',      'UT start time of first exposure in file')
+    hdu.header['OBSTYPE']  = ('SPECTROSCOPIC', 'observation type - imaging or spectroscopic')
+    hdu.header['OBSMODE']  = ('ACCUM',         'operating mode')
+    hdu.header['SUBARRAY'] = (False,           'data from a subarray (T) or full frame (F)')
+    hdu.header['DETECTOR'] = ('CCD',           'detector in use: NUV-MAMA, FUV-MAMA, or CCD')
+    hdu.header['CCDAMP']   = ('D',             'CCD amplifier read out (A,B,C,D)')
+    hdu.header['CCDGAIN']  = (1,               'commanded gain of CCD')
+    hdu.header['CCDOFFST'] = (3,               'commanded CCD bias offset')
+    hdu.header['BINAXIS1'] = (1,               'axis1 data bin size in unbinned detector pixels')
+    hdu.header['BINAXIS2'] = (1,               'axis2 data bin size in unbinned detector pixels')
+    
+    hdu.writeto(test_file, output_verify='exception', clobber=True)
+
+
+def write_pctetab(pctetab):
+    if not os.access(os.path.curdir, os.W_OK):
+        raise Exception('Can\'t write test PCTETAB file to CWD!')
+    
+    hdu = fits.PrimaryHDU()
+    
+    hdu.header['FILENAME'] = pctetab
+    hdu.header['FILETYPE'] = 'PIXCTE'                                                            
+    hdu.header['TELESCOP'] = 'HST'                                                            
+    hdu.header['USEAFTER'] = 'Oct 01 1996 00:00:00'                                                
+    hdu.header['PEDIGREE'] = 'INFLIGHT 01/10/1996 25/06/2012'                                      
+    hdu.header['DESCRIP']  = 'Parameters needed for pixel-based CTE correction ------------------' 
+    hdu.header['NCHGLEAK'] = (1, 'number of chg_leak extensions')
+    hdu.header['INSTRUME'] = 'STIS'                                                            
+    hdu.header['DETECTOR'] = 'CCD'                                                            
+    hdu.header['SIM_NIT']  = (7, 'number of readout simulations done per column')
+    hdu.header['SHFT_NIT'] = (4, 'the number of shifts each column readout simula')
+    hdu.header['RN_CLIP']  = (5.6, 'Read noise level in electrons.')
+    hdu.header['NSEMODEL'] = (1, 'Read noise smoothing algorithm.')
+    hdu.header['SUBTHRSH'] = (-30.0, 'Over-subtraction correction threshold.')
+    hdu.header['PCTE_VER'] = ('0.1_alpha', 'Version of PCTETAB')
+    
+    hdu.writeto(pctetab, output_verify='exception', clobber=True)
+
+
+def write_superdark(superdark):
+    if not os.access(os.path.curdir, os.W_OK):
+        raise Exception('Can\'t write test superdark file to CWD!')
+    
+    hdu = fits.PrimaryHDU()
+    
+    hdu.header['FILENAME'] = superdark
+    hdu.header['FILETYPE'] = 'DARK IMAGE'
+    hdu.header['TELESCOP'] = 'HST'
+    hdu.header['REF_TEMP'] = 18
+    hdu.header['DRK_VS_T'] = 0.07
+    hdu.header['PCTECORR'] = 'COMPLETE'
+    hdu.header['PCTETAB']  = 'pctetab$a01_stis_pcte.fits'
+    hdu.header['USEAFTER'] = 'Jul 24 2012 00:59:27'
+    hdu.header['PEDIGREE'] = 'INFLIGHT 01/10/1996 25/06/2012'
+    hdu.header['DESCRIP']  = 'Weekly gain=1 dark for STIS CCD data taken after Jul 24 2012-------'
+    hdu.header['INSTRUME'] = 'STIS'
+    hdu.header['DETECTOR'] = ('CCD', 'detector in use: CCD')
+    
+    hdu.header['PCTEFRAC'] = (1.192887185841836,              'CTE time scaling value')
+    hdu.header['PCTESMIT'] = (7,                              'PCTE readout simulation iterations')
+    hdu.header['PCTESHFT'] = (4,                              'PCTE readout number of shifts')
+    hdu.header['PCTERNCL'] = (5.6,                            'PCTE readnoise amplitude')
+    hdu.header['PCTENSMD'] = (1,                              'PCTE readnoise mitigation algorithm')
+    hdu.header['PCTETRSH'] = (-30.0,                          'PCTE over-subtraction threshold')
+    hdu.header['PCTE_VER'] = ('0.1_alpha',                    'Version of PCTETAB')
+    hdu.header['CTE_NAME'] = ('PixelCTE 2012',                'name of CTE algorithm')
+    hdu.header['CTE_VER']  = ('3.2',                          'version of CTE algorithm')
+    hdu.header['BASEDARK'] = ('$ctitest/bdark_d133_drk.fits', 'Used to make weekdark')
+    
+    hdu.header['HISTORY'] = 'blah, blah blah'
+    hdu.header['HISTORY'] = 'The following input files were used:'
+    hdu.header['HISTORY'] = 'abc_cte.fits'
+    hdu.header['HISTORY'] = 'def_cte.fits'
+    hdu.header['HISTORY'] = 'hij_cte.fits'
+    hdu.header['HISTORY'] = ''
+    hdu.header['HISTORY'] = 'blah2, blah2, blah2'
+    
+    hdu.writeto(superdark, output_verify='exception', clobber=True)
+
+
+# ----------------------------------------------------------------------------------------
+# Here are the unit tests:
 
 class TestPaths:
     '''
     Tests functionality of stis_cti.resolve_iraf_file
     '''
-    def setup(self):
+    @classmethod
+    def setup_class(cls):
         os.environ['toref'] = '/grp/hst/cdbs/oref/'
+        # Undefine undoref if it exists:
+        if os.environ.has_key('undoref'):
+            os.environ.pop('undoref')
     
-    def teardown(self):
+    @classmethod
+    def teardown_class(cls):
         os.environ.pop('toref')
     
     def test_no_dollar(self):
@@ -39,28 +139,6 @@ class TestPaths:
         assert_equals(ex.message, "Can't resolve environmental variable 'undoref'.")
 
 
-def setup_file(test_file):
-    # Create and write out a test FITS file:
-    if not os.access(os.path.curdir, os.W_OK):
-        raise Exception('Can\'t write test file to CWD!')
-    
-    hdu = fits.PrimaryHDU()
-    hdu.header['TELESCOP'] = ('HST',           'telescope used to acquire data')
-    hdu.header['INSTRUME'] = ('STIS',          'identifier for instrument used to acquire data')
-    hdu.header['TDATEOBS'] = ('2012-07-14',    'UT date of start of first exposure in file')
-    hdu.header['TTIMEOBS'] = ('04:35:52',      'UT start time of first exposure in file')
-    hdu.header['OBSTYPE']  = ('SPECTROSCOPIC', 'observation type - imaging or spectroscopic')
-    hdu.header['OBSMODE']  = ('ACCUM',         'operating mode')
-    hdu.header['SUBARRAY'] = (False,           'data from a subarray (T) or full frame (F)')
-    hdu.header['DETECTOR'] = ('CCD',           'detector in use: NUV-MAMA, FUV-MAMA, or CCD')
-    hdu.header['CCDAMP']   = ('D',             'CCD amplifier read out (A,B,C,D)')
-    hdu.header['CCDGAIN']  = (1,               'commanded gain of CCD')
-    hdu.header['CCDOFFST'] = (3,               'commanded CCD bias offset')
-    hdu.header['BINAXIS1'] = (1,               'axis1 data bin size in unbinned detector pixels')
-    hdu.header['BINAXIS2'] = (1,               'axis2 data bin size in unbinned detector pixels')
-    hdu.writeto(test_file, output_verify='exception', clobber=True)
-
-
 class TestFileFiltering:
     '''
     Tests functionality of stis_cti.viable_ccd_file
@@ -68,7 +146,7 @@ class TestFileFiltering:
     test_file = 'testfits_2334134234_raw.fits'
     
     def setup(self):
-        setup_file(self.test_file)
+        write_file(self.test_file)
     
     def teardown(self):
         os.remove(self.test_file)
@@ -134,7 +212,7 @@ class Test_determine_input_science:
         os.mkdir(self.test_dir)
         
         # Write FITS file:
-        setup_file(self.test_file)
+        write_file(self.test_file)
     
     def teardown(self):
         os.remove(self.test_file)
@@ -157,32 +235,9 @@ class Test_determine_input_science:
         assert determine_input_science(self.test_dir, True, False)
     
     def test_filter_date_partial_reject(self):
-        setup_file(self.test_file2)
+        write_file(self.test_file2)
         fits.setval(self.test_file2, 'TDATEOBS', value='1992-01-01')
         assert_equals(determine_input_science(self.test_dir, False, False), [self.test_file])
-
-
-def write_pctetab(pctetab):
-    if not os.access(os.path.curdir, os.W_OK):
-        raise Exception('Can\'t write test PCTETAB file to CWD!')
-    
-    hdu = fits.PrimaryHDU()
-    hdu.header['FILENAME'] = pctetab
-    hdu.header['FILETYPE'] = 'PIXCTE'                                                            
-    hdu.header['TELESCOP'] = 'HST'                                                            
-    hdu.header['USEAFTER'] = 'Oct 01 1996 00:00:00'                                                
-    hdu.header['PEDIGREE'] = 'INFLIGHT 01/10/1996 25/06/2012'                                      
-    hdu.header['DESCRIP']  = 'Parameters needed for pixel-based CTE correction ------------------' 
-    hdu.header['NCHGLEAK'] = (1, 'number of chg_leak extensions')
-    hdu.header['INSTRUME'] = 'STIS'                                                            
-    hdu.header['DETECTOR'] = 'CCD'                                                            
-    hdu.header['SIM_NIT']  = (7, 'number of readout simulations done per column')
-    hdu.header['SHFT_NIT'] = (4, 'the number of shifts each column readout simula')
-    hdu.header['RN_CLIP']  = (5.6, 'Read noise level in electrons.')
-    hdu.header['NSEMODEL'] = (1, 'Read noise smoothing algorithm.')
-    hdu.header['SUBTHRSH'] = (-30.0, 'Over-subtraction correction threshold.')
-    hdu.header['PCTE_VER'] = ('0.1_alpha', 'Version of PCTETAB')
-    hdu.writeto(pctetab, output_verify='exception', clobber=True)
 
 
 class Test_check_pctetab_version:
@@ -206,47 +261,6 @@ class Test_check_pctetab_version:
     def test_pctetab_ver_file_reject(self):
         fits.setval(self.pctetab, 'PCTE_VER', value='3.0_beta')
         assert_raises(VersionError, check_pctetab_version, self.pctetab, False, '0.1', '1.999')
-
-
-def write_superdark(superdark):
-    if not os.access(os.path.curdir, os.W_OK):
-        raise Exception('Can\'t write test superdark file to CWD!')
-    
-    hdu = fits.PrimaryHDU()
-    
-    hdu.header['FILENAME'] = superdark
-    hdu.header['FILETYPE'] = 'DARK IMAGE'
-    hdu.header['TELESCOP'] = 'HST'
-    hdu.header['REF_TEMP'] = 18
-    hdu.header['DRK_VS_T'] = 0.07
-    hdu.header['PCTECORR'] = 'COMPLETE'
-    hdu.header['PCTETAB']  = 'pctetab$a01_stis_pcte.fits'
-    hdu.header['USEAFTER'] = 'Jul 24 2012 00:59:27'
-    hdu.header['PEDIGREE'] = 'INFLIGHT 01/10/1996 25/06/2012'
-    hdu.header['DESCRIP']  = 'Weekly gain=1 dark for STIS CCD data taken after Jul 24 2012-------'
-    hdu.header['INSTRUME'] = 'STIS'
-    hdu.header['DETECTOR'] = ('CCD', 'detector in use: CCD')
-    
-    hdu.header['PCTEFRAC'] = (1.192887185841836,              'CTE time scaling value')
-    hdu.header['PCTESMIT'] = (7,                              'PCTE readout simulation iterations')
-    hdu.header['PCTESHFT'] = (4,                              'PCTE readout number of shifts')
-    hdu.header['PCTERNCL'] = (5.6,                            'PCTE readnoise amplitude')
-    hdu.header['PCTENSMD'] = (1,                              'PCTE readnoise mitigation algorithm')
-    hdu.header['PCTETRSH'] = (-30.0,                          'PCTE over-subtraction threshold')
-    hdu.header['PCTE_VER'] = ('0.1_alpha',                    'Version of PCTETAB')
-    hdu.header['CTE_NAME'] = ('PixelCTE 2012',                'name of CTE algorithm')
-    hdu.header['CTE_VER']  = ('3.2',                          'version of CTE algorithm')
-    hdu.header['BASEDARK'] = ('$ctitest/bdark_d133_drk.fits', 'Used to make weekdark')
-    
-    hdu.header['HISTORY'] = 'blah, blah blah'
-    hdu.header['HISTORY'] = 'The following input files were used:'
-    hdu.header['HISTORY'] = 'abc_cte.fits'
-    hdu.header['HISTORY'] = 'def_cte.fits'
-    hdu.header['HISTORY'] = 'hij_cte.fits'
-    hdu.header['HISTORY'] = ''
-    hdu.header['HISTORY'] = 'blah2, blah2, blah2'
-    
-    hdu.writeto(superdark, output_verify='exception', clobber=True)
 
 
 class Test_superdark_hash:
@@ -365,7 +379,7 @@ class Test_archive_dark_query:
     
     @classmethod
     def setup_class(cls):
-        setup_file(cls.test_file)
+        write_file(cls.test_file)
         cls.anneal = archive_dark_query([cls.test_file], None, None, False, False)
     
     @classmethod
@@ -397,6 +411,7 @@ class Test_archive_dark_query:
         assert_raises(IOError, archive_dark_query, [undefined_filename], None, None, False, False)
 
 
+# ----------------------------------------------------------------------------------------
 if __name__ == '__main__':
     import nose
     nose.runmodule(argv=['nose', '--verbosity=2'])
