@@ -234,6 +234,9 @@ def archive_dark_query(files, anneal_data=None, min_exptime=None, verbose=False,
             print f
         print
     
+    if len(files) == 0:
+        raise IOError('No files specified/found.')
+    
     # Determine time boundaries for each annealing period:
     # (This is costly, so pass the value into this function when calling multiple times.)
     if anneal_data == None:
