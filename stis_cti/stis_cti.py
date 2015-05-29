@@ -1,5 +1,3 @@
-#! /usr/bin/env python
-
 import os
 import sys
 import glob
@@ -11,14 +9,9 @@ import refstis
 from stistools import basic2d, calstis
 import archive_dark_query
 import StisPixCteCorr
-#try:
-#    import ipdb as pdb
-#except ImportError:
-#    import pdb
 
 __author__  = 'Sean Lockwood'
 __version__ = '0.3_alpha'
-
 
 # stis_cti()
 # determine_input_science()
@@ -38,8 +31,6 @@ __version__ = '0.3_alpha'
 # check_for_old_output_files()
 # map_outputs()
 # class Logger
-# main
-
 
 class FileError(Exception):
     pass
@@ -47,7 +38,7 @@ class FileError(Exception):
 class VersionError(Exception):
     pass
 
-def stis_cti(science_dir, dark_dir, ref_dir, pctetab, num_processes, 
+def stis_cti(science_dir, dark_dir, ref_dir, num_processes, pctetab=None, 
              all_weeks_flag=False, allow=False, clean=False, verbose=False):
     '''
     Run STIS/CCD pixel-based CTI-correction on data specified in SCIENCE_DIR.
@@ -100,6 +91,33 @@ def stis_cti(science_dir, dark_dir, ref_dir, pctetab, num_processes,
     print 'System:                         {}'.format(sys_info)
     print 'Number of parallel processes:   {}'.format(num_processes)
     print 'Start time:                     {}\n'.format(datetime.datetime.now().isoformat(' '))
+    
+    # Check that directories exist:
+    if not os.path.isdir(science_dir):
+        raise FileError('science_dir does not exist:  ' + science_dir)
+    if not os.path.isdir(dark_dir):
+        raise FileError('dark_dir does not exist:  '    + dark_dir)
+    if not os.path.isdir(ref_dir):
+        raise FileError('ref_dir does not exist:  '     + ref_dir)
+    
+    # Check PCTETAB:
+    if pctetab is None:
+        pctetabs = glob.glob(os.path.join(ref_dir, '*_pcte.fits*'))
+        pctetabs.sort()
+        if len(pctetabs) > 0:
+            pctetab = pctetabs[-1]
+        else:
+            # Couldn't find PCTETAB in ref/ directory, so use the PCTETAB included with the stis_cti package:
+            default_pcte_str = os.path.join(sys.prefix, __package__) + os.path.sep
+            package_pctes = glob.glob(default_pcte_str + '*_pcte.fits')
+            package_pctes.sort()
+            if len(package_pctes) == 0:
+                raise FileError('Couldn\'t find a PCTETAB in {} or (package default) {}'.format(
+                    ref_dir, default_pcte_str))
+            pctetab = package_pctes[-1]
+            print 'WARNING:  Using package-default PCTETAB: {}\n'.format(pctetab)
+    if not os.path.exists(pctetab):
+        raise FileError('PCTETAB does not exist:  ' + pctetab)
     
     if verbose:
         print 'cwd         = {}'.format(os.getcwd() + os.path.sep)
@@ -669,16 +687,12 @@ def populate_darkfiles(raw_files, dark_dir, ref_dir, pctetab, num_processes, all
     '''Check science files for uncorrected super-darks; and, if necessary, generate them and
        populate the science file headers.'''
     
-    #import pickle
-    
     superdark_remakes = []
     for file in raw_files:
         with fits.open(file) as f:
             hdr0 = f[0].header
         superdark = hdr0['DARKFILE']
         superdark_resolved = resolve_iraf_file(superdark)
-        #if verbose:
-        #    print superdark, ' = ', superdark_resolved
         try:
             with fits.open(superdark_resolved) as sd:
                 hdr0 = sd[0].header
@@ -706,9 +720,6 @@ def populate_darkfiles(raw_files, dark_dir, ref_dir, pctetab, num_processes, all
     
     # Determine component darks used to make superdarks:
     anneal_data = archive_dark_query.get_anneal_boundaries()
-    #with open('/Users/lockwood/stis_cte/wrapper/anneals.p', 'rb') as p:
-    #    anneal_data = pickle.load(p)  # *** For testing only!!! ***
-    #print 'WARNING:  *** Using pickle file anneals.p for testing! ***\n'
     anneals = archive_dark_query.archive_dark_query( \
                       raw_files, anneal_data=anneal_data, print_url=False)  # print_url?
     
@@ -1002,94 +1013,3 @@ class Logger(object):
         if self.file != None:
             self.file.close()
             self.file = None
-
-
-if __name__ == '__main__':
-    import argparse
-    
-    # Get information about the user's system:
-    num_available_cores = multiprocessing.cpu_count()
-    
-    # The suggested number of cores is num_available_cores - 2, within [1, default_max_cores]:
-    default_max_cores = 15
-    default_cores = min([max([1, num_available_cores - 2]), default_max_cores])
-    
-    # For prettier implementation of help text, see:
-    # http://stackoverflow.com/questions/3853722/python-argparse-how-to-insert-newline-in-the-help-text
-    
-    parser = argparse.ArgumentParser( 
-        description='Run STIS/CCD pixel-based CTI-correction on data specified in SCIENCE_DIR. ' + \
-                    'Uncorrected component darks are read from DARK_DIR, and ' + \
-                    'corrected component darks are written there too. ' + \
-                    'Corrected super-darks are read from and stored to REF_DIR.', 
-        epilog='Author:   ' + __author__ + '; ' + \
-               'Version:  ' + __version__)
-    parser.add_argument(dest='science_dir', action='store', default='./', nargs='?', 
-                        metavar='SCIENCE_DIR', 
-                        help='directory containing RAW science data (default=\"./\")')
-    parser.add_argument('-d', dest='dark_dir', action='store', default=None, 
-                        help='directory of dark FLT data (default=\"[SCIENCE_DIR]/../darks/\")')
-    parser.add_argument('-r', dest='ref_dir', action='store', default=None, 
-                        help='directory of CTI-corrected reference files ' + \
-                             '(default=\"[SCIENCE_DIR]/../ref/\")')
-    parser.add_argument('-n', dest='num_processes', action='store', default=default_cores, \
-                        metavar='NUM_PROCESSES', type=int, \
-                        help='maximum number of parallel processes to run ' + \
-                             '(default=' + str(default_cores) + ')' + \
-                              "; number of available CPU cores on your system = " + str(num_available_cores))
-    parser.add_argument('-p', dest='pctetab', action='store', metavar='PCTETAB', default=None, \
-                        help='name of PCTETAB to use in pixel-based correction ' + \
-                             '(default=\"[REF_DIR]/[MOST_RECENT]_pcte.fits\")')
-    parser.add_argument('--clean', dest='clean', action='store_true', default=False, 
-                        help='remove intermediate and final products from previous runs of ' + \
-                             'this script (\'*.txt\' files are skipped and clobbered)')
-    parser.add_argument('-v', '--verbose', dest='verbose', action='store_true', default=False, 
-                        help='print more information')
-    parser.add_argument('-vv', dest='very_verbose', action='store_true', 
-                        help='very verbose')
-    # Allow any amp/gain/offst/date through processing (not well-tested):
-    parser.add_argument('--allow', dest='allow', action='store_true', default=False, 
-                        help=argparse.SUPPRESS)
-    parser.add_argument('--all_weeks', dest='all_weeks_flag', action='store_true', default=False, 
-                        help=argparse.SUPPRESS)
-    args = parser.parse_args()
-    
-    verbose = args.verbose
-    if args.very_verbose:
-        verbose = 2
-    
-    # Determine default dark_dir and ref_dir relative to science_dir:
-    if args.dark_dir is None:
-        args.dark_dir = os.path.join(args.science_dir, os.path.pardir + os.path.sep + 'darks')
-    if args.ref_dir is None:
-        args.ref_dir = os.path.join(args.science_dir, os.path.pardir + os.path.sep + 'ref')
-    
-    # Normalize redundant relative path variables:
-    science_dir = os.path.normpath(args.science_dir) + os.path.sep
-    dark_dir    = os.path.normpath(args.dark_dir)    + os.path.sep
-    ref_dir     = os.path.normpath(args.ref_dir)     + os.path.sep
-    
-    # Check that directories exist:
-    if not os.path.isdir(science_dir):
-        raise FileError('science_dir does not exist:  ' + science_dir)
-    if not os.path.isdir(dark_dir):
-        raise FileError('dark_dir does not exist:  '    + dark_dir)
-    if not os.path.isdir(ref_dir):
-        raise FileError('ref_dir does not exist:  '     + ref_dir)
-    
-    # Determine default PCTETAB (default = last alphabetical _pcte.fits from ref_dir):
-    if args.pctetab is None:
-        pctetabs = glob.glob(os.path.join(ref_dir, '*_pcte.fits*'))
-        pctetabs.sort()
-        if len(pctetabs) > 0:
-            pctetab = pctetabs[-1]
-        else:
-            raise FileError('No PCTETAB file found in {}.'.format(ref_dir))
-    else:
-        pctetab = args.pctetab
-    if not os.path.exists(pctetab):
-        raise FileError('PCTETAB does not exist:  ' + pctetab)
-    
-    stis_cti(science_dir, dark_dir, ref_dir, pctetab, args.num_processes, 
-             args.all_weeks_flag, args.allow, args.clean, verbose)
-    

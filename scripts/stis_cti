@@ -39,7 +39,7 @@ if __name__ == '__main__':
                               "; number of available CPU cores on your system = " + str(num_available_cores))
     parser.add_argument('-p', dest='pctetab', action='store', metavar='PCTETAB', default=None, \
                         help='name of PCTETAB to use in pixel-based correction ' + \
-                             '(default=\"[REF_DIR]/[MOST_RECENT]_pcte.fits\")')
+                             '(default=\"[REF_DIR]/[MOST_RECENT]_pcte.fits\" or package\'s default PCTETAB)')
     parser.add_argument('--clean', dest='clean', action='store_true', default=False, 
                         help='remove intermediate and final products from previous runs of ' + \
                              'this script (\'*.txt\' files are skipped and clobbered)')
@@ -69,26 +69,26 @@ if __name__ == '__main__':
     dark_dir    = os.path.normpath(args.dark_dir)    + os.path.sep
     ref_dir     = os.path.normpath(args.ref_dir)     + os.path.sep
     
-    # Check that directories exist:
-    if not os.path.isdir(science_dir):
-        raise FileError('science_dir does not exist:  ' + science_dir)
-    if not os.path.isdir(dark_dir):
-        raise FileError('dark_dir does not exist:  '    + dark_dir)
-    if not os.path.isdir(ref_dir):
-        raise FileError('ref_dir does not exist:  '     + ref_dir)
+    ## Check that directories exist:
+    #if not os.path.isdir(science_dir):
+    #    raise FileError('science_dir does not exist:  ' + science_dir)
+    #if not os.path.isdir(dark_dir):
+    #    raise FileError('dark_dir does not exist:  '    + dark_dir)
+    #if not os.path.isdir(ref_dir):
+    #    raise FileError('ref_dir does not exist:  '     + ref_dir)
     
-    # Determine default PCTETAB (default = last alphabetical _pcte.fits from ref_dir):
-    if args.pctetab is None:
-        pctetabs = glob.glob(os.path.join(ref_dir, '*_pcte.fits*'))
-        pctetabs.sort()
-        if len(pctetabs) > 0:
-            pctetab = pctetabs[-1]
-        else:
-            raise FileError('No PCTETAB file found in {}.'.format(ref_dir))
-    else:
-        pctetab = args.pctetab
-    if not os.path.exists(pctetab):
-        raise FileError('PCTETAB does not exist:  ' + pctetab)
+    ## Determine default PCTETAB (default = last alphabetical _pcte.fits from ref_dir):
+    #if args.pctetab is None:
+    #    pctetabs = glob.glob(os.path.join(ref_dir, '*_pcte.fits*'))
+    #    pctetabs.sort()
+    #    if len(pctetabs) > 0:
+    #        pctetab = pctetabs[-1]
+    #    else:
+    #        raise FileError('No PCTETAB file found in {}.'.format(ref_dir))
+    #else:
+    #    pctetab = args.pctetab
+    #if not os.path.exists(pctetab):
+    #    raise FileError('PCTETAB does not exist:  ' + pctetab)
     
-    stis_cti.stis_cti(science_dir, dark_dir, ref_dir, pctetab, args.num_processes, 
+    stis_cti.stis_cti(science_dir, dark_dir, ref_dir, args.num_processes, args.pctetab, 
                       args.all_weeks_flag, args.allow, args.clean, verbose)
