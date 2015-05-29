@@ -1,5 +1,3 @@
-#! /usr/bin/env python
-
 from astropy.io import fits
 import glob
 from collections import Counter
@@ -297,50 +295,3 @@ def archive_dark_query(files, anneal_data=None, min_exptime=None, verbose=False,
         print
     
     return matches
-
-
-if __name__ == '__main__':
-    import pickle
-    import argparse
-    import sys
-    
-    parser = argparse.ArgumentParser( 
-        description='Determines which STIS/CCD darks are necessary to regenerate a ' + 
-            'science dataset\'s super-dark.', 
-        epilog='Author:   ' + __author__ + '; ' + 
-               'Version:  ' + __version__)
-    parser.add_argument(dest='file', action='store', nargs='+', 
-                        help='Science files to re-reduce (or search string).')
-    parser.add_argument('-t', dest='min_exptime', action='store', default=None, 
-                        help='Minimum exposure time of component darks (in seconds) [default=960]')
-    parser.add_argument('-p', dest='pickle_file', action='store', default=None, 
-                        help='Optional pickle file containing anneal data (skip querying MAST)')
-    parser.add_argument('-v', '--verbose', dest='verbose', action='store_true', 
-                        help='Print more information about matching annealing periods.')
-    parser.add_argument('-vv', dest='very_verbose', action='store_true', 
-                        help='Very verbose')
-    args = parser.parse_args()
-    
-    verbose = False
-    verbose = args.verbose
-    
-    if args.very_verbose:
-        verbose = 2
-    
-    if args.pickle_file != None:
-        if args.min_exptime is not None:
-            print 'Error!  Pickle file does not support non-default min_exptime.'
-            sys.exit()
-        anneal_data = pickle.load(open(args.pickle_file, 'rb'))
-        if verbose:
-            print 'Reading anneal_data from pickle file:  ' + args.pickle_file
-            print
-    else:
-        anneal_data = None
-    
-    if size(args.file) <= 0:
-        print 'Error:  No files found!'
-        sys.exit()
-    
-    tmp = archive_dark_query(args.file, anneal_data=anneal_data, min_exptime=args.min_exptime, 
-                             verbose=verbose, print_url=True)
