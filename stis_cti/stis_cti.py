@@ -86,11 +86,13 @@ def stis_cti(science_dir, dark_dir, ref_dir, num_processes, pctetab=None,
     except ImportError:
         sys_info = 'Indeterminate'
     
+    start_time = datetime.datetime.now()
+    
     # Print system information:
     print 'Running CTI-correction script:  {} v{}'.format(os.path.basename(__file__), __version__)
     print 'System:                         {}'.format(sys_info)
     print 'Number of parallel processes:   {}'.format(num_processes)
-    print 'Start time:                     {}\n'.format(datetime.datetime.now().isoformat(' '))
+    print 'Start time:                     {}\n'.format(start_time.isoformat(' '))
     
     # Check that directories exist:
     if not os.path.isdir(science_dir):
@@ -156,9 +158,6 @@ def stis_cti(science_dir, dark_dir, ref_dir, num_processes, pctetab=None,
         'blt.fits'     : '<pass>'   ,
         'cte.fits'     : '<pass>'   }
     
-    # Check for original MAST data results (*** Not needed? ***):
-    # ...
-    
     # Check for results from previous runs:
     rootnames = [os.path.basename(f).split('_',1)[0] for f in raw_files]
     check_for_old_output_files(rootnames, science_dir, output_mapping, clean, verbose)
@@ -184,9 +183,10 @@ def stis_cti(science_dir, dark_dir, ref_dir, num_processes, pctetab=None,
     map_outputs(rootnames, science_dir, output_mapping, verbose)
     log.flush()
     
-    print '\nCompletion time:                {}'.format(datetime.datetime.now().isoformat(' '))
+    end_time = datetime.datetime.now()
+    print '\nCompletion time:                {}'.format(end_time.isoformat(' '))
+    print 'Run time:                       {}'.format(end_time - start_time)
     print 'stis_cti.py complete!\n'
-    
     log.close()
 
 
@@ -257,7 +257,7 @@ def viable_ccd_file(file,
     
     # Set defaults:
     if earliest_date_allowed is None:
-        earliest_date_allowed = datetime.datetime(2009, 5, 1, 0, 0, 0)  # Or when? ***
+        earliest_date_allowed = datetime.datetime(2009, 5, 1, 0, 0, 0)
     if type(earliest_date_allowed) is not datetime.datetime:
         raise TypeError('earliest_date_allowed must be a datetime.datetime, not a {}.'.format(type(earliest_date_allowed)))
     
@@ -613,7 +613,6 @@ def generate_basedark(files, outname, pctetab, num_cpu, verbose=False):
     
     # Make a basedark from the corrected darks:
     refstis.basedark.make_basedark(corrected_files, refdark_name=os.path.normpath(os.path.expandvars(outname)))
-    # Print results of "[REF_DIR]/[basedark_name - '.fits']_joined_bd_calstis_log.txt"? ***
     
     if verbose:
         calstis_log = outname.replace('.fits','_joined_bd_calstis_log.txt', 1)
@@ -625,7 +624,6 @@ def generate_basedark(files, outname, pctetab, num_cpu, verbose=False):
     #os.remove(calstis_log)  # ***
     
     # Copy the last file's ext=0 header into a variable to use in populating the basedark header:
-    # (Maybe we should read all headers and make sure the keywords are the same [except PCTEFRAC]? ***)
     with fits.open(corrected_files[-1]) as file:
         dark_hdr0 = file[0].header
     
@@ -668,7 +666,6 @@ def generate_weekdark(files, outname, pctetab, basedark, num_cpu, verbose=False)
     #os.remove(calstis_log)  # ***
     
     # Copy the last file's ext=0 header into a variable to use in populating the basedark header:
-    # (Maybe we should read all headers and make sure the keywords are the same [except PCTEFRAC]? ***)
     with fits.open(corrected_files[-1]) as file:
         dark_hdr0 = file[0].header
     
@@ -846,13 +843,9 @@ def populate_darkfiles(raw_files, dark_dir, ref_dir, pctetab, num_processes, all
             
             # Update hdr0 of science file:
             # DARKFILE:
-            darkfile = os.path.join(ref_dir, weekdark_tag + '_drk.fits')  # Do something smart with system variables here? ***
+            darkfile = os.path.join(ref_dir, weekdark_tag + '_drk.fits')
             old_darkfile = f[0].header['DARKFILE']
             f[0].header['DARKFILE'] = darkfile
-            
-            #PCTETAB:
-            #old_pctetab = f[0].header.get('PCTETAB', default=None)
-            #f[0].header.set('PCTETAB', pctetab, after='DARKFILE')
             
             f.flush()
             if verbose:
@@ -965,7 +958,6 @@ def map_outputs(rootnames, science_dir, output_mapping, verbose=False):
                     if verbose:
                         print 'Renaming:  {}\t-->\t{}'.format(file, new_file)
                     os.rename(file, new_file)
-                    # *** What about the filename keyword? ***
             finally:
                 os.chdir(cwd)
 
