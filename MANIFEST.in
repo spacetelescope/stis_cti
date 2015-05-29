@@ -1,0 +1,9 @@
+include README.txt
+include LICENSE.txt
+include a01_stis_pcte.fits
+include setup.py
+include scripts/*
+include src/*
+include stis_cti/*.py
+exclude stis_cti/available_cpu_count.py
+global-exclude *.pyc
