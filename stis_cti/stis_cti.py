@@ -612,7 +612,7 @@ def generate_basedark(files, outname, pctetab, num_cpu, verbose=False):
     corrected_files = perform_cti_correction(files, pctetab, num_cpu, verbose)
     
     # Make a basedark from the corrected darks:
-    refstis.basedark.make_basedark(corrected_files, refdark_name=os.path.normpath(os.path.expandvars(outname)))
+    refstis.basedark(corrected_files, refdark_name=os.path.normpath(os.path.expandvars(outname)))
     
     if verbose:
         calstis_log = outname.replace('.fits','_joined_bd_calstis_log.txt', 1)
@@ -653,7 +653,7 @@ def generate_weekdark(files, outname, pctetab, basedark, num_cpu, verbose=False)
     corrected_files = perform_cti_correction(files, pctetab, num_cpu, verbose)
     
     # Make a weekdark from the corrected darks:
-    refstis.weekdark.make_weekdark(corrected_files, os.path.normpath(os.path.expandvars(outname)), 
+    refstis.weekdark(corrected_files, os.path.normpath(os.path.expandvars(outname)), 
         os.path.abspath(os.path.expandvars(basedark)))
     
     if verbose:
