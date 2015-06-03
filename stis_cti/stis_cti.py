@@ -9,11 +9,13 @@ import refstis
 from stistools import basic2d, calstis
 import archive_dark_query
 import StisPixCteCorr
+from crds.bestrefs import BestrefsScript  # Do some kind of import try/except here ***
 
 __author__  = 'Sean Lockwood'
 __version__ = '0.3_alpha'
 
 # stis_cti()
+# setup_crds()
 # determine_input_science()
 # viable_ccd_file()
 # bias_correct_science_files()
@@ -32,6 +34,8 @@ __version__ = '0.3_alpha'
 # map_outputs()
 # class Logger
 
+cdbs_server_url = 'https://hst-crds.stsci.edu'
+
 class FileError(Exception):
     pass
 
@@ -39,7 +43,8 @@ class VersionError(Exception):
     pass
 
 def stis_cti(science_dir, dark_dir, ref_dir, num_processes, pctetab=None, 
-             all_weeks_flag=False, allow=False, clean=False, verbose=False):
+             all_weeks_flag=False, allow=False, clean=False, crds_update=False, 
+             verbose=False):
     '''
     Run STIS/CCD pixel-based CTI-correction on data specified in SCIENCE_DIR.
     
@@ -70,6 +75,7 @@ def stis_cti(science_dir, dark_dir, ref_dir, num_processes, pctetab=None,
                             number of available CPU cores on your system = Y
           -p PCTETAB        name of PCTETAB to use in pixel-based correction
                             (default="[REF_DIR]/[MOST_RECENT]_pcte.fits")
+          --crds_update     update and download ref files
           --clean           remove intermediate and final products from previous runs
                             of this script ('*.txt' files are skipped and clobbered)
           -v, --verbose     print more information
@@ -142,6 +148,10 @@ def stis_cti(science_dir, dark_dir, ref_dir, num_processes, pctetab=None,
     if not allow:
         check_pctetab_version(pctetab, verbose)
     
+    # Setup environmental variables for CRDS code to update headers:
+    if crds_update:
+        setup_crds(ref_dir, verbose)
+    
     raw_files = determine_input_science(science_dir, allow, verbose)
     log.flush()
     
@@ -164,11 +174,11 @@ def stis_cti(science_dir, dark_dir, ref_dir, num_processes, pctetab=None,
     # (Note that the 'clean' option doesn't remove '*.txt' files.)
     
     # Check science files for uncorrected super-darks:
-    populate_darkfiles(raw_files, dark_dir, ref_dir, pctetab, num_processes, all_weeks_flag, verbose)
+    populate_darkfiles(raw_files, dark_dir, ref_dir, pctetab, num_processes, all_weeks_flag, crds_update, verbose)
     log.flush()
     
     # Bias-correct the science files:
-    bias_corrected = bias_correct_science_files(raw_files, verbose)
+    bias_corrected = bias_correct_science_files(raw_files, crds_update, verbose)
     log.flush()
     
     # Perform the CTI correction in parallel on the science data:
@@ -188,6 +198,48 @@ def stis_cti(science_dir, dark_dir, ref_dir, num_processes, pctetab=None,
     print 'Run time:                       {}'.format(end_time - start_time)
     print 'stis_cti.py complete!\n'
     log.close()
+
+
+def setup_crds(ref_dir, verbose=False):
+    '''
+    Setup $oref directory to house CRDS reference files:
+        (1) Pre-defined $oref shell variable, if directory is read/writable.
+        (2) ref_dir
+    
+    $oref value must end in the path separator (e.g. '/'), so this is appended if necessary.
+    '''
+    
+    if os.environ.get('CRDS_SERVER_URL') is None:
+        os.environ['CRDS_SERVER_URL'] = cdbs_server_url
+    
+    if verbose:
+        print 'Setting up CRDS environmental variables...'
+        print '$CRDS_SERVER_URL = {}'.format(os.environ['CRDS_SERVER_URL'])
+    
+    ref_dir = resolve_iraf_file(ref_dir)
+    if os.environ.get('CRDS_PATH') is None or not os.access(os.environ.get('CRDS_PATH'), os.R_OK | ok.W_OK):
+        try:
+            os.environ['CRDS_PATH'] = os.path.abspath(ref_dir)
+        except OSError as err:
+            print '\nPlease specify an \'CRDS_PATH\' directory with proper permissions.\n'
+            raise err
+    
+    if os.environ.get('oref') is None or not os.access(os.environ.get('oref'), os.R_OK | os.W_OK):
+        try:
+            os.environ['oref'] = os.path.abspath(os.path.join(ref_dir, 'references', 'hst', 'oref')) \
+                                 + os.path.sep
+        except OSError as err:
+            print '\nPlease specify an \'oref\' directory with proper permissions.\n'
+            raise err
+    
+    # Check that $oref ends in the path separator:
+    if os.environ['oref'][-1] != os.path.sep:
+        os.environ['oref'] += os.path.sep
+    
+    if verbose:
+        print '$oref = {}\n'.format(os.environ['oref'])
+    
+    return True
 
 
 def determine_input_science(science_dir, allow=False, verbose=False):
@@ -292,7 +344,7 @@ def viable_ccd_file(file,
         hdr0['BINAXIS1'] == 1 and hdr0['BINAXIS2'] == 1
 
 
-def bias_correct_science_files(raw_files, verbose):
+def bias_correct_science_files(raw_files, crds_update=False, verbose=False):
     if verbose:
         print 'Bias-correcting science files...\n'
     
@@ -303,6 +355,11 @@ def bias_correct_science_files(raw_files, verbose):
     for outname in outnames:
         if os.path.exists(outname):
             raise IOError('File {} already exists!'.format(outname))
+    
+    if crds_update:
+        errors = BestrefsScript('BestrefsScript --update-bestrefs -s 1 -f ' + ' '.join(raw_files))()
+        if int(errors) > 0:
+            raise Exception('CRDS BestrefsScript:  Call returned errors!')
     
     for raw_file, outname, trailer in zip(raw_files, outnames, trailers):
         if verbose:
@@ -680,7 +737,8 @@ def generate_weekdark(files, outname, pctetab, basedark, num_cpu, verbose=False)
         print 'Weekdark complete:  {}\n'.format(outname)
 
 
-def populate_darkfiles(raw_files, dark_dir, ref_dir, pctetab, num_processes, all_weeks_flag=False, verbose=False):
+def populate_darkfiles(raw_files, dark_dir, ref_dir, pctetab, num_processes, all_weeks_flag=False, 
+    crds_update=False, verbose=False):
     '''Check science files for uncorrected super-darks; and, if necessary, generate them and
        populate the science file headers.'''
     
@@ -714,6 +772,11 @@ def populate_darkfiles(raw_files, dark_dir, ref_dir, pctetab, num_processes, all
     if verbose:
         print 'Making superdarks for:'
         print '   ' + '\n   '.join(raw_files) + '\n'
+    
+    if crds_update:
+        errors = BestrefsScript('BestrefsScript --update-bestrefs -s 1 -f ' + ' '.join(raw_files))()
+        if int(errors) > 0:
+            raise Exception('CRDS BestrefsScript:  Call returned errors!')
     
     # Determine component darks used to make superdarks:
     anneal_data = archive_dark_query.get_anneal_boundaries()

@@ -27,7 +27,7 @@ setup(
                    'Topic :: Scientific/Engineering :: Physics',
                    'Topic :: Software Development :: Libraries :: Python Modules'],
     packages = ['stis_cti'],
-    requires = ['numpy', 'astropy', 'stistools (>=1.0.2)', 'refstis'],
+    requires = ['numpy', 'astropy', 'stistools (>=1.0.2)', 'refstis', 'crds (>= 1.4.0)'],
     scripts = ['scripts/stis_cti', 'scripts/archive_dark_query'],
     data_files = [('stis_cti', ['a01_stis_pcte.fits', 'LICENSE.txt'])],
     ext_modules = [StisPixCteCorr_module],

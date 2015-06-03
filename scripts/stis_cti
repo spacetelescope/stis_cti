@@ -40,6 +40,8 @@ if __name__ == '__main__':
     parser.add_argument('-p', dest='pctetab', action='store', metavar='PCTETAB', default=None, \
                         help='name of PCTETAB to use in pixel-based correction ' + \
                              '(default=\"[REF_DIR]/[MOST_RECENT]_pcte.fits\" or package\'s default PCTETAB)')
+    parser.add_argument('--crds_update', dest='crds_update', action='store_true', default=False,
+                        help='update and download ref files')
     parser.add_argument('--clean', dest='clean', action='store_true', default=False, 
                         help='remove intermediate and final products from previous runs of ' + \
                              'this script (\'*.txt\' files are skipped and clobbered)')
@@ -70,4 +72,4 @@ if __name__ == '__main__':
     ref_dir     = os.path.normpath(args.ref_dir)     + os.path.sep
     
     stis_cti.stis_cti(science_dir, dark_dir, ref_dir, args.num_processes, args.pctetab, 
-                      args.all_weeks_flag, args.allow, args.clean, verbose)
+                      args.all_weeks_flag, args.allow, args.clean, args.crds_update, verbose)
