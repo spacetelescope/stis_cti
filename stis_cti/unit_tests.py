@@ -105,7 +105,7 @@ def write_superdark(superdark):
 # ----------------------------------------------------------------------------------------
 # Here are the unit tests:
 
-class TestPaths:
+class TestPaths(object):
     '''
     Tests functionality of stis_cti.resolve_iraf_file
     '''
@@ -140,7 +140,7 @@ class TestPaths:
         assert_equals(ex.message, "Can't resolve environmental variable 'undoref'.")
 
 
-class TestFileFiltering:
+class TestFileFiltering(object):
     '''
     Tests functionality of stis_cti.viable_ccd_file
     '''
@@ -191,7 +191,7 @@ class TestFileFiltering:
         assert_false(viable_ccd_file(self.test_file))
 
 
-class Test_determine_input_science:
+class Test_determine_input_science(object):
     '''
     Tests functionality of stis_cti.determine_input_science
     '''
@@ -241,7 +241,7 @@ class Test_determine_input_science:
         assert_equals(determine_input_science(self.test_dir, False, False), [self.test_file])
 
 
-class Test_check_pctetab_version:
+class Test_check_pctetab_version(object):
     '''
     Tests functionality of stis_cti.check_pctetab_version
     '''
@@ -264,7 +264,7 @@ class Test_check_pctetab_version:
         assert_raises(VersionError, check_pctetab_version, self.pctetab, False, '0.1', '1.999')
 
 
-class Test_superdark_hash:
+class Test_superdark_hash(object):
     '''
     Tests functionality of stis_cti.superdark_hash
     '''
@@ -372,7 +372,7 @@ class Test_superdark_hash:
             superdark_hash(pctetab=self.pctetab, files=['abc_cte.fits', 'def_cte.fits', 'hij_cte.fits']))
     
 
-class Test_archive_dark_query:
+class Test_archive_dark_query(object):
     '''
     Tests functionality of stis_cti.archive_dark_query
     '''
@@ -412,7 +412,7 @@ class Test_archive_dark_query:
         assert_raises(IOError, archive_dark_query, [undefined_filename], None, None, False, False)
 
 
-class Test_check_for_old_output_files:
+class Test_check_for_old_output_files(object):
     '''
     Tests functionality of stis_cti.check_for_old_output_files
     '''
