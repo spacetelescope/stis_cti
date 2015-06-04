@@ -45,7 +45,7 @@ if __name__ == '__main__':
     parser.add_argument('--clean', dest='clean', action='store_true', default=False, 
                         help='remove intermediate and final products from previous runs of ' + \
                              'this script (\'*.txt\' files are skipped and clobbered)')
-    parser.add_argument('-v', '--verbose', dest='verbose', action='store_true', default=False, 
+    parser.add_argument('-v', '--verbose', dest='verbose', action='store_true', default=True, 
                         help='print more information')
     parser.add_argument('-vv', dest='very_verbose', action='store_true', 
                         help='very verbose')
