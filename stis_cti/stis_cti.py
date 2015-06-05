@@ -100,6 +100,8 @@ def stis_cti(science_dir, dark_dir, ref_dir, num_processes, pctetab=None,
     print 'Number of parallel processes:   {}'.format(num_processes)
     if clean:
         print '--clean'
+    if crds_update:
+        print '--crds_update'
     if verbose:
         print 'verbose mode:                   {}'.format(verbose)
 
