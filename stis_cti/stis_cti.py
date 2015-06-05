@@ -736,7 +736,8 @@ def generate_weekdark(files, outname, pctetab, basedark, num_cpu, clean_all=Fals
         print '   ' + '\n   '.join(files) + '\n'
     
     # Correct component darks, if necessary:
-    corrected_files = perform_cti_correction(files, pctetab, num_cpu, clean_all, verbose)
+    corrected_files = perform_cti_correction(files, pctetab, num_cpu, False, verbose)
+      # Don't delete component darks here, as this has already been done in generate_basedark().
     
     # Make a weekdark from the corrected darks:
     refstis.weekdark(corrected_files, os.path.normpath(os.path.expandvars(outname)), 
