@@ -43,8 +43,8 @@ class VersionError(Exception):
     pass
 
 def stis_cti(science_dir, dark_dir, ref_dir, num_processes, pctetab=None, 
-             all_weeks_flag=False, allow=False, clean=False, crds_update=False, 
-             verbose=False):
+             all_weeks_flag=False, allow=False, clean=False, clean_all=False, 
+             crds_update=False, verbose=False):
     '''
     Run STIS/CCD pixel-based CTI-correction on data specified in SCIENCE_DIR.
     
@@ -78,6 +78,8 @@ def stis_cti(science_dir, dark_dir, ref_dir, num_processes, pctetab=None,
           --crds_update     update and download ref files
           --clean           remove intermediate and final products from previous runs
                             of this script ('*.txt' files are skipped and clobbered)
+          --clean_all       '--clean' + remove previous super-darks and CTI-corrected
+                            component darks
           -v, --verbose     print more information
           -vv               very verbose
     
@@ -100,6 +102,8 @@ def stis_cti(science_dir, dark_dir, ref_dir, num_processes, pctetab=None,
     print 'Number of parallel processes:   {}'.format(num_processes)
     if clean:
         print '--clean'
+    if clean_all:
+        print '--clean_all'
     if crds_update:
         print '--crds_update'
     if verbose:
@@ -114,6 +118,9 @@ def stis_cti(science_dir, dark_dir, ref_dir, num_processes, pctetab=None,
         raise FileError('dark_dir does not exist:  '    + dark_dir)
     if not os.path.isdir(ref_dir):
         raise FileError('ref_dir does not exist:  '     + ref_dir)
+    
+    if clean_all:
+        clean = True
     
     # Check PCTETAB:
     if pctetab is None:
@@ -181,7 +188,8 @@ def stis_cti(science_dir, dark_dir, ref_dir, num_processes, pctetab=None,
     # (Note that the 'clean' option doesn't remove '*.txt' files.)
     
     # Check science files for uncorrected super-darks:
-    populate_darkfiles(raw_files, dark_dir, ref_dir, pctetab, num_processes, all_weeks_flag, crds_update, verbose)
+    populate_darkfiles(raw_files, dark_dir, ref_dir, pctetab, num_processes, all_weeks_flag, 
+        clean_all, crds_update, verbose)
     log.flush()
     
     # Bias-correct the science files:
@@ -189,7 +197,7 @@ def stis_cti(science_dir, dark_dir, ref_dir, num_processes, pctetab=None,
     log.flush()
     
     # Perform the CTI correction in parallel on the science data:
-    cti_corrected = perform_cti_correction(bias_corrected, pctetab, num_processes, verbose)
+    cti_corrected = perform_cti_correction(bias_corrected, pctetab, num_processes, False, verbose)
     log.flush()
     
     # Finish running CalSTIS on the CTI-corrected science data:
@@ -570,7 +578,7 @@ def func_star(a_b):
     return func(*a_b)
 
 
-def perform_cti_correction(files, pctetab, num_cpu=1, verbose=False):
+def perform_cti_correction(files, pctetab, num_cpu=1, clean_all=False, verbose=False):
     # The call to StisPixCteCorr should be done in parallel!
     
     perform_files = []
@@ -579,6 +587,12 @@ def perform_cti_correction(files, pctetab, num_cpu=1, verbose=False):
     for file in files:
         outname = file.replace('_flt.fits', '_cte.fits', 1).replace('_blt.fits', '_cte.fits', 1)
         outnames.append(outname)
+        
+        if clean_all and os.path.exists(outname):
+            if verbose:
+                print 'Deleting file:  {}'.format(outname)
+            os.remove(outname)
+        
         if os.path.exists(outname) and (superdark_hash(pctetab=pctetab, files=[]) == superdark_hash(superdark=outname, files=[])):
             if verbose:
                 print 'Skipping regeneration of CTI-corrected file:  {}'.format(outname)
@@ -660,10 +674,14 @@ def copy_dark_keywords(superdark, dark_hdr0, pctetab, history=None, basedark=Non
                 s[0].header['HISTORY'] = h
 
 
-def generate_basedark(files, outname, pctetab, num_cpu, verbose=False):
-    # Don't make a basedark if it already exists:
+def generate_basedark(files, outname, pctetab, num_cpu, clean_all=False, verbose=False):
     if os.path.exists(os.path.expandvars(outname)):
-        if superdark_hash(pctetab=pctetab, files=files) == superdark_hash(superdark=outname):
+        if clean_all and os.path.exists(outname):
+            if verbose:
+                print 'Deleting basedark:  {}'.format(outname)
+            os.remove(outname)
+        elif superdark_hash(pctetab=pctetab, files=files) == superdark_hash(superdark=outname):
+            # Don't make a basedark if it already exists:
             if verbose:
                 print 'Skipping regeneration of basedark:  {}'.format(outname)
             return
@@ -673,7 +691,7 @@ def generate_basedark(files, outname, pctetab, num_cpu, verbose=False):
         print '   ' + '\n   '.join(files) + '\n'
     
     # Correct component darks, if necessary:
-    corrected_files = perform_cti_correction(files, pctetab, num_cpu, verbose)
+    corrected_files = perform_cti_correction(files, pctetab, num_cpu, clean_all, verbose)
     
     # Make a basedark from the corrected darks:
     refstis.basedark(corrected_files, refdark_name=os.path.normpath(os.path.expandvars(outname)))
@@ -701,10 +719,14 @@ def generate_basedark(files, outname, pctetab, num_cpu, verbose=False):
         print 'Basedark complete:  {}\n'.format(outname)
 
 
-def generate_weekdark(files, outname, pctetab, basedark, num_cpu, verbose=False):
-    # Don't make a weekdark if it already exists:
+def generate_weekdark(files, outname, pctetab, basedark, num_cpu, clean_all=False, verbose=False):
     if os.path.exists(os.path.expandvars(outname)):
-        if superdark_hash(pctetab=pctetab, files=files) == superdark_hash(superdark=outname):
+        if clean_all and os.path.exists(outname):
+            if verbose:
+                print 'Deleting weekdark:  {}'.format(outname)
+            os.remove(outname)
+        elif superdark_hash(pctetab=pctetab, files=files) == superdark_hash(superdark=outname):
+            # Don't make a weekdark if it already exists:
             if verbose:
                 print 'Skipping regeneration of weekdark:  {}'.format(outname)
             return
@@ -714,7 +736,7 @@ def generate_weekdark(files, outname, pctetab, basedark, num_cpu, verbose=False)
         print '   ' + '\n   '.join(files) + '\n'
     
     # Correct component darks, if necessary:
-    corrected_files = perform_cti_correction(files, pctetab, num_cpu, verbose)
+    corrected_files = perform_cti_correction(files, pctetab, num_cpu, clean_all, verbose)
     
     # Make a weekdark from the corrected darks:
     refstis.weekdark(corrected_files, os.path.normpath(os.path.expandvars(outname)), 
@@ -745,7 +767,7 @@ def generate_weekdark(files, outname, pctetab, basedark, num_cpu, verbose=False)
 
 
 def populate_darkfiles(raw_files, dark_dir, ref_dir, pctetab, num_processes, all_weeks_flag=False, 
-    crds_update=False, verbose=False):
+    clean_all=False, crds_update=False, verbose=False):
     '''Check science files for uncorrected super-darks; and, if necessary, generate them and
        populate the science file headers.'''
     
@@ -759,9 +781,18 @@ def populate_darkfiles(raw_files, dark_dir, ref_dir, pctetab, num_processes, all
             with fits.open(superdark_resolved) as sd:
                 hdr0 = sd[0].header
                 if hdr0.get('PCTECORR', default='unknown').strip().upper() == 'COMPLETE':
-                    if verbose:
-                        print 'Superdark {} is already CTI-corrected.'.format(superdark_resolved)
-                    pass
+                    if not clean_all:
+                        if verbose:
+                            print 'Superdark {} is already CTI-corrected.'.format(superdark_resolved)
+                        pass
+                    else:
+                        if verbose:
+                            print 'Remaking CTI-corrected superdark {}'.format(superdark_resolved)
+                        if os.path.abspath(os.path.dirname(superdark_resolved)) == os.path.abspath(ref_dir):
+                            os.remove(superdark_resolved)
+                            if verbose:
+                                print 'Deleted old superdark:  {}'.format(superdark_resolved)
+                        superdark_remakes.extend(file)
                 else:
                     if verbose:
                         print 'Superdark {} is not CTI-corrected.'.format(superdark_resolved)
