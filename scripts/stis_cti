@@ -43,6 +43,8 @@ if __name__ == '__main__':
     parser.add_argument('--clean', dest='clean', action='store_true', default=False, 
                         help='remove intermediate and final products from previous runs of ' + \
                              'this script (\'*.txt\' files are skipped and clobbered)')
+    parser.add_argument('--clean_all', dest='clean_all', action='store_true', default=False,
+                        help='\'--clean\' + remove previous super-darks and CTI-corrected component darks')
     parser.add_argument('-v', '--verbose', dest='verbose', action='store_true', default=True, 
                         help='print more information')
     parser.add_argument('-vv', dest='very_verbose', action='store_true', 
@@ -70,4 +72,4 @@ if __name__ == '__main__':
     ref_dir     = os.path.normpath(args.ref_dir)     + os.path.sep
     
     stis_cti.stis_cti(science_dir, dark_dir, ref_dir, args.num_processes, args.pctetab, 
-                      args.all_weeks_flag, args.allow, args.clean, verbose)
+                      args.all_weeks_flag, args.allow, args.clean, args.clean_all, verbose)

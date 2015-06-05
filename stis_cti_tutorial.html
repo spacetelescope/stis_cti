@@ -1689,7 +1689,7 @@ div#notebook {
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>By Sean Lockwood &amp; John Biretta for the COS/STIS Team at STScI<br>2015 June 04</p>
-<p>Thank you for trying out this <strong>beta</strong> release.  Please note that STScI is not responsible for any damages resulting from the use of this software.<br>Please send any feedback to <a href="&#x6d;&#97;&#x69;&#x6c;&#116;&#x6f;&#58;&#98;&#105;&#114;&#x65;&#116;&#x74;&#x61;&#x40;&#x73;&#116;&#x73;&#99;&#105;&#x2e;&#x65;&#x64;&#x75;">&#98;&#105;&#114;&#x65;&#116;&#x74;&#x61;&#x40;&#x73;&#116;&#x73;&#99;&#105;&#x2e;&#x65;&#x64;&#x75;</a>.</p>
+<p>Thank you for trying out this <strong>beta</strong> release.  Please note that STScI is not responsible for any damages resulting from the use of this software.<br>Please send any feedback to <a href="&#109;&#x61;&#105;&#x6c;&#x74;&#111;&#58;&#98;&#x69;&#114;&#101;&#116;&#116;&#97;&#64;&#115;&#116;&#x73;&#99;&#105;&#46;&#101;&#100;&#x75;">&#98;&#x69;&#114;&#101;&#116;&#116;&#97;&#64;&#115;&#116;&#x73;&#99;&#105;&#46;&#101;&#100;&#x75;</a>.</p>
 </div>
 </div>
 </div>
@@ -1821,11 +1821,10 @@ In&nbsp;[1]:
 <div class="output_area"><div class="prompt"></div>
 <div class="output_subarea output_stream output_stdout output_text">
 <pre>
-usage: stis_cti [-h] [-d DARK_DIR] [-r REF_DIR] [-n NUM_PROCESSES] [-p PCTETAB] [--crds_update] [--clean] [-v] [-vv]
-                [SCIENCE_DIR]
+usage: stis_cti [-h] [-d DARK_DIR] [-r REF_DIR] [-n NUM_PROCESSES] [-p PCTETAB] [--clean] [--clean_all] [-v] [-vv] [SCIENCE_DIR]
 
-Run STIS/CCD pixel-based CTI-correction on data specified in SCIENCE_DIR. Uncorrected component darks are read from
-DARK_DIR, and corrected component darks are written there too. Corrected super-darks are read from and stored to REF_DIR.
+Run STIS/CCD pixel-based CTI-correction on data specified in SCIENCE_DIR. Uncorrected component darks are read from DARK_DIR, and corrected component darks are written
+there too. Corrected super-darks are read from and stored to REF_DIR.
 
 positional arguments:
   SCIENCE_DIR       directory containing RAW science data (default=&quot;./&quot;)
@@ -1834,13 +1833,10 @@ optional arguments:
   -h, --help        show this help message and exit
   -d DARK_DIR       directory of dark FLT data (default=&quot;[SCIENCE_DIR]/../darks/&quot;)
   -r REF_DIR        directory of CTI-corrected reference files (default=&quot;[SCIENCE_DIR]/../ref/&quot;)
-  -n NUM_PROCESSES  maximum number of parallel processes to run (default=1); number of available CPU cores on your system
-                    = 2
-  -p PCTETAB        name of PCTETAB to use in pixel-based correction (default=&quot;[REF_DIR]/[MOST_RECENT]_pcte.fits&quot; or
-                    package&apos;s default PCTETAB)
-  --crds_update     update and download ref files
-  --clean           remove intermediate and final products from previous runs of this script (&apos;*.txt&apos; files are skipped
-                    and clobbered)
+  -n NUM_PROCESSES  maximum number of parallel processes to run (default=1); number of available CPU cores on your system = 2
+  -p PCTETAB        name of PCTETAB to use in pixel-based correction (default=&quot;[REF_DIR]/[MOST_RECENT]_pcte.fits&quot; or package&apos;s default PCTETAB)
+  --clean           remove intermediate and final products from previous runs of this script (&apos;*.txt&apos; files are skipped and clobbered)
+  --clean_all       &apos;--clean&apos; + remove previous super-darks and CTI-corrected component darks
   -v, --verbose     print more information
   -vv               very verbose
 
@@ -2026,9 +2022,24 @@ In&nbsp;[]:
 <p>Note that this option is not currently compatible with specifying one&#39;s own super-dark, as the user-specified <code>DARKFILE</code> will be over-written.  As a workaround, you may run the CRDS bestref script manually and then override the <code>DARKFILE</code> keyword as desired.</p>
 <p>To run CRDS bestref manually, see <a href="https://hst-crds.stsci.edu/docs/cmdline_bestrefs/">https://hst-crds.stsci.edu/docs/cmdline_bestrefs/</a> or re-retrieve your data and best reference files from MAST.  You may also wish to setup a common local CRDS cache of reference files to avoid redundancy.</p>
 <p><strong> PCTETAB updates: </strong><br>The <code>stis_cti</code> package includes the <code>v1.0 PCTETAB</code> reference file, which specifies the parameters necessary to run the pixel-based correction on STIS data.  If this file is updated, or if an advanced user wishes to modify the file to run the correction differently, the new version may be placed in the <code>ref/</code> directory.  (If multiple <code>PCTETAB</code> files are present, the one with the last alphabetical name will be used.)</p>
-<p>To completely re-run the correction, delete any basedarks/weekdarks in the <code>ref/</code> directory and any <code>_cte.fits</code> files in the <code>darks/</code> directory.</p>
+<p>To completely re-run the correction, you can delete any basedarks/weekdarks in the <code>ref/</code> directory and any <code>_cte.fits</code> files in the <code>darks/</code> directory by specifying the <code>&#39;--clean_all&#39;</code> option.</p>
 </div>
 </div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">
+In&nbsp;[]:
+</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class="highlight"><pre> 
+</pre></div>
+
+</div>
+</div>
+</div>
+
 </div>
     </div>
   </div>
