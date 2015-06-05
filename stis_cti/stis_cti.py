@@ -975,12 +975,12 @@ def populate_darkfiles(raw_files, dark_dir, ref_dir, pctetab, num_processes, all
             weekdarks[weekdark_tag]['amp'].strip().lower(), weekdarks[weekdark_tag]['anneal_num']))
         anneal = [a for a in anneals if a['index'] == weekdarks[weekdark_tag]['anneal_num']][0]
         files = [f['file'] for f in anneal['darks'] if f['CCDAMP'] == weekdarks[weekdark_tag]['amp']]
-        generate_basedark(files, basedark, pctetab, num_processes, verbose)  # Or, do we want to compartmentalize the amp selection?
+        generate_basedark(files, basedark, pctetab, num_processes, clean_all, verbose)  # Or, do we want to compartmentalize the amp selection?
         
         # Make weekdark:
         weekdark_name = os.path.abspath(os.path.expandvars(os.path.join(ref_dir, weekdark_tag + '_drk.fits')))
         files = [f['file'] for f in weekdarks[weekdark_tag]['darks']]  # Already selected for amp
-        generate_weekdark(files, weekdark_name, pctetab, basedark, num_processes, verbose)
+        generate_weekdark(files, weekdark_name, pctetab, basedark, num_processes, clean_all, verbose)
 
 
 def check_for_old_output_files(rootnames, science_dir, output_mapping, clean=False, verbose=False):
