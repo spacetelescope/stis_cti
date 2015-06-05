@@ -618,10 +618,10 @@ def copy_dark_keywords(superdark, dark_hdr0, pctetab, history=None, basedark=Non
 
 def generate_basedark(files, outname, pctetab, num_cpu, clean_all=False, verbose=False):
     if os.path.exists(os.path.expandvars(outname)):
-        if clean_all and os.path.exists(outname):
+        if clean_all:
             if verbose:
-                print 'Deleting basedark:  {}'.format(outname)
-            os.remove(outname)
+                print 'Deleting basedark:  {}'.format(os.path.expandvars(outname))
+            os.remove(os.path.expandvars(outname))
         elif superdark_hash(pctetab=pctetab, files=files) == superdark_hash(superdark=outname):
             # Don't make a basedark if it already exists:
             if verbose:
@@ -663,10 +663,10 @@ def generate_basedark(files, outname, pctetab, num_cpu, clean_all=False, verbose
 
 def generate_weekdark(files, outname, pctetab, basedark, num_cpu, clean_all=False, verbose=False):
     if os.path.exists(os.path.expandvars(outname)):
-        if clean_all and os.path.exists(outname):
+        if clean_all:
             if verbose:
-                print 'Deleting weekdark:  {}'.format(outname)
-            os.remove(outname)
+                print 'Deleting weekdark:  {}'.format(os.path.expandvars(outname))
+            os.remove(os.path.expandvars(outname))
         elif superdark_hash(pctetab=pctetab, files=files) == superdark_hash(superdark=outname):
             # Don't make a weekdark if it already exists:
             if verbose:
