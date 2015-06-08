@@ -47,6 +47,8 @@ def stis_cti(science_dir, dark_dir, ref_dir, num_processes, pctetab=None,
           from previous runs of this script.
       clean_all (bool, optional):  'clean' + remove CTI-corrected super-darks and component
           darks before reprocessing.
+      crds_update (bool, optional):  Runs crds.bestrefs script to update science file headers
+          and download pipeline reference files.
       verbose (int {0,1,2}, optional, default=1):  Verbosity of text printed to the screen
           and saved in the log file.
     

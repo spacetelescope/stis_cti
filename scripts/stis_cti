@@ -38,7 +38,7 @@ if __name__ == '__main__':
                         help='name of PCTETAB to use in pixel-based correction ' + \
                              '(default=\"[REF_DIR]/[MOST_RECENT]_pcte.fits\" or package\'s default PCTETAB)')
     parser.add_argument('--crds_update', dest='crds_update', action='store_true', default=False,
-                        help='update and download ref files')
+                        help='update and download $oref files')
     parser.add_argument('--clean', dest='clean', action='store_true', default=False, 
                         help='remove intermediate and final products from previous runs of ' + \
                              'this script (\'*.txt\' files are skipped and clobbered)')
