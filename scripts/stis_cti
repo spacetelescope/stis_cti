@@ -14,9 +14,6 @@ if __name__ == '__main__':
     default_max_cores = 15
     default_cores = min([max([1, num_available_cores - 2]), default_max_cores])
     
-    # For prettier implementation of help text, see:
-    # http://stackoverflow.com/questions/3853722/python-argparse-how-to-insert-newline-in-the-help-text
-    
     parser = argparse.ArgumentParser( 
         description='Run STIS/CCD pixel-based CTI-correction on data specified in SCIENCE_DIR. ' + \
                     'Uncorrected component darks are read from DARK_DIR, and ' + \

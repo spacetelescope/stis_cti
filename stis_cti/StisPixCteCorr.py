@@ -10,13 +10,13 @@ http://adsabs.harvard.edu/abs/2010PASP..122.1035A
 .. note::
     * This code only works for STIS/CCD but can be modified to work on other
       detectors.
-    * It was developed for use with full-frame GAIN=2 FLT images as input.
+    * It was developed for use with full-frame GAIN={1,4} FLT images as input.
     * It has not been fully tested with any other formats.
     * Noise is slightly enhanced in the output (see [Anderson]_).
     * This code assumes a linear time dependence for a given set of
       coefficients.
     * This algorithm does not account for traps with very long release timescale
-      but it is not an issue for ACS/WFC.
+      but it is not an issue.
     * This code also does not account for second-exposure effect.
     * Multi-threading support was not implemented in this version.
 
@@ -51,24 +51,13 @@ you might also need to do one or more of the following before running the task:
         * EXTNAME (must be DQ)
         * EXTVER (1 or greater)
 
-Examples
+Example
 --------
 To correct a set of STIS FLT images, with one new CTE-corrected image
 for each input.
 
 >>> from stistools import StisPixCteCorr
 >>> StisPixCteCorr.CteCorr('o*q_flt.fits')
-
-Using the TEAL GUI.
-
->>> from stistools import StisPixCteCorr
->>> from stsci.tools import teal
->>> teal.teal('StisPixCteCorr')
-
-From within PyRAF::
-
-    --> from stistools import StisPixCteCorr
-    --> epar StisPixCteCorr
 
 References
 ----------
