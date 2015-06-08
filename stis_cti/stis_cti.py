@@ -12,27 +12,7 @@ import StisPixCteCorr
 from crds.bestrefs import BestrefsScript  # Do some kind of import try/except here ***
 
 __author__  = 'Sean Lockwood'
-__version__ = '0.3_alpha'
-
-# stis_cti()
-# setup_crds()
-# determine_input_science()
-# viable_ccd_file()
-# bias_correct_science_files()
-# run_calstis_on_science()
-# resolve_iraf_file()
-# superdark_hash()
-# check_pctetab_version()
-# func()
-# func_star()
-# perform_cti_correction()
-# copy_dark_keywords()
-# generate_basedark()
-# generate_weekdark()
-# populate_darkfiles()
-# check_for_old_output_files()
-# map_outputs()
-# class Logger
+__version__ = '0.4_beta'
 
 cdbs_server_url = 'https://hst-crds.stsci.edu'
 
@@ -44,46 +24,36 @@ class VersionError(Exception):
 
 def stis_cti(science_dir, dark_dir, ref_dir, num_processes, pctetab=None, 
              all_weeks_flag=False, allow=False, clean=False, clean_all=False, 
-             crds_update=False, verbose=False):
+             crds_update=False, verbose=1):
     '''
     Run STIS/CCD pixel-based CTI-correction on data specified in SCIENCE_DIR.
     
-    Uncorrected component darks are read from DARK_DIR, and corrected component
-    darks are written there too. Corrected super-darks are read from and stored to
-    REF_DIR.
+    Args:
+      science_dir (str):  Directory containing uncalibrated science data to be corrected.
+      dark_dir (str):  Directory containing calibrated component darks to be corrected and
+          location where CTI-corrected component darks are placed.
+      ref_dir (str):  Directory where CTI-corrected super-darks are placed.  These will be
+          used again unless they are deleted or clean_all=True.
+      num_processes (int):  Max number of parallel processes to use when running the CTI-
+          correction algorithm.
+      pctetab (str, optional):  The path + name of the PCTETAB reference file to use in
+          the CTI-correction.  If not specified, one is selected from (1) the ref_dir, or
+          (2) from the package data directory.  The last file (alphabetically) is chosen.
+      all_weeks_flag (bool, optional) [UNTESTED]:  Generates weekdarks for all weeks within
+          each annealing period to be processed.
+      allow (bool, optional) [UNTESTED]:  Use more lenient filtering when determining which
+          files should be allowed to be corrected.
+      clean (bool, optional):  Remove intermediate and final products in the science_dir
+          from previous runs of this script.
+      clean_all (bool, optional):  'clean' + remove CTI-corrected super-darks and component
+          darks before reprocessing.
+      verbose (int {0,1,2}, optional, default=1):  Verbosity of text printed to the screen
+          and saved in the log file.
     
-    From the command line:
-        usage: stis_cti.py [-h] [-d DARK_DIR] [-r REF_DIR] [-n NUM_PROCESSES]
-                           [-p PCTETAB] [--clean] [-v | -vv]
-                           [SCIENCE_DIR]
-        
-        Run STIS/CCD pixel-based CTI-correction on data specified in SCIENCE_DIR.
-        Uncorrected component darks are read from DARK_DIR, and corrected component
-        darks are written there too. Corrected super-darks are read from and stored to
-        REF_DIR.
-        
-        positional arguments:
-          SCIENCE_DIR       directory containing RAW science data (default="./")
-        
-        optional arguments:
-          -h, --help        show this help message and exit
-          -d DARK_DIR       directory of dark FLT data
-                            (default="[SCIENCE_DIR]/../darks/")
-          -r REF_DIR        directory of CTI-corrected reference files
-                            (default="[SCIENCE_DIR]/../ref/")
-          -n NUM_PROCESSES  maximum number of parallel processes to run (default=X);
-                            number of available CPU cores on your system = Y
-          -p PCTETAB        name of PCTETAB to use in pixel-based correction
-                            (default="[REF_DIR]/[MOST_RECENT]_pcte.fits")
-          --crds_update     update and download ref files
-          --clean           remove intermediate and final products from previous runs
-                            of this script ('*.txt' files are skipped and clobbered)
-          --clean_all       '--clean' + remove previous super-darks and CTI-corrected
-                            component darks
-          -v, --verbose     print more information
-          -vv               very verbose
-    
-    Note that 'all_week_flag' and 'allow' options have not been fully tested!
+    Notes:
+      $oref shell variable must be set to the directory of STIS standard pipeline reference files.
+      
+      Note that 'all_week_flag' and 'allow' options have not been tested!
     '''
     # Open a log file and copy {STDOUT, STDERR} to it:
     log = Logger(os.path.join(science_dir, 'cti_{}.log'.format(datetime.datetime.now().isoformat('_'))))
@@ -179,7 +149,7 @@ def stis_cti(science_dir, dark_dir, ref_dir, num_processes, pctetab=None,
         'cte_x1d.fits' : 'x1c.fits' ,
         'blt_tra.txt'  : 'trb.txt'  ,
         'cte_tra.txt'  : 'trc.txt'  ,
-        'blt.fits'     : '<pass>'   ,
+        'blt.fits'     : '<remove>' ,
         'cte.fits'     : '<pass>'   }
     
     # Check for results from previous runs:
@@ -326,7 +296,8 @@ def viable_ccd_file(file,
     if earliest_date_allowed is None:
         earliest_date_allowed = datetime.datetime(2009, 5, 1, 0, 0, 0)
     if type(earliest_date_allowed) is not datetime.datetime:
-        raise TypeError('earliest_date_allowed must be a datetime.datetime, not a {}.'.format(type(earliest_date_allowed)))
+        raise TypeError('earliest_date_allowed must be a datetime.datetime, not a {}.'.format(
+            type(earliest_date_allowed)))
     
     if amplifiers_allowed is None:
         amplifiers_allowed = ['D']
@@ -401,10 +372,7 @@ def bias_correct_science_files(raw_files, crds_update=False, verbose=False):
         
         if status != 0:
             raise RuntimeError('basic2d returned non-zero status on {}:  {}'.format(raw_file, status))
-        
-
-        # Remove trailer file?
-        
+    
     return outnames
 
 
@@ -412,11 +380,11 @@ def run_calstis_on_science(files, verbose):
     if verbose:
         print 'Running CalSTIS on science files...\n'
     
+    # Note that outname is determined by CalSTIS, and not this function.
     outnames = [f.replace('_cte.fits', '_cte_flt.fits', 1) for f in files]  # Replicating CalSTIS' behavior
     trailers = [os.path.abspath(os.path.expandvars(f.replace('_cte.fits', '_cte_tra.txt', 1))) for f in files]
-    #trailers = [os.path.basename(f.replace('_cte.fits', '_cte_tra.txt',  1)) for f in files]  # Also remove path
     
-    # Check for previous _blt.fits files first:
+    # Check for previous output files:
     for outname in outnames:
         if os.path.exists(outname):
             raise IOError('File {} already exists!'.format(outname))
@@ -426,7 +394,7 @@ def run_calstis_on_science(files, verbose):
             print 'Running calstis on {} --> {}.'.format(file, outname)
         if os.path.exists(trailer):
             os.remove(trailer)
-        # Note that outname is determined by CalSTIS, and not this call:
+        
         cwd = os.getcwd()
         try:
             # Need to change to science directory to find associated wavecals.
@@ -449,13 +417,12 @@ def run_calstis_on_science(files, verbose):
 
 
 def resolve_iraf_file(file):
-    # Email sent to phil to get the proper version of this routine...
-    
+    '''Resolves pathvar$filename into usable format.'''
     dir = ''
     rootname = file
     
     if '$' in file and file[0] == '$':
-        dir, rootname = file[1:].split('/', 1)  # What about '\' ?
+        dir, rootname = file[1:].split(os.path.sep, 1)
     elif '$' in file:
         dir, rootname = file.split('$', 1)
     
@@ -565,7 +532,6 @@ def superdark_hash(sim_nit=None, shft_nit=None, rn_clip=None, nsemodel=None, sub
         exposures, \
         sim_nit, shft_nit, rn_clip, nsemodel, subthrsh, pcte_ver)
     
-    #return hash_str
     return hash(hash_str)
 
 
@@ -579,7 +545,7 @@ def func_star(a_b):
 
 
 def perform_cti_correction(files, pctetab, num_cpu=1, clean_all=False, verbose=False):
-    # The call to StisPixCteCorr should be done in parallel!
+    '''Run StisPixCteCorr when needed.'''
     
     perform_files = []
     outnames = []
@@ -628,11 +594,9 @@ def perform_cti_correction(files, pctetab, num_cpu=1, clean_all=False, verbose=F
     p.close()
     p.join()
     
-    ## Single-threaded version:
+    # Single-threaded version:
     #for perform_file, outname in zip(perform_files, outnames):
     #    StisPixCteCorr.CteCorr(perform_file, outFits=outname)
-    
-    # *** Do the corrected files need to be fed through DQICORR again to fix flags? ***
     
     if len(outnames) == 0:
         outnames = None
@@ -641,6 +605,8 @@ def perform_cti_correction(files, pctetab, num_cpu=1, clean_all=False, verbose=F
 
 
 def copy_dark_keywords(superdark, dark_hdr0, pctetab, history=None, basedark=None):
+    '''Copy header keywords from a used component dark to the new super-dark.'''
+    
     # Copy these keywords from the last component dark to the new superdark:
     keywords = ['PCTECORR', 'PCTETAB', 'PCTEFRAC', 'PCTERNCL', 'PCTERNCL', 'PCTENSMD', 
                 'PCTETRSH', 'PCTESMIT', 'PCTESHFT', 'CTE_NAME', 'CTE_VER', 'PCTE_VER']
@@ -675,6 +641,8 @@ def copy_dark_keywords(superdark, dark_hdr0, pctetab, history=None, basedark=Non
 
 
 def generate_basedark(files, outname, pctetab, num_cpu, clean_all=False, verbose=False):
+    '''Generate a basedark for an annealing period, if it doesn't already exist.'''
+    
     if os.path.exists(os.path.expandvars(outname)):
         if clean_all:
             if verbose:
@@ -703,7 +671,6 @@ def generate_basedark(files, outname, pctetab, num_cpu, clean_all=False, verbose
             for line in cs_log.readlines():
                 print '     ' + line.strip()
         print
-    #os.remove(calstis_log)  # ***
     
     # Copy the last file's ext=0 header into a variable to use in populating the basedark header:
     with fits.open(corrected_files[-1]) as file:
@@ -720,6 +687,8 @@ def generate_basedark(files, outname, pctetab, num_cpu, clean_all=False, verbose
 
 
 def generate_weekdark(files, outname, pctetab, basedark, num_cpu, clean_all=False, verbose=False):
+    '''Generate a weekdark for part of an annealing period, if it doesn't already exist.'''
+    
     if os.path.exists(os.path.expandvars(outname)):
         if clean_all:
             if verbose:
@@ -750,7 +719,6 @@ def generate_weekdark(files, outname, pctetab, basedark, num_cpu, clean_all=Fals
             for line in cs_log.readlines():
                 print '     ' + line.strip()
         print
-    #os.remove(calstis_log)  # ***
     
     # Copy the last file's ext=0 header into a variable to use in populating the basedark header:
     with fits.open(corrected_files[-1]) as file:
@@ -820,10 +788,10 @@ def populate_darkfiles(raw_files, dark_dir, ref_dir, pctetab, num_processes, all
     # Determine component darks used to make superdarks:
     anneal_data = archive_dark_query.get_anneal_boundaries()
     anneals = archive_dark_query.archive_dark_query( \
-                      raw_files, anneal_data=anneal_data, print_url=False)  # print_url?
+                      raw_files, anneal_data=anneal_data, print_url=False)
     
     # Get list of EXPNAMEs from files in the dark_dir.
-    found_dark_files = glob.glob(os.path.join(dark_dir, '*_flt.fits*'))  # Do something to allow RAW files? ***
+    found_dark_files = glob.glob(os.path.join(dark_dir, '*_flt.fits*'))
     if verbose >= 2:
         max_file_length = str(max(map(lambda x: len(x), found_dark_files) + [1]))
     found = {}
@@ -943,7 +911,7 @@ def populate_darkfiles(raw_files, dark_dir, ref_dir, pctetab, num_processes, all
             weekdark_tag = matched_weekdark_tags[0]
             weekdark[weekdark_tag].append(file)
             
-            # Update hdr0 of science file:
+            # Update ext=0 hdr of science file:
             # DARKFILE:
             darkfile = os.path.join(ref_dir, weekdark_tag + '_drk.fits')
             old_darkfile = f[0].header['DARKFILE']
@@ -952,7 +920,6 @@ def populate_darkfiles(raw_files, dark_dir, ref_dir, pctetab, num_processes, all
             f.flush()
             if verbose:
                 print 'Updated hdr0 DARKFILE of {}:  {} --> {}'.format(file, old_darkfile, darkfile)
-                #print 'Updated hdr0 PCTETAB  of {}:  {} --> {}'.format(file, old_pctetab, pctetab)
     
     if verbose:
         print '\nWeekdarks needed:'
@@ -966,7 +933,7 @@ def populate_darkfiles(raw_files, dark_dir, ref_dir, pctetab, num_processes, all
         if verbose:
             print 'Generating superdarks for all amps/weeks available.\n'
     else:
-        weekdark_tags = weekdark.keys()  # missing 's' -- Need better variable names! ***
+        weekdark_tags = weekdark.keys()  # Note the missing 's'
     
     # Generate specified basedarks and weekdarks, based on weekdark_tags:
     already_deleted = set()
@@ -982,7 +949,7 @@ def populate_darkfiles(raw_files, dark_dir, ref_dir, pctetab, num_processes, all
             already_deleted.add(basedark)
         else:
             clean_this = False
-        generate_basedark(files, basedark, pctetab, num_processes, clean_this, verbose)  # Or, do we want to compartmentalize the amp selection?
+        generate_basedark(files, basedark, pctetab, num_processes, clean_this, verbose)
         
         # Make weekdark:
         weekdark_name = os.path.abspath(os.path.expandvars(os.path.join(ref_dir, weekdark_tag + '_drk.fits')))
@@ -1034,6 +1001,14 @@ def check_for_old_output_files(rootnames, science_dir, output_mapping, clean=Fal
 
 
 def map_outputs(rootnames, science_dir, output_mapping, verbose=False):
+    '''
+    Rename outputs according to output_mapping dictionary.
+    
+    Special commands for output products:
+        '<pass>'   -- Don't do anything with product; denotes it as an intermediate product.
+        '<remove>' -- Delete the intermediate product.
+    '''
+    
     for rootname in rootnames:
         if verbose:
             print 'Renaming files with rootname {}:'.format(rootname)
@@ -1076,7 +1051,7 @@ def map_outputs(rootnames, science_dir, output_mapping, verbose=False):
 
 
 class Logger(object):
-    '''Lumberjack class - Duplicates sys.stdout to a log file and it's okay
+    '''Copies sys.stdout to a log file
        source: http://stackoverflow.com/a/24583265
        Modified to include STDERR.
     '''

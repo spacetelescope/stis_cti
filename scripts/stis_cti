@@ -14,9 +14,6 @@ if __name__ == '__main__':
     default_max_cores = 15
     default_cores = min([max([1, num_available_cores - 2]), default_max_cores])
     
-    # For prettier implementation of help text, see:
-    # http://stackoverflow.com/questions/3853722/python-argparse-how-to-insert-newline-in-the-help-text
-    
     parser = argparse.ArgumentParser( 
         description='Run STIS/CCD pixel-based CTI-correction on data specified in SCIENCE_DIR. ' + \
                     'Uncorrected component darks are read from DARK_DIR, and ' + \
@@ -47,10 +44,8 @@ if __name__ == '__main__':
                              'this script (\'*.txt\' files are skipped and clobbered)')
     parser.add_argument('--clean_all', dest='clean_all', action='store_true', default=False,
                         help='\'--clean\' + remove previous super-darks and CTI-corrected component darks')
-    parser.add_argument('-v', '--verbose', dest='verbose', action='store_true', default=True, 
-                        help='print more information')
-    parser.add_argument('-vv', dest='very_verbose', action='store_true', 
-                        help='very verbose')
+    parser.add_argument('-v', dest='verbose', metavar='VERBOSE_LEVEL', choices=[0,1,2], action='store', type=int,
+                        default=1, help='verbosity ({0,1,2}; default=1)')
     # Allow any amp/gain/offst/date through processing (not well-tested):
     parser.add_argument('--allow', dest='allow', action='store_true', default=False, 
                         help=argparse.SUPPRESS)
@@ -59,8 +54,6 @@ if __name__ == '__main__':
     args = parser.parse_args()
     
     verbose = args.verbose
-    if args.very_verbose:
-        verbose = 2
     
     # Determine default dark_dir and ref_dir relative to science_dir:
     if args.dark_dir is None:
