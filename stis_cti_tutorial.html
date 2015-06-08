@@ -1688,8 +1688,8 @@ div#notebook {
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>By Sean Lockwood &amp; John Biretta for the COS/STIS Team at STScI<br>2015 June 05</p>
-<p>Thank you for trying out this <strong>beta</strong> release.  Please note that STScI is not responsible for any damages resulting from the use of this software.<br>Please send any feedback to <a href="&#x6d;&#x61;&#x69;&#x6c;&#116;&#111;&#x3a;&#x62;&#105;&#114;&#101;&#x74;&#116;&#97;&#64;&#x73;&#116;&#x73;&#99;&#105;&#x2e;&#101;&#100;&#117;">&#x62;&#105;&#114;&#101;&#x74;&#116;&#97;&#64;&#x73;&#116;&#x73;&#99;&#105;&#x2e;&#101;&#100;&#117;</a>.</p>
+<p><code>v0.4_beta</code><br>By Sean Lockwood &amp; John Biretta for the COS/STIS Team at STScI<br>2015 June 08</p>
+<p>Thank you for trying out this <strong>beta</strong> release.  Please note that STScI is not responsible for any damages resulting from the use of this software.<br>Please send any feedback to <a href="&#x6d;&#x61;&#105;&#108;&#x74;&#111;&#x3a;&#x62;&#x69;&#x72;&#x65;&#x74;&#116;&#97;&#x40;&#x73;&#116;&#x73;&#x63;&#105;&#46;&#x65;&#100;&#x75;">&#x62;&#x69;&#x72;&#x65;&#x74;&#116;&#97;&#x40;&#x73;&#116;&#x73;&#x63;&#105;&#46;&#x65;&#100;&#x75;</a>.</p>
 </div>
 </div>
 </div>
@@ -1850,10 +1850,11 @@ In&nbsp;[1]:
 <div class="output_area"><div class="prompt"></div>
 <div class="output_subarea output_stream output_stdout output_text">
 <pre>
-usage: stis_cti [-h] [-d DARK_DIR] [-r REF_DIR] [-n NUM_PROCESSES] [-p PCTETAB] [--clean] [--clean_all] [-v] [-vv] [SCIENCE_DIR]
+usage: stis_cti [-h] [-d DARK_DIR] [-r REF_DIR] [-n NUM_PROCESSES] [-p PCTETAB] [--crds_update] [--clean] [--clean_all] [-v VERBOSE_LEVEL]
+                [SCIENCE_DIR]
 
-Run STIS/CCD pixel-based CTI-correction on data specified in SCIENCE_DIR. Uncorrected component darks are read from DARK_DIR, and corrected component darks are written
-there too. Corrected super-darks are read from and stored to REF_DIR.
+Run STIS/CCD pixel-based CTI-correction on data specified in SCIENCE_DIR. Uncorrected component darks are read from DARK_DIR, and corrected
+component darks are written there too. Corrected super-darks are read from and stored to REF_DIR.
 
 positional arguments:
   SCIENCE_DIR       directory containing RAW science data (default=&quot;./&quot;)
@@ -1862,14 +1863,14 @@ optional arguments:
   -h, --help        show this help message and exit
   -d DARK_DIR       directory of dark FLT data (default=&quot;[SCIENCE_DIR]/../darks/&quot;)
   -r REF_DIR        directory of CTI-corrected reference files (default=&quot;[SCIENCE_DIR]/../ref/&quot;)
-  -n NUM_PROCESSES  maximum number of parallel processes to run (default=1); number of available CPU cores on your system = 2
+  -n NUM_PROCESSES  maximum number of parallel processes to run (default=14); number of available CPU cores on your system = 16
   -p PCTETAB        name of PCTETAB to use in pixel-based correction (default=&quot;[REF_DIR]/[MOST_RECENT]_pcte.fits&quot; or package&apos;s default PCTETAB)
+  --crds_update     update and download $oref files
   --clean           remove intermediate and final products from previous runs of this script (&apos;*.txt&apos; files are skipped and clobbered)
   --clean_all       &apos;--clean&apos; + remove previous super-darks and CTI-corrected component darks
-  -v, --verbose     print more information
-  -vv               very verbose
+  -v VERBOSE_LEVEL  verbosity ({0,1,2}; default=1)
 
-Author: Sean Lockwood; Version: 0.3_alpha
+Author: Sean Lockwood; Version: 0.4_beta
 
 </pre>
 </div>
