@@ -212,8 +212,8 @@ def darks_url(exposures):
 
 def archive_dark_query(files, anneal_data=None, min_exptime=None, verbose=False, print_url=True):
     '''
-    Query the archive for the list of individual darks necessary to recreate the
-    super-darks.
+    Queries the MAST archive to determine which component darks are needed to 
+    generate a CTI-corrected super-dark.
     '''
     
     # Convert to a list of filenames if only a string is provided:

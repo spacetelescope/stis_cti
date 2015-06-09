@@ -26,36 +26,61 @@ def stis_cti(science_dir, dark_dir, ref_dir, num_processes, pctetab=None,
              all_weeks_flag=False, allow=False, clean=False, clean_all=False, 
              crds_update=False, verbose=1):
     '''
-    Run STIS/CCD pixel-based CTI-correction on data specified in SCIENCE_DIR.
+    Runs the HST/STIS/CCD pixel-based CTI-correction on science data and 
+    component darks, generating and applying a CTI-corrected super-dark in 
+    the process.
     
-    Args:
-      science_dir (str):  Directory containing uncalibrated science data to be corrected.
-      dark_dir (str):  Directory containing calibrated component darks to be corrected and
-          location where CTI-corrected component darks are placed.
-      ref_dir (str):  Directory where CTI-corrected super-darks are placed.  These will be
-          used again unless they are deleted or clean_all=True.
-      num_processes (int):  Max number of parallel processes to use when running the CTI-
-          correction algorithm.
-      pctetab (str, optional):  The path + name of the PCTETAB reference file to use in
-          the CTI-correction.  If not specified, one is selected from (1) the ref_dir, or
-          (2) from the package data directory.  The last file (alphabetically) is chosen.
-      all_weeks_flag (bool, optional) [UNTESTED]:  Generates weekdarks for all weeks within
-          each annealing period to be processed.
-      allow (bool, optional) [UNTESTED]:  Use more lenient filtering when determining which
-          files should be allowed to be corrected.
-      clean (bool, optional):  Remove intermediate and final products in the science_dir
-          from previous runs of this script.
-      clean_all (bool, optional):  'clean' + remove CTI-corrected super-darks and component
-          darks before reprocessing.
-      crds_update (bool, optional):  Runs crds.bestrefs script to update science file headers
-          and download pipeline reference files.
-      verbose (int {0,1,2}, optional, default=1):  Verbosity of text printed to the screen
-          and saved in the log file.
+    :param science_dir:
+        Directory containing uncalibrated science data to be corrected.
+    :param dark_dir: str
+        Directory containing calibrated component darks to be corrected and
+        location where CTI-corrected component darks are placed.
+    :param ref_dir: str
+        Directory where CTI-corrected super-darks are placed.  These will be
+        used again unless they are deleted or clean_all=True.
+    :param num_processes:
+        Max number of parallel processes to use when running the CTI-correction 
+        algorithm.
+    :param pctetab:
+        The path + name of the PCTETAB reference file to use in the CTI-correction.  
+        If not specified, one is selected from (1) the ref_dir, or (2) from the 
+        package data directory.  The last file (alphabetically) is chosen.
+    :param all_weeks_flag:
+        UNTESTED.  Generates weekdarks for all weeks within each annealing period 
+        to be processed.
+    :param allow:
+        UNTESTED.  Use more lenient filtering when determining which files should 
+        be allowed to be corrected.
+    :param clean:
+        Remove intermediate and final products in the science_dir from previous 
+        runs of this script.
+    :param clean_all:
+        'clean' + remove CTI-corrected super-darks and component darks before 
+        reprocessing.
+    :param crds_update:
+        Runs crds.bestrefs script to update science file headers and download 
+        pipeline reference files.
+    :param verbose:
+        Verbosity of text printed to the screen and saved in the log file.
     
-    Notes:
-      $oref shell variable must be set to the directory of STIS standard pipeline reference files.
+    :type science_dir: str
+    :type dark_dir: str
+    :type ref_dir: str
+    :type num_processes: int
+    :type pctetab: str, optional 
+    :type all_weeks_flag: bool, optional
+    :type allow: bool, optional
+    :type clean: bool, optional
+    :type clean_all: bool, optional
+    :type crds_update: bool, optional
+    :type verbose: int {0,1,2}, optional, default=1
+    
+    .. note::
+      $oref shell variable must be set to the directory of STIS standard pipeline 
+      reference files.
       
-      Note that 'all_week_flag' and 'allow' options have not been tested!
+    .. note::
+      Note that the 'all_week_flag' and 'allow' options have not been tested!
     '''
     # Open a log file and copy {STDOUT, STDERR} to it:
     log = Logger(os.path.join(science_dir, 'cti_{}.log'.format(datetime.datetime.now().isoformat('_'))))
@@ -293,6 +318,19 @@ def viable_ccd_file(file,
                     amplifiers_allowed=None, 
                     gains_allowed=None, 
                     offsts_allowed=None):
+    '''
+    :param earliest_date_allowed: Beginning datetime allowed.
+    :param amplifiers_allowed: CCDAMP values allowed.
+    :param gains_allowed:  CCDGAIN values allowed.
+    :param offsts_allowed: CCDOFFST values allowed
+    
+    :type earliest_date_allowed: datetime.datetime object (default=2009-May-01 00:00:00 UTC)
+    :type amplifiers_allowed: list of strings (default=['D'])
+    :type gains_allowed: list of ints (default=[1,4])
+    :type offsts_allowed: list of ints (default=[3])
+    
+    :returns:  bool -- Run stis_cti.stis_cti() on the file?
+    '''
     
     # Set defaults:
     if earliest_date_allowed is None:
