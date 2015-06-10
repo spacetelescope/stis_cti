@@ -29,6 +29,6 @@ setup(
     packages = ['stis_cti'],
     requires = ['numpy', 'astropy', 'stistools (>=1.0.2)', 'refstis', 'crds (>= 1.4.0)'],
     scripts = ['scripts/stis_cti', 'scripts/archive_dark_query'],
-    data_files = [('stis_cti', ['a01_stis_pcte.fits', 'LICENSE.txt'])],
+    data_files = [('stis_cti', ['a01_stis_pcte.fits'])],
     ext_modules = [StisPixCteCorr_module],
     )
