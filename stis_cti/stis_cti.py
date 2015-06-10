@@ -383,6 +383,8 @@ def bias_correct_science_files(raw_files, crds_update=False, verbose=False):
             raise IOError('File {} already exists!'.format(outname))
     
     if crds_update:
+        if verbose:
+            print 'Running crds.BestrefsScript on science files...'
         errors = BestrefsScript('BestrefsScript --update-bestrefs -s 1 -f ' + ' '.join(raw_files))()
         if int(errors) > 0:
             raise Exception('CRDS BestrefsScript:  Call returned errors!')
