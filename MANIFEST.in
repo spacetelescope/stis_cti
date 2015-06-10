@@ -6,4 +6,9 @@ include scripts/*
 include src/*
 include stis_cti/*.py
 exclude stis_cti/available_cpu_count.py
+include doc/*.rst
+include doc/*.py
+include doc/make.bat
+include doc/Makefile
+include doc/*.png
 global-exclude *.pyc
