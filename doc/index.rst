@@ -7,7 +7,7 @@ stis_cti's Documentation
 ========================
 
 .. toctree::
-   :maxdepth: 4
+   :maxdepth: 3
    
    README.rst
    stis_cti.rst

@@ -3,20 +3,15 @@ STIS Pixel-Based CTI-Correction Tutorial
 ========================================
 Thank you for trying out this **beta** release.  Please note that STScI is not responsible for any damages resulting from the use of this software.
 
-Please send any feedback to <biretta@stsci.edu>.
+Please send any feedback to biretta@stsci.edu.
 
 Introduction
 ============
-The ``stis_cti`` package implements the Anderson & Bedin (PASP 2010, 122: 1035-1064) pixel-based CTI-correction on HST/STIS CCD data.  It performs bias corrections on the data, calls ``StisPixCteCorr`` on the data, and finishes running the remaining ``CalSTIS`` processing steps.
+The ``stis_cti`` package implements the Anderson & Bedin (`PASP 2010, 122: 1035-1064 <http://adsabs.harvard.edu//abs/2010PASP..122.1035A>`_) pixel-based CTI-correction on HST/STIS CCD data.  It performs bias corrections on the data, calls ``StisPixCteCorr()`` on the data, and finishes running the remaining ``CalSTIS`` processing steps.
 
-The code also creates a CTI-corrected super-dark reference file to use in this processing from component dark files.  When running the code, the user will be prompted to retrieve these component darks from the MAST archive if they have not already been retrieved.  The code makes use of the ``refstis`` package to generate super-darks from the component darks.
+The code also creates a CTI-corrected super-dark reference file to use in this processing from component dark files.  When run, the user will be prompted to retrieve these component darks from the MAST archive if they have not already been retrieved.  The code makes use of the ``refstis`` package to generate super-darks from the component darks.
 
-Note that not all observing modes are currently supported.  The code will not reprocess data taken in subarray or binned modes, with a non-D amplifier, or from before the STIS recovery of May 2009.
-
-.. image:: obr101010_comparison.png
-   :width: 100 %
-   :alt: obr101010_crj comparison
-   :align: center
+Note that not all observing modes are currently supported.  The code will not reprocess data taken in subarray or binned modes, with a non-D amplifier, in ACQ mode, or from before the STIS recovery of May 2009.
 
 System Requirements
 ===================
@@ -26,7 +21,7 @@ Some components in older Ureka installations may be out of date and require upda
 
 Installation
 ============
-First, launch Ureka (available via <http://ssb.stsci.edu/ureka/>):
+First, launch Ureka (available via http://ssb.stsci.edu/ureka/):
 
 ``ur_setup``
 
@@ -51,7 +46,7 @@ Then, install the following packages within the Ureka environment:
 
     ``./setup.py install``  
 
-To install a local CRDS cache on your system, please see:  
+To install a local CRDS cache on your system (optional), please see:  
 
 https://hst-crds.stsci.edu/docs/cmdline_bestrefs/
 
@@ -178,7 +173,7 @@ The following data products are output by ``stis_cti``:
 +----------------------------------+------------------+-----------------------+
 | **Product**                      | **Original Ext** | **CTI-Corrected Ext** |
 +==================================+==================+=======================+
-| Bias- and CTI-corrected science  | n/a              | CTE                   |
+| Bias- and CTI-corrected science  | n/a              | CTE [#cte]_           |
 | (intermediate product)           |                  |                       |
 +----------------------------------+------------------+-----------------------+
 | Cosmic ray rejected, flat-       | CRJ              | CRC                   |
@@ -213,7 +208,14 @@ The following data products are output by ``stis_cti``:
 | images.                          |                  |                       |
 +----------------------------------+------------------+-----------------------+
 
-Where ``CTE`` files are bias- and CTI-corrected intermediate products.
+.. [#cte] Where ``CTE`` files are bias- and CTI-corrected intermediate products.
+
+.. figure:: obr101010_comparison.png
+   :width: 100 %
+   :alt: obr101010_crj comparison
+   :align: center
+   
+   A comparison of part of a STIS cosmic-ray rejected image.  Note the CTI trails are removed in both the science and super-dark data used to generate the ``_crc`` file.
 
 Advanced Topics
 ===============
@@ -249,8 +251,8 @@ The ``stis_cti`` script first determines if the ``DARKFILE`` specified in each s
   
 Now when ``stis_cti`` is run on the science directory, it won't try to recreate the super-dark, but will CTI-correct the science images.
 
-Updating CRDS Keywords and Automatically Downloading Reference Files
---------------------------------------------------------------------
+CRDS Updates
+------------
 Oftentimes, the reference files specified in a dataset get replaced within the pipeline.  This is especially true of super-biases and super-darks produced in the months following the execution of an observation.  When new reference files are available, you may re-retrieve the data from MAST.  Alternatively, the ``crds`` script now supports updating header keywords and downloading required reference files automatically.
 
 When run with the ``--crds_update`` option, the script will update header keywords and download reference files to the ``$oref`` directory, if it is writable.  Otherwise, one will be created within the ``ref/`` directory.
@@ -261,6 +263,6 @@ To run CRDS bestref manually, see https://hst-crds.stsci.edu/docs/cmdline_bestre
 
 PCTETAB Updates
 ---------------
-The ``stis_cti`` package includes the ``v1.0_beta PCTETAB`` reference file, which specifies the parameters necessary to run the pixel-based correction on STIS data.  If this file is updated, or if an advanced user wishes to modify the file to run the correction differently, the new version may be placed in the ``ref/`` directory.  (If multiple ``PCTETAB`` files are present, the one with the last alphabetical name will be used.)
+The ``stis_cti`` package includes the ``v1.0_beta`` ``PCTETAB`` reference file, which specifies the parameters necessary to run the pixel-based correction on STIS data.  If this file is updated, or if an advanced user wishes to modify the file to run the correction differently, the new version may be placed in the ``ref/`` directory.  (If multiple ``PCTETAB`` files are present, the one with the last alphabetical name will be used.)
 
 To completely re-run the correction, you can delete any needed basedarks/weekdarks in the ``ref/`` directory and any needed ``_cte.fits`` files in the ``darks/`` directory by specifying the ``--clean_all`` option.

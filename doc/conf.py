@@ -186,7 +186,6 @@ htmlhelp_basename = 'stis_ctidoc'
 latex_elements = {
 'classoptions': ',openany,oneside',
 'babel': '\\usepackage[english]{babel}',
-
 'preamble': '''
 \usepackage[]{hyperref}
 \hypersetup{
@@ -202,6 +201,7 @@ latex_elements = {
     pdfpagemode=UseOutlines,
     pdfpagelayout=TwoPageRight
 }
+\setcounter{tocdepth}{3}
 ''',
 
 # The paper size ('letterpaper' or 'a4paper').
