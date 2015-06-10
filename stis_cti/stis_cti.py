@@ -9,7 +9,7 @@ import refstis
 from stistools import basic2d, calstis
 import archive_dark_query
 import StisPixCteCorr
-from crds.bestrefs import BestrefsScript  # Do some kind of import try/except here ***
+from crds.bestrefs import BestrefsScript
 
 __author__  = 'Sean Lockwood'
 __version__ = '0.4_beta'
@@ -820,11 +820,6 @@ def populate_darkfiles(raw_files, dark_dir, ref_dir, pctetab, num_processes, all
         print 'Making superdarks for:'
         print '   ' + '\n   '.join(raw_files) + '\n'
     
-    if crds_update:
-        errors = BestrefsScript('BestrefsScript --update-bestrefs -s 1 -f ' + ' '.join(raw_files))()
-        if int(errors) > 0:
-            raise Exception('CRDS BestrefsScript:  Call returned errors!')
-    
     # Determine component darks used to make superdarks:
     anneal_data = archive_dark_query.get_anneal_boundaries()
     anneals = archive_dark_query.archive_dark_query( \
@@ -834,6 +829,7 @@ def populate_darkfiles(raw_files, dark_dir, ref_dir, pctetab, num_processes, all
     found_dark_files = glob.glob(os.path.join(dark_dir, '*_flt.fits*'))
     if verbose >= 2:
         max_file_length = str(max(map(lambda x: len(x), found_dark_files) + [1]))
+    
     found = {}
     for file in found_dark_files:
         with fits.open(file) as f:
@@ -845,11 +841,34 @@ def populate_darkfiles(raw_files, dark_dir, ref_dir, pctetab, num_processes, all
     missing_darks = set()
     weekdark_types = defaultdict(list)
     for anneal in anneals:
-        # For each amp, count weeks based on old darkfile; reset for each annealing period:
-        all_weeks = {'A':{}, 'B':{}, 'C':{}, 'D':{}}
+        # Populate file locations:
         for dark in anneal['darks']:
             if found.has_key(dark['exposure']):
                 dark['file'] = found[dark['exposure']][0]
+            else:
+                missing_darks.add(dark['exposure'])
+        
+        # Update file headers:
+        if crds_update and len(missing_darks) == 0:
+            if verbose:
+                print 'Running crds.BestrefsScript on dark files from anneal {}...'.format(anneal)
+            dark_files_to_run = [d['file'] for d in anneal['darks']]
+            errors = BestrefsScript('BestrefsScript --update-bestrefs -s 1 -f ' + ' '.join(dark_files_to_run))()
+            if int(errors) > 0:
+                raise Exception('CRDS BestrefsScript (darks):  Call returned errors!')
+            
+            # Update hdr0 data after BestrefsScript is run:
+            for dark in anneal['darks']:
+                file = dark['file']
+                with fits.open(file) as f:
+                    hdr0 = f[0].header
+                found[hdr0['ROOTNAME'].strip().upper()] = (file, hdr0)
+        
+        # For each amp, count weeks based on old darkfile; reset for each annealing period:
+        # Get keywords about each dark:
+        all_weeks = {'A':{}, 'B':{}, 'C':{}, 'D':{}}
+        for dark in anneal['darks']:
+            if found.has_key(dark['exposure']):
                 for get_keyword in get_keywords:
                     dark[get_keyword] = found[dark['exposure']][1][get_keyword]
                     try:
