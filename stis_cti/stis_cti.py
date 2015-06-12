@@ -86,6 +86,10 @@ def stis_cti(science_dir, dark_dir, ref_dir, num_processes, pctetab=None,
     log = Logger(os.path.join(science_dir, 'cti_{}.log'.format(datetime.datetime.now().isoformat('_'))))
     
     try:
+        import pkg_resources
+    except ImportError:
+        pass
+    try:
         from platform import node, platform
         sys_info = '{}; {}'.format(node(), platform())
     except ImportError:
@@ -127,14 +131,17 @@ def stis_cti(science_dir, dark_dir, ref_dir, num_processes, pctetab=None,
             pctetab = pctetabs[-1]
         else:
             # Couldn't find PCTETAB in ref/ directory, so use the PCTETAB included with the stis_cti package:
-            default_pcte_str = os.path.join(sys.prefix, __package__) + os.path.sep
-            package_pctes = glob.glob(default_pcte_str + '*_pcte.fits')
-            package_pctes.sort()
+            try:
+                default_pcte_str = pkg_resources.resource_filename(stis_cti.__name__, 'data/*_pcte.fits')
+            except NameError:
+                default_pcte_str = os.path.join(os.path.dirname(stis_cti.__file__), 'data', '*_pcte.fits')
+            package_pctes = glob.glob(default_pcte_str)
             if len(package_pctes) == 0:
-                raise FileError('Couldn\'t find a PCTETAB in {} or (package default) {}'.format(
-                    ref_dir, default_pcte_str))
+                raise FileError('Couldn\'t find a PCTETAB in {}\nor package default in {}'.format(
+                    ref_dir, os.path.dirname(default_pcte_str)))
+            package_pctes.sort()
             pctetab = package_pctes[-1]
-            print 'WARNING:  Using package-default PCTETAB: {}\n'.format(pctetab)
+            print 'WARNING:  Using package-default PCTETAB:\n{}\n'.format(pctetab)
     if not os.path.exists(pctetab):
         raise FileError('PCTETAB does not exist:  ' + pctetab)
     
@@ -184,13 +191,21 @@ def stis_cti(science_dir, dark_dir, ref_dir, num_processes, pctetab=None,
     check_for_old_output_files(rootnames, science_dir, output_mapping, clean, verbose)
     # (Note that the 'clean' option doesn't remove '*.txt' files.)
     
+    # Run crds.BestrefsScript on science files:
+    if crds_update:
+        if verbose:
+            print 'Running crds.BestrefsScript on science files...'
+        errors = BestrefsScript('BestrefsScript --update-bestrefs -s 1 -f ' + ' '.join(raw_files))()
+        if int(errors) > 0:
+            raise Exception('CRDS BestrefsScript:  Call returned errors!')
+    
     # Check science files for uncorrected super-darks:
     populate_darkfiles(raw_files, dark_dir, ref_dir, pctetab, num_processes, all_weeks_flag, 
         clean_all, crds_update, verbose)
     log.flush()
     
     # Bias-correct the science files:
-    bias_corrected = bias_correct_science_files(raw_files, crds_update, verbose)
+    bias_corrected = bias_correct_science_files(raw_files, verbose)
     log.flush()
     
     # Perform the CTI correction in parallel on the science data:
@@ -370,7 +385,7 @@ def viable_ccd_file(file,
         hdr0['BINAXIS1'] == 1 and hdr0['BINAXIS2'] == 1
 
 
-def bias_correct_science_files(raw_files, crds_update=False, verbose=False):
+def bias_correct_science_files(raw_files, verbose=False):
     if verbose:
         print 'Bias-correcting science files...\n'
     
@@ -381,13 +396,6 @@ def bias_correct_science_files(raw_files, crds_update=False, verbose=False):
     for outname in outnames:
         if os.path.exists(outname):
             raise IOError('File {} already exists!'.format(outname))
-    
-    if crds_update:
-        if verbose:
-            print 'Running crds.BestrefsScript on science files...'
-        errors = BestrefsScript('BestrefsScript --update-bestrefs -s 1 -f ' + ' '.join(raw_files))()
-        if int(errors) > 0:
-            raise Exception('CRDS BestrefsScript:  Call returned errors!')
     
     for raw_file, outname, trailer in zip(raw_files, outnames, trailers):
         if verbose:

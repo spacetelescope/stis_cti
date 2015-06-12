@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from distutils.core import setup, Extension
+from setuptools import setup, Extension
 import numpy
 
 StisPixCteCorr_module = Extension('stis_cti.StisPixCte_FixY',
@@ -27,8 +27,9 @@ setup(
                    'Topic :: Scientific/Engineering :: Physics',
                    'Topic :: Software Development :: Libraries :: Python Modules'],
     packages = ['stis_cti'],
-    requires = ['numpy', 'astropy', 'stistools (>=1.0.2)', 'refstis', 'crds (>= 1.4.0)'],
+    requires = ['numpy', 'astropy (>= 1.0.1)', 'stistools (>= 1.0.2)', 'refstis', \
+                'crds (>= 1.4.0)', 'stistools (>= 1.0.2)', 'stsci.tools (>= 3.2.2)'],
     scripts = ['scripts/stis_cti', 'scripts/archive_dark_query'],
-    data_files = [('stis_cti', ['a01_stis_pcte.fits'])],
+    package_data = {'stis_cti': ['data/*.fits']},
     ext_modules = [StisPixCteCorr_module],
     )
