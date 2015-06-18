@@ -244,7 +244,7 @@ def setup_crds(ref_dir, verbose=False):
         print '$CRDS_SERVER_URL = {}'.format(os.environ['CRDS_SERVER_URL'])
     
     ref_dir = resolve_iraf_file(ref_dir)
-    if os.environ.get('CRDS_PATH') is None or not os.access(os.environ.get('CRDS_PATH'), os.R_OK | ok.W_OK):
+    if os.environ.get('CRDS_PATH') is None or not os.access(os.environ.get('CRDS_PATH'), os.R_OK | os.W_OK):
         try:
             os.environ['CRDS_PATH'] = os.path.abspath(ref_dir)
         except OSError as err:
