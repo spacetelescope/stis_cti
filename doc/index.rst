@@ -9,5 +9,6 @@ stis_cti's Documentation
 .. toctree::
    :maxdepth: 3
    
+   qsg.rst
    README.rst
    stis_cti.rst
