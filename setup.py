@@ -10,7 +10,7 @@ StisPixCteCorr_module = Extension('stis_cti.StisPixCte_FixY',
 setup(
     name = 'stis_cti',
     url = 'https://grit.stsci.edu/lockwood/cti_wrapper/repository/archive',
-    version = '0.4_beta3',
+    version = '0.4_beta4',
     description = 'Apply pixel-based CTI-correction to HST/STIS CCD data',
     author = 'Sean Lockwood, Phil Hodge, Pey Lian Lim and ' + \
              'W.J. Hack (Python), J. Anderson (Fortran), Matt Davis',
@@ -28,7 +28,7 @@ setup(
                    'Topic :: Software Development :: Libraries :: Python Modules'],
     packages = ['stis_cti'],
     install_requires = ['setuptools', 'numpy', 'astropy>= 1.0.1', 'stistools>= 1.0.2', 
-        'refstis', 'crds>= 1.3.0', 'stistools>= 1.0.2', 'stsci.tools>= 3.2.2'],
+        'refstis>= 0.5.0', 'crds>= 1.3.0', 'stistools>= 1.0.2', 'stsci.tools>= 3.2.2'],
     scripts = ['scripts/stis_cti', 'scripts/archive_dark_query'],
     package_data = {'stis_cti': ['data/*.fits']},
     ext_modules = [StisPixCteCorr_module],

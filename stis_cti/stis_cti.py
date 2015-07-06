@@ -12,7 +12,7 @@ import StisPixCteCorr
 from crds.bestrefs import BestrefsScript
 
 __author__  = 'Sean Lockwood'
-__version__ = '0.4_beta2'
+__version__ = '0.4_beta4'
 
 cdbs_server_url = 'https://hst-crds.stsci.edu'
 
@@ -712,7 +712,7 @@ def generate_basedark(files, outname, pctetab, num_cpu, clean_all=False, verbose
     corrected_files = perform_cti_correction(files, pctetab, num_cpu, clean_all, verbose)
     
     # Make a basedark from the corrected darks:
-    refstis.basedark(corrected_files, refdark_name=os.path.normpath(os.path.expandvars(outname)))
+    refstis.basedark.make_basedark(corrected_files, refdark_name=os.path.normpath(os.path.expandvars(outname)))
     
     if verbose:
         calstis_log = outname.replace('.fits','_joined_bd_calstis_log.txt', 1)
@@ -759,7 +759,7 @@ def generate_weekdark(files, outname, pctetab, basedark, num_cpu, clean_all=Fals
       # Don't delete component darks here, as this has already been done in generate_basedark().
     
     # Make a weekdark from the corrected darks:
-    refstis.weekdark(corrected_files, os.path.normpath(os.path.expandvars(outname)), 
+    refstis.weekdark.make_weekdark(corrected_files, os.path.normpath(os.path.expandvars(outname)), 
         os.path.abspath(os.path.expandvars(basedark)))
     
     if verbose:
