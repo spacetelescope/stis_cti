@@ -116,7 +116,7 @@ Note that running this script requires an internet connection to the MAST archiv
                       component darks
     -v VERBOSE_LEVEL  verbosity ({0,1,2}; default=1)
   
-  Author: Sean Lockwood; Version: 0.4_beta5
+  Author: Sean Lockwood; Version: 0.4_beta6
 
 The script is designed to run the pixel-based correction in parallel on the component darks, and in parallel on the science files.  The maximum number of processes may be specified via the '``-n #``' option.
 
