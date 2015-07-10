@@ -23,30 +23,21 @@ Installation
 ============
 First, launch Ureka (available via http://ssb.stsci.edu/ureka/):
 
-``ur_setup``
+::
+   
+   ur_setup
+   
+::
 
-Then, install the following packages within the Ureka environment:
- * crds:  
+Then, install the requiered packages within the Ureka environment:
 
-    ``pip install crds``
+::
+   
+   pip install stis-cti --pre
+   
+::
 
- * refstis:  
-
-    ``tar -xzf refstis.tar.gz``  
-
-    ``cd refstis``  
-
-    ``./setup.py install``  
-
- * stis_cti:  
-
-    ``tar -xzf stis_cti.tar.gz``  
-
-    ``cd stis_cti``  
-
-    ``./setup.py install``  
-
-To install a local CRDS cache on your system (optional), please see:  
+To optionally install a local CRDS cache in a common location on your system, please see:
 
 https://hst-crds.stsci.edu/docs/cmdline_bestrefs/
 
@@ -60,7 +51,7 @@ Here's one possible layout:
    - science/ — contains at least the pipeline's "uncalibrated" products that are to be corrected  
    - darks/ — component darks (``_flt.fits``); their CTI-corrected counterparts (``_cte.fits``) will be placed in here  
    - ref/ — location for CTI-corrected super-darks produced by the ``stis_cti`` script  
-   - oref/ — pipeline reference files (note that these may be automatically populated via the ``--crds_update`` option)
+   - oref/ — pipeline reference files (specifying the ``--crds_update`` option creates this directory at ref/references/hst/oref/)
 
 For example::
 
@@ -68,7 +59,6 @@ For example::
   mkdir stis_cti_corrected/my_science
   mkdir stis_cti_corrected/darks
   mkdir stis_cti_corrected/ref
-  mkdir stis_cti_corrected/oref
 
 By default, the command-line interface assumes that there are ``ref/`` and ``darks/`` directories parallel to the ``science/`` directory (of any name), though alternate configurations may be specified.
 
@@ -84,7 +74,7 @@ This directory must contain the needed reference files specified in the science 
 
 Command-line Usage
 ==================
-The easiest way to invoke the correction is from the ``UNIX`` shell.  
+The easiest way to invoke the correction is from the ``UNIX`` shell.
 
 Note that running this script requires an internet connection to the MAST archive site.
 
@@ -126,7 +116,7 @@ Note that running this script requires an internet connection to the MAST archiv
                       component darks
     -v VERBOSE_LEVEL  verbosity ({0,1,2}; default=1)
   
-  Author: Sean Lockwood; Version: 0.4_beta4
+  Author: Sean Lockwood; Version: 0.4_beta5
 
 The script is designed to run the pixel-based correction in parallel on the component darks, and in parallel on the science files.  The maximum number of processes may be specified via the '``-n #``' option.
 
@@ -236,10 +226,13 @@ The ``stis_cti`` script first determines if the ``DARKFILE`` specified in each s
   # to produce _cte.fits files.
   month_files = glob.glob('annealing_month/*_cte.fits')
              # Assuming only the annealing month's darks are selected
-  refstis.basedark(month_files, refdark_name='basedark_drk.fits')
+  refstis.basedark.make_basedark(month_files, refdark_name='basedark_drk.fits')
   week_files = glob.glob('my_week/*_cte.fits')
-  refstis.weekdark(week_files, refdark_name='weekdark_drk.fits',
-                   thebasedark='basedark_drk.fits')
+  refstis.weekdark.make_weekdark(week_files, refdark_name='weekdark_drk.fits',
+      thebasedark='basedark_drk.fits')
+  
+  # You must mark the new weekdarks as being CTI-corrected, for example:
+  fits.setval('weekdark_drk.fits', 'PCTECORR', value='COMPLETE')
   
   # Point the science files at the new weekdark:
   # Define $stisref to point to the directory containing the weekdark in the shell.
@@ -249,7 +242,8 @@ The ``stis_cti`` script first determines if the ``DARKFILE`` specified in each s
   # On each science file:
   fits.setval('science/filename_raw.fits', 'DARKFILE', value='stisref$weekdark_drk.fits')
   
-Now when ``stis_cti`` is run on the science directory, it won't try to recreate the super-dark, but will CTI-correct the science images.
+Now when ``stis_cti`` is run on the science directory, it won't try to recreate the super-dark, 
+but will CTI-correct the science images.
 
 CRDS Updates
 ------------
@@ -263,6 +257,6 @@ To run CRDS bestref manually, see https://hst-crds.stsci.edu/docs/cmdline_bestre
 
 PCTETAB Updates
 ---------------
-The ``stis_cti`` package includes the ``v1.0_beta`` ``PCTETAB`` reference file, which specifies the parameters necessary to run the pixel-based correction on STIS data.  If this file is updated, or if an advanced user wishes to modify the file to run the correction differently, the new version may be placed in the ``ref/`` directory.  (If multiple ``PCTETAB`` files are present, the one with the last alphabetical name will be used.)
+The ``stis_cti`` package includes the ``v0.1_beta`` ``PCTETAB`` reference file, which specifies the parameters necessary to run the pixel-based correction on STIS data.  If this file is updated, or if an advanced user wishes to modify the file to run the correction differently, the new version may be placed in the ``ref/`` directory.  (If multiple ``PCTETAB`` files are present, the one with the last alphabetical name will be used.)
 
 To completely re-run the correction, you can delete any needed basedarks/weekdarks in the ``ref/`` directory and any needed ``_cte.fits`` files in the ``darks/`` directory by specifying the ``--clean_all`` option.

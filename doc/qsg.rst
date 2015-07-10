@@ -23,33 +23,19 @@ After Ureka is installed, open a new Ureka session (either click on the
 Ureka icon on the desktop, or open a new terminal window and type either ``ur_setup common ssbrel``
 or ``ssbrel``, depending on your installation details).
 
-Next we need to install the ``stis_cti`` package. Create a directory
-where the scripts will be installed, for example:
+To install the ``stis_cti`` package and dependencies, run:
 
 ::
 
-  mkdir ~/cti
-  cd ~/cti
+  pip install stis-cti --pre
 
 ::
 
-Put the tar files we emailed to you in this directory, then unpack and install the scripts:
-
-::
-
-  pip install crds
-  tar -xzf refstis-0.0.1.tar.gz
-  cd refstis-0.0.1
-  ./setup.py install
-  cd ..
-  tar -xzf stis_cti-0.4-beta2.tar.gz
-  cd stis_cti-0.4-beta2
-  ./setup.py install
-  cd ..
-
-::
-
-After that open a brand new Ureka session (see above), and continue there.  Create a working directory where the data will reside, and also create the necessary sub-directories.  For example, our disk here is called "/Users" and the account is "biretta" and we might use the proposal number "13542" so our working directory was "/Users/biretta/13542".
+After that open a brand new Ureka session (see above), and continue there.  
+Create a working directory where the data will reside, and also create the 
+necessary sub-directories.  For example, our disk here is called "/Users" 
+and the account is "biretta" and we might use the proposal number "13542" 
+so our working directory was "/Users/biretta/13542".
 
 ::
 
@@ -59,30 +45,14 @@ After that open a brand new Ureka session (see above), and continue there.  Crea
   mkdir darks
   mkdir ref
   mkdir science
-  mkdir oref
 
 ::
 
 Place the raw science data in the "science" directory.  This will
 include the files you got from the archive: \*_raw.fits, \*_epc.fits, \*_spt.fits, \*_asn.fits, \*_trl.fits
 
-Let's move any normal pipeline calibrated products out of the way to a sub-directory "pipeline":
-
-::
-  
-  cd science
-  mkdir pipeline
-  mv *crj.fits pipeline
-  mv *flt.fits pipeline
-  mv *x1d.fits pipeline
-  mv *x2d.fits pipeline
-  mv *sx1.fits pipeline
-  mv *sx2.fits pipeline
-
-::
-
-Next we define the location of the calibration reference
-files. We will assume you want the script to automatically download the reference files from the HST
+Next we define the location of the calibration reference files. We will assume 
+you want the script to automatically download the reference files from the HST 
 archive:  
 
 ::
@@ -90,6 +60,8 @@ archive:
   setenv oref "/Users/biretta/13542/ref/references/hst/stis/"
 
 ::
+
+Note that it is important to include the trailing slash ('/').
 
 Next we do an initial run of the script from the science directory:
 
@@ -130,10 +102,10 @@ missing, and then stop:
 
 ::
 
-Next we need to get the missing dark frames.  Copy the entire URL which the script generated, and paste it into a web browser (e.g. on a
-Mac highlight the URL with the cursor, and hit "command-C", move the cursor
-to the web browser URL window, and hit "command-V").  Then hit return.
-This will generate a HST archive request for the missing dark files.  Then do this on the archive web page:
+Next we need to get the missing dark frames.  Copy the entire URL which the script generated, and paste 
+it into a web browser (e.g. on a Mac highlight the URL with the cursor, and hit "command-C", move the cursor 
+to the web browser URL window, and hit "command-V").  Then hit return.  This will generate a HST archive 
+request for the missing dark files.  Then do this on the archive web page:
 
 Click ``[Mark all]``
 
@@ -146,7 +118,7 @@ Check ``[sftp the data]``
 
 ::
 
-  plhstins2.stsci.edu (put your computer name here instead)
+  myserver.mydomain.edu (put your computer name here instead)
 
   /Users/biretta/13542/darks  (use the darks directory that we created earlier)
 
@@ -186,7 +158,4 @@ When you get the message that looks like:
 Good luck!  Let us know if you encounter problems, or need any help.
 
 -- John Biretta  (biretta@stsci.edu)
-
-
-
 

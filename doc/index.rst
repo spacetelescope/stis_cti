@@ -10,5 +10,5 @@ stis_cti's Documentation
    :maxdepth: 3
    
    qsg.rst
-   README.rst
+   readme.rst
    stis_cti.rst
