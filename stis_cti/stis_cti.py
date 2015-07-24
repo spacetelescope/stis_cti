@@ -195,8 +195,15 @@ def stis_cti(science_dir, dark_dir, ref_dir, num_processes, pctetab=None,
     # Run crds.BestrefsScript on science files:
     if crds_update:
         # Run correction on matching _wav files too, if they exist:
-        wav_files = [f.replace('_raw', '_wav', 1) for f in raw_files 
-                        if len(glob.glob(f.replace('_raw', '_wav', 1))) >= 1]
+        raw_path = os.path.dirname(raw_files[0])
+        wav_files = []
+        for file in raw_files:
+            with fits.open(file) as f:
+                wav_files.append(f[0].header.get('WAVECAL', default='N/A').strip())
+        wav_files = [file for file in wav_files if 'N/A' not in file]
+        wav_files = [os.path.join(raw_path, file) for file in wav_files]
+        wav_files = [file for file in wav_files if os.path.exists(file)]
+        
         crds_files = deepcopy(raw_files)
         crds_files.extend(wav_files)
         
