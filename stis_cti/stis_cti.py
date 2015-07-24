@@ -13,7 +13,7 @@ import StisPixCteCorr
 from crds.bestrefs import BestrefsScript
 
 __author__  = 'Sean Lockwood'
-__version__ = '0.4_beta7'
+__version__ = '0.4_beta8'
 
 crds_server_url = 'https://hst-crds.stsci.edu'
 
@@ -30,6 +30,8 @@ def stis_cti(science_dir, dark_dir, ref_dir, num_processes, pctetab=None,
     Runs the HST/STIS/CCD pixel-based CTI-correction on science data and 
     component darks, generating and applying a CTI-corrected super-dark in 
     the process.
+    
+    Documentation is available at http://pythonhosted.org/stis_cti/
     
     :param science_dir:
         Directory containing uncalibrated science data to be corrected.

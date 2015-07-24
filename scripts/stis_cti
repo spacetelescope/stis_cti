@@ -18,7 +18,8 @@ if __name__ == '__main__':
         description='Run STIS/CCD pixel-based CTI-correction on data specified in SCIENCE_DIR. ' + \
                     'Uncorrected component darks are read from DARK_DIR, and ' + \
                     'corrected component darks are written there too. ' + \
-                    'Corrected super-darks are read from and stored to REF_DIR.', 
+                    'Corrected super-darks are read from and stored to REF_DIR. ' + \
+                    'See documentation at http://pythonhosted.org/stis_cti/', 
         epilog='Author:   ' + stis_cti.__author__ + '; ' + \
                'Version:  ' + stis_cti.__version__)
     parser.add_argument(dest='science_dir', action='store', default='./', nargs='?', 
