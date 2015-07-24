@@ -5,6 +5,7 @@ import multiprocessing
 import datetime
 from astropy.io import fits
 from collections import defaultdict
+from copy import deepcopy
 import refstis
 from stistools import basic2d, calstis
 import archive_dark_query
@@ -12,9 +13,9 @@ import StisPixCteCorr
 from crds.bestrefs import BestrefsScript
 
 __author__  = 'Sean Lockwood'
-__version__ = '0.4_beta5'
+__version__ = '0.4_beta7'
 
-cdbs_server_url = 'https://hst-crds.stsci.edu'
+crds_server_url = 'https://hst-crds.stsci.edu'
 
 class FileError(Exception):
     pass
@@ -76,8 +77,8 @@ def stis_cti(science_dir, dark_dir, ref_dir, num_processes, pctetab=None,
     :type verbose: int {0,1,2}, optional, default=1
     
     .. note::
-      $oref shell variable must be set to the directory of STIS standard pipeline 
-      reference files.
+      Unless crds_update is True, the $oref shell variable must be set to the directory of 
+      STIS standard pipeline reference files.
       
     .. note::
       Note that the 'all_week_flag' and 'allow' options have not been tested!
@@ -193,9 +194,15 @@ def stis_cti(science_dir, dark_dir, ref_dir, num_processes, pctetab=None,
     
     # Run crds.BestrefsScript on science files:
     if crds_update:
+        # Run correction on matching _wav files too, if they exist:
+        wav_files = [f.replace('_raw', '_wav', 1) for f in raw_files 
+                        if len(glob.glob(f.replace('_raw', '_wav', 1))) >= 1]
+        crds_files = deepcopy(raw_files)
+        crds_files.extend(wav_files)
+        
         if verbose:
-            print 'Running crds.BestrefsScript on science files...'
-        errors = BestrefsScript('BestrefsScript --update-bestrefs -s 1 -f ' + ' '.join(raw_files))()
+            print 'Running crds.BestrefsScript on science and wav files...'
+        errors = BestrefsScript('BestrefsScript --update-bestrefs -s 1 -f ' + ' '.join(crds_files))()
         if int(errors) > 0:
             raise Exception('CRDS BestrefsScript:  Call returned errors!')
     
@@ -229,42 +236,96 @@ def stis_cti(science_dir, dark_dir, ref_dir, num_processes, pctetab=None,
 
 def setup_crds(ref_dir, verbose=False):
     '''
-    Setup $oref directory to house CRDS reference files:
-        (1) Pre-defined $oref shell variable, if directory is read/writable.
-        (2) ref_dir
+    Setup $CRDS_PATH and $oref environmental variables to house CRDS reference files.
+    
+    Sets the $CRDS_PATH environmental variable according to:
+        (1) If undefined, Central Store location (if possible)
+        (2) If not on Central Store (local), read/writable directory defined by system's $CRDS_PATH
+        (3) If local and system's $CRDS_PATH directory not read/writable, nested within 'ref'
+    
+    Unless $CRDS_PATH is on Central Store, $oref is redefined to be nested within new $CRDS_PATH.
     
     $oref value must end in the path separator (e.g. '/'), so this is appended if necessary.
     '''
     
     if os.environ.get('CRDS_SERVER_URL') is None:
-        os.environ['CRDS_SERVER_URL'] = cdbs_server_url
+        os.environ['CRDS_SERVER_URL'] = crds_server_url
     
     if verbose:
         print 'Setting up CRDS environmental variables...'
         print '$CRDS_SERVER_URL = {}'.format(os.environ['CRDS_SERVER_URL'])
     
     ref_dir = resolve_iraf_file(ref_dir)
-    if os.environ.get('CRDS_PATH') is None or not os.access(os.environ.get('CRDS_PATH'), os.R_OK | os.W_OK):
-        try:
-            os.environ['CRDS_PATH'] = os.path.abspath(ref_dir)
-        except OSError as err:
-            print '\nPlease specify an \'CRDS_PATH\' directory with proper permissions.\n'
-            raise err
     
-    if os.environ.get('oref') is None or not os.access(os.environ.get('oref'), os.R_OK | os.W_OK):
-        try:
-            os.environ['oref'] = os.path.abspath(os.path.join(ref_dir, 'references', 'hst', 'oref')) \
-                                 + os.path.sep
-        except OSError as err:
-            print '\nPlease specify an \'oref\' directory with proper permissions.\n'
-            raise err
+    if os.environ.get('CRDS_PATH') is None and \
+       os.path.exists('/grp/crds/cache') and os.path.exists('/grp/crds/cache/references/hst'):
+            # On-site CRDS cache on Central Store:
+            # (This location is special because we can assume it does not need updating.)
+            os.environ['CRDS_PATH'] = '/grp/crds/cache'
+            os.environ['oref'] = os.path.join(os.environ['CRDS_PATH'], 'references', 'hst') + \
+                                 os.path.sep
+    elif os.path.exists('/grp/crds/cache') and \
+         os.path.samefile(os.environ.get('CRDS_PATH'), '/grp/crds/cache'):
+        # CRDS_PATH is already defined as Central Store:
+        os.environ['oref'] = os.path.join(os.environ['CRDS_PATH'], 'references', 'hst') + \
+                             os.path.sep
+    else:
+        if os.environ.get('CRDS_PATH') is None:
+            # $CRDS_PATH is undefined and Central Store is not available:
+            os.environ['CRDS_PATH'] = os.path.abspath(ref_dir)
+            os.environ['oref'] = os.path.join(os.environ['CRDS_PATH'], 'references', 'hst', 'stis') + \
+                                 os.path.sep
+        elif not os.access(os.environ.get('CRDS_PATH'), os.R_OK | os.W_OK):
+            # $CRDS_PATH was already defined by the user, but is NOT read/writable:
+            print 'WARNING:  Local $CRDS_PATH is not read/writable.'
+            print "         Using 'ref' directory for local CRDS cache."
+            os.environ['CRDS_PATH'] = os.path.abspath(ref_dir)
+            os.environ['oref'] = os.path.join(os.environ['CRDS_PATH'], 'references', 'hst', 'stis') + \
+                                 os.path.sep
+        elif os.access(os.environ.get('CRDS_PATH'), os.R_OK | os.W_OK):
+            # $CRDS_PATH was already defined by the user and is read/writable:
+            
+            # Check that $oref is defined within $CRDS_PATH properly for either a flat or
+            # instrument-specific cache:
+            if os.path.abspath(os.environ.get('oref')) not in \
+                [os.path.abspath(os.path.join(os.environ.get('CRDS_PATH'), \
+                                              'references', 'hst')), 
+                 os.path.abspath(os.path.join(os.environ.get('CRDS_PATH'), \
+                                              'references', 'hst', 'stis'))]:
+                raise OSError('$oref is not properly defined within $CRDS_PATH.\n' + 
+                              '    Consider fixing $oref or running without --crds_update option.')
+        else:
+            raise Exception('Unexpected condition.')
+        
+        if not os.access(os.path.abspath(os.environ.get('oref')), os.F_OK):
+            try:
+                os.makedirs(os.path.abspath(os.environ.get('oref')))
+                if verbose:
+                    print 'Created $oref directory.'
+            except OSError as err:
+                print 'Could not create directory structure:'
+                print '    {}'.format(os.path.abspath(os.environ.get('oref')))
+                raise err
+        
+        # Check that local $CRDS_PATH and $oref are read/writable:
+        if not os.access(os.environ.get('CRDS_PATH'), os.R_OK | os.W_OK) or \
+           not os.access(os.environ.get('oref'), os.R_OK | os.W_OK):
+            raise OSError(('Local $CRDS_PATH and/or $oref are not read/writable!\n' + 
+                           '    $CRDS_PATH = {}\n' + 
+                           '    $oref      = {}\n' +
+                           '    Either fix these or run without --crds_update option.').format( \
+                           os.environ.get('CRDS_PATH'), os.environ.get('oref')))
     
     # Check that $oref ends in the path separator:
     if os.environ['oref'][-1] != os.path.sep:
         os.environ['oref'] += os.path.sep
     
+    if not os.access(os.environ['oref'], os.R_OK):
+        raise OSError('Cannot read $oref!\n    {}'.format(os.environ['oref']))
+    
     if verbose:
-        print '$oref = {}\n'.format(os.environ['oref'])
+        print '$CRDS_PATH = {}'.format(os.environ.get('CRDS_PATH'))
+        print '$oref      = {}\n'.format(os.environ.get('oref'))
     
     return True
 
@@ -859,7 +920,7 @@ def populate_darkfiles(raw_files, dark_dir, ref_dir, pctetab, num_processes, all
                 missing_darks.add(dark['exposure'])
         
         # Update file headers:
-        if crds_update and len(missing_darks) == 0:
+        if crds_update:
             if verbose:
                 print 'Running crds.BestrefsScript on dark files from anneal {}...'.format(anneal)
             dark_files_to_run = [d['file'] for d in anneal['darks']]
