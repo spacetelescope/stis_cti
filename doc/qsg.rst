@@ -95,11 +95,6 @@ missing, and then stop:
    2COC4W8ADJQ%2COC4W8BHWQ%2COC4W8CI2Q%2COC4W8DNUQ%2COC4W8EOAQ%2COC4W8FBPQ%2COC4W8GBTQ&
    max_records=50000&max_rpp=5000&ordercolumn1=sci_start_time&action=Search
 
-   .
-   .
-   .
-   stis_cti.stis_cti.FileError: Missing component dark FLT files.
-
 Next we need to get the missing dark frames.  Copy the entire URL which the script generated, and paste 
 it into a web browser (e.g. on a Mac highlight the URL with the cursor, and hit "command-C", move the cursor 
 to the web browser URL window, and hit "command-V").  Then hit return.  This will generate a HST archive 
