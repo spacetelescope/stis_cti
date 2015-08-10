@@ -26,10 +26,8 @@ or ``ssbrel``, depending on your installation details).
 To install the ``stis_cti`` package and dependencies, run:
 
 ::
-
+  
   pip install stis-cti --pre
-
-::
 
 After that open a brand new Ureka session (see above), and continue there.  
 Create a working directory where the data will reside, and also create the 
@@ -38,15 +36,13 @@ and the account is "biretta" and we might use the proposal number "13542"
 so our working directory was "/Users/biretta/13542".
 
 ::
-
+  
   ur_setup common ssbrel
   mkdir /Users/biretta/13542
   cd    /Users/biretta/13542
   mkdir darks
   mkdir ref
   mkdir science
-
-::
 
 Place the raw science data in the "science" directory.  This will
 include the files you got from the archive: \*_raw.fits, \*_epc.fits, \*_spt.fits, \*_asn.fits, \*_trl.fits
@@ -55,28 +51,32 @@ Next we define the location of the calibration reference files. We will assume
 you want the script to automatically download the reference files from the HST 
 archive:  
 
-::
+In TCSH:
 
+::
+  
   setenv oref "/Users/biretta/13542/ref/references/hst/stis/"
 
+In BASH:
+
 ::
+  
+  export oref="/Users/biretta/13542/ref/references/hst/stis/"
 
 Note that it is important to include the trailing slash ('/').
 
 Next we do an initial run of the script from the science directory:
 
 ::
-
+  
   stis_cti --crds_update
-
-::
 
 It is expected the script will run for a minute, and then give an
 error message, along with a web url to get the dark frames that are
 missing, and then stop:
 
 ::
-
+   
    ERROR:  These FLT component darks are missing from ../darks/:
    .
    .
@@ -100,8 +100,6 @@ missing, and then stop:
    .
    stis_cti.stis_cti.FileError: Missing component dark FLT files.
 
-::
-
 Next we need to get the missing dark frames.  Copy the entire URL which the script generated, and paste 
 it into a web browser (e.g. on a Mac highlight the URL with the cursor, and hit "command-C", move the cursor 
 to the web browser URL window, and hit "command-V").  Then hit return.  This will generate a HST archive 
@@ -117,7 +115,7 @@ and the computer and directory where you want the files to be sent:
 Check ``[sftp the data]``
 
 ::
-
+  
   myserver.mydomain.edu (put your computer name here instead)
 
   /Users/biretta/13542/darks  (use the darks directory that we created earlier)
@@ -125,8 +123,6 @@ Check ``[sftp the data]``
   biretta (put your computer account name)
 
   (put your computer password)
-
-::
 
 File options: check ``Calibrated`` (it will probably checked already by default)
 
@@ -139,15 +135,13 @@ to completion.  On a typical Mac laptop, it might take an hour to
 run.  Make sure you are in the science directory still, and then:
 
 ::
-
+  
   stis_cti --crds_update
-
-::
 
 When you get the message that looks like:
 
 .. parsed-literal:: 
-
+   
    Completion time:                2015-06-12 19:51:29.862291
    Run time:                       0:23:05.068940
    stis_cti.py complete!

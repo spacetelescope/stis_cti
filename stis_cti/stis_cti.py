@@ -13,7 +13,7 @@ import StisPixCteCorr
 from crds.bestrefs import BestrefsScript
 
 __author__  = 'Sean Lockwood'
-__version__ = '0.4_beta8'
+__version__ = '0.4_beta9'
 
 crds_server_url = 'https://hst-crds.stsci.edu'
 
@@ -930,19 +930,22 @@ def populate_darkfiles(raw_files, dark_dir, ref_dir, pctetab, num_processes, all
         
         # Update file headers:
         if crds_update:
-            if verbose:
-                print 'Running crds.BestrefsScript on dark files from anneal {}...'.format(anneal)
-            dark_files_to_run = [d['file'] for d in anneal['darks']]
-            errors = BestrefsScript('BestrefsScript --update-bestrefs -s 1 -f ' + ' '.join(dark_files_to_run))()
-            if int(errors) > 0:
-                raise Exception('CRDS BestrefsScript (darks):  Call returned errors!')
-            
-            # Update hdr0 data after BestrefsScript is run:
-            for dark in anneal['darks']:
-                file = dark['file']
-                with fits.open(file) as f:
-                    hdr0 = f[0].header
-                found[hdr0['ROOTNAME'].strip().upper()] = (file, hdr0)
+            dark_files_to_run = [d['file'] for d in anneal['darks'] if d.has_key('file')]
+            if len(dark_files_to_run) > 0:
+                if verbose:
+                    print 'Running crds.BestrefsScript on dark files from anneal {}...'.format(anneal)
+                
+                errors = BestrefsScript('BestrefsScript --update-bestrefs -s 1 -f ' + ' '.join(dark_files_to_run))()
+                if int(errors) > 0:
+                    raise Exception('CRDS BestrefsScript (darks):  Call returned errors!')
+                
+                # Update hdr0 data after BestrefsScript is run:
+                for dark in anneal['darks']:
+                    if dark.has_key('file'):
+                        file = dark['file']
+                        with fits.open(file) as f:
+                            hdr0 = f[0].header
+                        found[hdr0['ROOTNAME'].strip().upper()] = (file, hdr0)
         
         # For each amp, count weeks based on old darkfile; reset for each annealing period:
         # Get keywords about each dark:
@@ -985,7 +988,7 @@ def populate_darkfiles(raw_files, dark_dir, ref_dir, pctetab, num_processes, all
         print 'Please download the missing darks (calibrated FLTs) via this link:'
         print '(or specify the proper dark_dir [{}])\n'.format(dark_dir)
         print archive_dark_query.darks_url(missing_darks) + '\n'
-        raise FileError('Missing component dark FLT files.')
+        sys.exit(1)
     
     if verbose:
         print 'All required component dark FLT files for annealing periods have been located on disk.\n'

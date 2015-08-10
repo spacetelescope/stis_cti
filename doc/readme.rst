@@ -26,16 +26,12 @@ First, launch Ureka (available via http://ssb.stsci.edu/ureka/):
 ::
    
    ur_setup
-   
-::
 
 Then, install the requiered packages within the Ureka environment:
 
 ::
    
    pip install stis-cti --pre
-   
-::
 
 To optionally install a local CRDS cache in a common location on your system, please see:
 
@@ -116,7 +112,7 @@ Note that running this script requires an internet connection to the MAST archiv
                       component darks
     -v VERBOSE_LEVEL  verbosity ({0,1,2}; default=1)
   
-  Author: Sean Lockwood; Version: 0.4_beta8
+  Author: Sean Lockwood; Version: 0.4_beta9
 
 The script is designed to run the pixel-based correction in parallel on the component darks, and in parallel on the science files.  The maximum number of processes may be specified via the '``-n #``' option.
 

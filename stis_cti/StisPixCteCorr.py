@@ -20,9 +20,8 @@ http://adsabs.harvard.edu/abs/2010PASP..122.1035A
     * This code also does not account for second-exposure effect.
     * Multi-threading support was not implemented in this version.
 
+:Optional preprocessing for nonstandard FLT input:
 
-Optional preprocessing for nonstandard FLT input
-================================================
 If you are not using a fully calibrated FLT image as input,
 you might also need to do one or more of the following before running the task:
 
@@ -51,16 +50,16 @@ you might also need to do one or more of the following before running the task:
         * EXTNAME (must be DQ)
         * EXTVER (1 or greater)
 
-Example
---------
+:Example:
+
 To correct a set of STIS FLT images, with one new CTE-corrected image
 for each input.
 
 >>> from stistools import StisPixCteCorr
 >>> StisPixCteCorr.CteCorr('o*q_flt.fits')
 
-References
-----------
+:References:
+
 .. [Anderson] Anderson J. & Bedin, L.R., 2010, PASP, 122, 1035
 
 """
