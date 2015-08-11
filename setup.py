@@ -15,7 +15,7 @@ StisPixCteCorr_module = Extension('stis_cti.StisPixCte_FixY',
 setup(
     name = 'stis_cti',
     url = 'http://www.stsci.edu/instruments/stis/',
-    version = '0.4_beta9',
+    version = '0.4_beta10',
     description = 'Pixel-based CTI-correction for HST/STIS CCD data',
     long_description = long_description,
     author = 'Sean Lockwood, Phil Hodge, Pey Lian Lim, W.J. Hack, J. Anderson, Matt Davis',

@@ -19,8 +19,9 @@ Python usage::
 
 Other utilities:
 
-  * stis_cti.StisPixCteCorr(...) -- Code to run pixel-based CTI-correction
+  * stis_cti.StisPixCteCorr(...) -- Code to run pixel-based CTI-correction on intermediate products
   * stis_cti.viable_ccd_file(...) -- Test to see which FITS files on which to run the correction
   * stis_cti.archive_dark_query(...) -- Utility to query MAST for needed component darks
+  * stis_cti.custom_superdark_info() -- Print information on manually creating/implementing a corrected super-dark
 
 See documentation at http://pythonhosted.org/stis_cti/
