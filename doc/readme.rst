@@ -208,6 +208,13 @@ Advanced Topics
 
 Custom Super-Darks
 ------------------
+For detailed text on how to create and apply a custom super-dark on your system, run:
+
+.. code:: python
+  
+  import stis_cti
+  stis_cti.custom_superdark_info()
+
 The ``stis_cti`` script first determines if the ``DARKFILE`` specified in each science file's header is already CTI-corrected (assuming it exists) by checking that the ``ext=0`` header keyword ``PCTECORR=='COMPLETE'``.  If it is, then the script will not attempt to replace it.  This allows users the flexibility to create their own super-darks via the ``refstis`` package with their own parameters and/or input data (e.g. herringbone-corrected_ data files).
 
 .. _herringbone-corrected: http://stis2.sese.asu.edu/
@@ -218,12 +225,15 @@ The ``stis_cti`` script first determines if the ``DARKFILE`` specified in each s
   import glob
   from astropy.io import fits
   
-  # First, run stis_cti.StisPixCteCorr() on _flt.fits dark files 
+  # First, populate the _flt.fits dark file headers with the PCTETAB reference file.
+  # Then, run stis_cti.StisPixCteCorr.CteCorr() on _flt.fits dark files 
   # to produce _cte.fits files.
   month_files = glob.glob('annealing_month/*_cte.fits')
              # Assuming only the annealing month's darks are selected
   refstis.basedark.make_basedark(month_files, refdark_name='basedark_drk.fits')
+
   week_files = glob.glob('my_week/*_cte.fits')
+             # Assuming we have moved the week's files to my_week/
   refstis.weekdark.make_weekdark(week_files, refdark_name='weekdark_drk.fits',
       thebasedark='basedark_drk.fits')
   
@@ -240,6 +250,9 @@ The ``stis_cti`` script first determines if the ``DARKFILE`` specified in each s
   
 Now when ``stis_cti`` is run on the science directory, it won't try to recreate the super-dark, 
 but will CTI-correct the science images.
+
+Be sure not to run ``stis_cti`` with the ``--crds_update`` option, as this will override the
+custom super-dark specified above.
 
 CRDS Updates
 ------------
