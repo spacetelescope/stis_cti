@@ -27,7 +27,14 @@ To install the ``stis_cti`` package and dependencies, run:
 
 ::
   
-  pip install stis-cti --pre
+  pip install --pre stis-cti
+
+Or, to upgrade from a previous version, run:
+
+::
+  
+  pip install --pre --upgrade --no-deps stis-cti
+  pip install --pre stis-cti
 
 After that open a brand new Ureka session (see above), and continue there.  
 Create a working directory where the data will reside, and also create the 
@@ -45,7 +52,11 @@ so our working directory was "/Users/biretta/13542".
   mkdir science
 
 Place the raw science data in the "science" directory.  This will
-include the files you got from the archive: \*_raw.fits, \*_epc.fits, \*_spt.fits, \*_asn.fits, \*_trl.fits
+include the files you got from the archive:
+\*_raw.fits, \*_epc.fits, \*_spt.fits, \*_asn.fits, \*_wav.fits
+
+Note that the presense of non-CTI-corrected products from the archive 
+(e.g. \*_flt.fits) will not interfere with the processing.
 
 Next we define the location of the calibration reference files. We will assume 
 you want the script to automatically download the reference files from the HST 

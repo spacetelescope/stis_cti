@@ -1,7 +1,7 @@
 def custom_superdark_info():
     '''
     Prints informative text on manually applying the CTI-correction and creating custom
-    super-darks.'
+    super-darks.
     '''
     import stis_cti
     import pkg_resources

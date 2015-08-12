@@ -31,7 +31,7 @@ Then, install the requiered packages within the Ureka environment:
 
 ::
    
-   pip install stis-cti --pre
+   pip install --pre stis-cti
 
 To optionally install a local CRDS cache in a common location on your system, please see:
 
@@ -118,7 +118,7 @@ The script is designed to run the pixel-based correction in parallel on the comp
 
 A typical call looks like::
 
-  stis_cti -vv -n 15 --crds_update my_science_dir/
+  stis_cti -v 2 -n 15 --crds_update my_science_dir/
 
 (Assuming that there are ``ref/`` and ``darks/`` directories parallel to ``my_science_dir/``)
 
