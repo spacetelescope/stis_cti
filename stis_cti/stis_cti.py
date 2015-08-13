@@ -173,6 +173,14 @@ def stis_cti(science_dir, dark_dir, ref_dir, num_processes, pctetab=None,
     if crds_update:
         setup_crds(ref_dir, verbose)
     
+    # Test that $oref is properly defined:
+    oref = os.environ.get('oref', failobj='Undefined')
+    if oref is 'Undefined' or not os.access(oref, os.R_OK):
+        raise OSError('Cannot read $oref directory!\n    {}\n'.format(oref) + \
+            '    Please set $oref environmental variable appropriately or run with --crds_update.')
+    if verbose:
+        print '$oref      = {}\n'.format(oref)
+    
     raw_files = determine_input_science(science_dir, allow, verbose)
     log.flush()
     
@@ -334,7 +342,6 @@ def setup_crds(ref_dir, verbose=False):
     
     if verbose:
         print '$CRDS_PATH = {}'.format(os.environ.get('CRDS_PATH'))
-        print '$oref      = {}\n'.format(os.environ.get('oref'))
     
     return True
 
