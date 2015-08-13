@@ -145,7 +145,7 @@ Note that running this script requires an internet connection to the MAST archiv
                       component darks
     -v VERBOSE_LEVEL  verbosity ({0,1,2}; default=1)
   
-  Author: Sean Lockwood; Version: 0.4_beta10
+  Author: Sean Lockwood; Version: 1.0
 
 The script is designed to run the pixel-based correction in parallel on the component 
 darks, and in parallel on the science files.  The maximum number of processes may be 
@@ -335,7 +335,7 @@ common local CRDS cache of reference files to avoid redundancy and save disk spa
 
 PCTETAB Updates
 ---------------
-The ``stis-cti`` package includes the ``v0.1_beta`` ``PCTETAB`` reference file, which 
+The ``stis-cti`` package includes the ``v0.1`` ``PCTETAB`` reference file, which 
 specifies the parameters necessary to run the pixel-based correction on STIS data.  If 
 this file is updated, or if an advanced user wishes to modify the file to run the 
 correction differently, the new version may be placed in the ``ref/`` directory.  (If 

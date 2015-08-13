@@ -13,7 +13,7 @@ import StisPixCteCorr
 from crds.bestrefs import BestrefsScript
 
 __author__  = 'Sean Lockwood'
-__version__ = '0.4_beta10'
+__version__ = '1.0'
 
 crds_server_url = 'https://hst-crds.stsci.edu'
 
