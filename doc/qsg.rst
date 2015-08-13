@@ -2,88 +2,73 @@
 Quick Start Guide
 =================
 
-Thank you very much for trying out this **beta** release of the
-``stis_cti`` correction package.  This section is intended to provide a dialogue and inputs which will give good results for beginning users. 
-Please let us know how it goes, and ask any questions you have.  Send
-feedback, questions, etc. to biretta@stsci.edu.
-Please note: we are not responsible for any damages resulting from
-use of this experimental software.
+This section is intended to provide a dialogue and inputs which will give 
+good results for beginning users.  Please let us know how it goes, and ask 
+any questions you have.  Send feedback and questions to help@stsci.edu.
 
-Note: as you are working through this guide, you can copy and paste
-text from this PDF file into your terminal window, if that helps you
-work faster.  Or you may want to copy blocks of text from this PDF into a textfile,
+Please note that AURA/STScI is not responsible for any damages resulting 
+from use of this software.
+
+------------------------------------------------------------------------------------------
+
+As you are working through this guide, you can copy and paste text 
+from this file into your terminal window, if that helps you work 
+faster.  Or you may want to copy blocks of text into a text file, 
 to create your own customized dialog and commands.
 
 If you don't have it already, you will need to install the standard
 Ureka/STSDAS distribution available at
-http://ssb.stsci.edu/ureka/. The normal version (not SSBX nor SSBDEV)
-is preferred for our scripts.
+http://ssb.stsci.edu/ureka/.
 
-After Ureka is installed, open a new Ureka session (either click on the
-Ureka icon on the desktop, or open a new terminal window and type either ``ur_setup common ssbrel``
-or ``ssbrel``, depending on your installation details).
+After Ureka is installed, open a new Ureka session (either click on the 
+Ureka icon on the desktop, or open a new terminal window and type either 
+``ur_setup`` or ``ssbrel``, depending on your installation details).
 
-To install the ``stis_cti`` package and dependencies, run:
+To install the ``stis-cti`` package and dependencies, run:
 
 ::
   
-  pip install --pre stis-cti
+  pip install stis-cti
 
 Or, to upgrade from a previous version, run:
 
 ::
   
-  pip install --pre --upgrade --no-deps stis-cti
-  pip install --pre stis-cti
+  pip install --upgrade --no-deps stis-cti
+  pip install stis-cti
 
-After that open a brand new Ureka session (see above), and continue there.  
+After that, open a brand new Ureka session (see above), and continue there.  
 Create a working directory where the data will reside, and also create the 
-necessary sub-directories.  For example, our disk here is called "/Users" 
-and the account is "biretta" and we might use the proposal number "13542" 
-so our working directory was "/Users/biretta/13542".
+necessary sub-directories.  For example, our disk here is called ``/Users``, 
+and the account is ``biretta``, and we might use the proposal number ``13542``, 
+so our working directory was ``/Users/biretta/13542``.
 
 ::
   
-  ur_setup common ssbrel
+  ur_setup
   mkdir /Users/biretta/13542
   cd    /Users/biretta/13542
   mkdir darks
   mkdir ref
   mkdir science
 
-Place the raw science data in the "science" directory.  This will
+Place the raw science data in the ``science`` directory.  This will
 include the files you got from the archive:
-\*_raw.fits, \*_epc.fits, \*_spt.fits, \*_asn.fits, \*_wav.fits
+``*_raw.fits``, ``*_epc.fits``, ``*_spt.fits``, ``*_asn.fits``, ``*_wav.fits``
 
 Note that the presense of non-CTI-corrected products from the archive 
-(e.g. \*_flt.fits) will not interfere with the processing.
+(e.g. ``*_flt.fits``) will not interfere with the processing.
 
-Next we define the location of the calibration reference files. We will assume 
-you want the script to automatically download the reference files from the HST 
-archive:  
-
-In TCSH:
-
-::
-  
-  setenv oref "/Users/biretta/13542/ref/references/hst/stis/"
-
-In BASH:
-
-::
-  
-  export oref="/Users/biretta/13542/ref/references/hst/stis/"
-
-Note that it is important to include the trailing slash ('/').
-
-Next we do an initial run of the script from the science directory:
+We will assume you want the script to automatically download the 
+reference files from the HST archive.  We do an initial run of the 
+script from the science directory:
 
 ::
   
   stis_cti --crds_update
 
 It is expected the script will run for a minute, and then give an
-error message, along with a web url to get the dark frames that are
+error message, along with a URL to get the dark frames that are
 missing, and then stop:
 
 ::
@@ -106,10 +91,12 @@ missing, and then stop:
    2COC4W8ADJQ%2COC4W8BHWQ%2COC4W8CI2Q%2COC4W8DNUQ%2COC4W8EOAQ%2COC4W8FBPQ%2COC4W8GBTQ&
    max_records=50000&max_rpp=5000&ordercolumn1=sci_start_time&action=Search
 
-Next we need to get the missing dark frames.  Copy the entire URL which the script generated, and paste 
-it into a web browser (e.g. on a Mac highlight the URL with the cursor, and hit "command-C", move the cursor 
-to the web browser URL window, and hit "command-V").  Then hit return.  This will generate a HST archive 
-request for the missing dark files.  Then do this on the archive web page:
+Next we need to get the missing dark frames.  Copy the entire URL which 
+the script generated, and paste it into a web browser (e.g. on a Mac 
+highlight the URL with the cursor, and hit ``command-c``, move the cursor 
+to the web browser URL bar, and hit ``command-v``).  Then hit ``return``.  
+This will generate an HST archive request for the missing dark files.  
+Then do this on the archive web page:
 
 Click ``[Mark all]``
 
@@ -153,9 +140,8 @@ When you get the message that looks like:
    stis_cti.py complete!
 
 
-...it is done running.  You should find the output files in the science directory with names like \*_cte.fits, \*_flc.fits, \*_crc.fits, etc.
+...it is done running.  You should find the output files in the science 
+directory with names like ``*_cte.fits``, ``*_flc.fits``, ``*_crc.fits``, etc.
 
-Good luck!  Let us know if you encounter problems, or need any help.
-
--- John Biretta  (biretta@stsci.edu)
-
+Good luck!  Let us know if you encounter problems, or need any assistance at 
+help@stsci.edu.
