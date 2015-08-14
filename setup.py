@@ -26,7 +26,7 @@ setup(
     keywords = ['astronomy'],
     classifiers = ['Programming Language :: Python',
                    'Programming Language :: C',
-                   'Development Status :: 4 - Beta',
+                   'Development Status :: 5 - Production/Stable',
                    'Operating System :: OS Independent',
                    'Intended Audience :: Science/Research',
                    'License :: OSI Approved :: BSD License',
