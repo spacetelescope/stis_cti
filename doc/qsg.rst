@@ -36,6 +36,8 @@ Or, to upgrade from a previous version, run:
   
   pip install --upgrade --no-deps stis-cti
   pip install stis-cti
+  pip install --upgrade --no-deps refstis
+  pip install refstis
 
 After that, open a brand new Ureka session (see above), and continue there.  
 Create a working directory where the data will reside, and also create the 

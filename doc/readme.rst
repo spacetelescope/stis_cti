@@ -4,7 +4,7 @@ STIS Pixel-Based CTI-Correction Tutorial
 Please note that AURA/STScI is not responsible for any damage resulting from the use of 
 this software.
 
-Please send any feedback to STIS team at help@stsci.edu.
+Please send any feedback to the COS/STIS team at help@stsci.edu.
 
 Introduction
 ============
@@ -14,7 +14,7 @@ Inefficiency (CTI)-correction on HST/STIS CCD data.  It performs bias correction
 data, calls ``StisPixCteCorr()`` on the intermediate products, and finishes running the 
 remaining ``CalSTIS`` processing steps.
 
-The code also creates a CTI-corrected super-dark reference files to use in this processing 
+The code also creates CTI-corrected super-dark reference files to use in this processing 
 from component dark files.  When run, the user will be prompted to retrieve these 
 component darks from the MAST archive if they have not already been retrieved.  The code 
 makes use of the ``refstis`` package to generate super-darks from the component darks.
@@ -51,6 +51,8 @@ Or, to upgrade from a previous installation:
   
   pip install --upgrade --no-deps stis-cti
   pip install stis-cti
+  pip install --upgrade --no-deps refstis
+  pip install refstis
 
 To optionally install a local CRDS cache in a common location on your system, please see:
 
