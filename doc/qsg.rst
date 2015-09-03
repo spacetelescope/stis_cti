@@ -145,5 +145,23 @@ When you get the message that looks like:
 ...it is done running.  You should find the output files in the science 
 directory with names like ``*_cte.fits``, ``*_flc.fits``, ``*_crc.fits``, etc.
 
+.. Warning::
+   
+   New reference files for recent STIS observations will not be available 
+   until 30-60 days after observation.  This will affect the selection of data being used 
+   to generate the CTI-corrected super-darks.  To get the most accurate calibration, 
+   please re-reduce your data after the pipeline's new super-biases and super-darks have 
+   been delivered by deleting the relevant old CTI-corrected super-darks in the ``ref/`` 
+   directory and running ``stis_cti`` with the ``--clean`` and ``--crds_update`` options 
+   specified.  You may need to download additional component darks from MAST.
+   
+   To receive updates when STIS reference files are delivered to CRDS, go to 
+   https://maillist.stsci.edu and subscribe to the ``stis_reffiles_upd`` mailing list.
+   
+   You can also check the status of super-dark and super-bias files by going to 
+   https://hst-crds.stsci.edu and clicking on STIS-->darkfile and STIS-->biasfile.  Sort 
+   by USEAFTER to see if the week corresponding to your science data has been delivered 
+   yet.
+
 Good luck!  Let us know if you encounter problems, or need any assistance at 
 help@stsci.edu.
