@@ -162,13 +162,14 @@ A typical call looks like::
 
 .. Warning::
    
-   New reference files for recent STIS observations will not be available 
-   until 30-60 days after observation.  This will affect the selection of data being used 
-   to generate the CTI-corrected super-darks.  To get the most accurate calibration, 
-   please re-reduce your data after the pipeline's new super-biases and super-darks have 
-   been delivered by deleting the relevant old CTI-corrected super-darks in the ``ref/`` 
-   directory and running ``stis_cti`` with the ``--clean`` and ``--crds_update`` options 
-   specified.  You may need to download additional component darks from MAST.
+   For recent STIS observations (new data taken in last 30 to 60 days) optimal dark 
+   reference files will not yet be available.  This will affect the selection of data 
+   being used to generate the CTI-corrected super-darks.  To get the most accurate 
+   calibration, please re-reduce your data after the pipeline's new super-biases and 
+   super-darks have been delivered by deleting the relevant old CTI-corrected super-darks 
+   in the ``ref/`` directory and running ``stis_cti`` with the ``--clean`` and 
+   ``--crds_update`` options specified.  You may need to download additional component 
+   darks from MAST.
    
    To receive updates when STIS reference files are delivered to CRDS, go to 
    https://maillist.stsci.edu and subscribe to the ``stis_reffiles_upd`` mailing list.
