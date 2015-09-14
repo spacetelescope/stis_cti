@@ -1,3 +1,4 @@
 stis_cti/data/* linguist-documentation
 doc/* linguist-documentation
 *.fits -diff
+*.p linguist-documentation
