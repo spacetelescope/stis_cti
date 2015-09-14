@@ -25,3 +25,4 @@ Other utilities:
   * stis_cti.custom_superdark_info() -- Print information on manually creating/implementing a corrected super-dark
 
 See documentation at http://pythonhosted.org/stis_cti/
+Project page:  http://www.stsci.edu/hst/stis/software/analyzing/scripts/pixel_based_CTI/
