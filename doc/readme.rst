@@ -6,6 +6,8 @@ this software.
 
 Please send any feedback to the COS/STIS team at help@stsci.edu.
 
+**Update:**  See the `Known Issues`_ section.
+
 Introduction
 ============
 The ``stis-cti`` package implements the Anderson & Bedin (`PASP 2010, 122: 1035-1064 
@@ -369,3 +371,33 @@ The location of the current package ``PCTETAB`` can be found by running
 To completely re-run the CTI-correction, you can delete any needed basedarks/weekdarks in 
 the ``ref/`` directory and any needed ``_cte.fits`` files in the ``darks/`` directory by 
 specifying the ``--clean_all`` option.
+
+Known Issues
+============
+
+.. Warning::
+   Run ``stistools.x1d.x1d()`` with the argument ``ctecorr="OMIT"`` on pixel-based
+   CTI-corrected data.
+
+- The primary FITS header keyword ``FILENAME`` does not get updated in CTI-corrected 
+  output products.
+
+- Running ``stistools.x1d.x1d()`` -- A tool to manually extract 1D spectra from ``FLC`` files:
+
+  - The older empirical CTI flux correction is incorrectly run by default, even if the 
+    FITS primary header keyword is set to ``CTECORR`` = ``OMIT``.
+    
+    To properly run ``stistools.x1d.x1d()``, specify ``ctecorr="OMIT"`` in the 
+    ``stistools.x1d.x1d()`` argument list.
+    
+  - The output product names when running ``stistools.x1d.x1d()`` do not match those 
+    output by ``stis_cti``:
+    
+    +---------------+---------------------+--------------------+----------------------+
+    | CR-Corrected? | Standard Products   | Output of stis_cti | Output of x1d() from |
+    |               | (Non-CTI-Corrected) |                    | stis_cti 2D product  |
+    +===============+=====================+====================+======================+
+    | No            | ``_x1d.fits``       | ``_x1c.fits``      | ``_flc_x1d.fits``    |
+    +---------------+---------------------+--------------------+----------------------+
+    | Yes           | ``_sx1.fits``       | ``_s1c.fits``      | ``_crc_x1d.fits``    |
+    +---------------+---------------------+--------------------+----------------------+
