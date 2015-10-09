@@ -198,6 +198,10 @@ this ahead of time:
   
   http://archive.stsci.edu/hst/search.php?sci_instrume=STIS&sci_instrument_config=STIS%2FCCD&sci_targname=DARK&sci_aec=C&resolve=don%27tresolve&sci_data_set_name=OC4W6XH3Q%2COC4W6YHBQ%2COC4W6ZP2Q%2COC4W70PCQ%2COC4W71TEQ%2COC4W72TOQ%2COC4W73X8Q%2COC4W74XJQ%2COC4W75D0Q%2COC4W76DCQ%2COC4W77HHQ%2COC4W78I0Q%2COC4W79A5Q%2COC4W7AADQ%2COC4W7BFGQ%2COC4W7CF9Q%2COC4W7DJNQ%2COC4W7EJRQ%2COC4W7FOAQ%2COC4W7GO4Q%2COC4W7HSNQ%2COC4W7ISUQ%2COC4W7JXEQ%2COC4W7KXAQ%2COC4W7LGRQ%2COC4W7MGWQ%2COC4W7NA1Q%2COC4W7OA8Q%2COC4W7PM6Q%2COC4W7QMDQ%2COC4W7RTJQ%2COC4W7STNQ%2COC4W7TX4Q%2COC4W7UXDQ%2COC4W7VIKQ%2COC4W7WIRQ%2COC4W7XNJQ%2COC4W7YNRQ%2COC4W7ZSZQ%2COC4W80TMQ%2COC4W81A4Q%2COC4W82AGQ%2COC4W83NMQ%2COC4W84O1Q%2COC4W85SRQ%2COC4W86SZQ%2COC4W87XWQ%2COC4W88YHQ%2COC4W89D6Q%2COC4W8ADJQ%2COC4W8BHWQ%2COC4W8CI2Q%2COC4W8DNUQ%2COC4W8EOAQ%2COC4W8FBPQ%2COC4W8GBTQ&max_records=50000&max_rpp=5000&ordercolumn1=sci_start_time&action=Search
 
+Alternatively, a list of the component darks comprising each annealing period is maintained
+at http://www.stsci.edu/~STIS/monitors/anneals/anneal_periods.html.  Note that it does
+not list the most recent annealing period until it is complete.
+
 Python Usage
 ============
 If you wish to run the ``stis_cti`` script from within Python (say from within another 
@@ -376,19 +380,20 @@ Known Issues
 ============
 
 .. Warning::
-   Run ``stistools.x1d.x1d()`` with the argument ``ctecorr="OMIT"`` on pixel-based
-   CTI-corrected data.
+   If you use ``stistools.x1d.x1d()`` to manually extract your spectra, we recommend using 
+   the argument ``ctecorr="OMIT"`` for pixel-based CTI-corrected data.
 
 - The primary FITS header keyword ``FILENAME`` does not get updated in CTI-corrected 
   output products.
 
-- Running ``stistools.x1d.x1d()`` -- A tool to manually extract 1D spectra from ``FLC`` files:
+- Running ``stistools.x1d.x1d()`` -- A tool to manually extract 1D spectra from ``FLT`` / 
+  ``FLC`` files:
 
   - The older empirical CTI flux correction is incorrectly run by default, even if the 
     FITS primary header keyword is set to ``CTECORR`` = ``OMIT``.
     
-    To properly run ``stistools.x1d.x1d()``, specify ``ctecorr="OMIT"`` in the 
-    ``stistools.x1d.x1d()`` argument list.
+    To properly run ``stistools.x1d.x1d()`` on ``FLC`` files, specify ``ctecorr="OMIT"``
+    in the ``stistools.x1d.x1d()`` argument list.
     
   - The output product names when running ``stistools.x1d.x1d()`` do not match those 
     output by ``stis_cti``:
