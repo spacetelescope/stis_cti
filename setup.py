@@ -35,7 +35,7 @@ setup(
                    'Topic :: Software Development :: Libraries :: Python Modules'],
     packages = ['stis_cti'],
     install_requires = ['setuptools', 'numpy', 'astropy>= 1.0.1', 'stistools>= 1.0.2', 
-        'refstis>= 0.5.1', 'crds>= 1.3.0', 'stistools>= 1.0.2', 'stsci.tools>= 3.2.2'],
+        'refstis>= 0.5.1', 'crds>= 1.3.0', 'stsci.tools>= 3.2.2'],
     scripts = ['scripts/stis_cti', 'scripts/archive_dark_query'],
     package_data = {'stis_cti': ['data/*.fits']},  # To do: Use entry_points instead
     ext_modules = [StisPixCteCorr_module],
