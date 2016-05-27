@@ -16,30 +16,29 @@ from this file into your terminal window, if that helps you work
 faster.  Or you may want to copy blocks of text into a text file, 
 to create your own customized dialog and commands.
 
-If you don't have it already, you will need to install the standard
-Ureka/STSDAS distribution available at
-http://ssb.stsci.edu/ureka/.
+If you don't have it already, you will need to install the AstroConda distribution with 
+legacy IRAF support available at 
+http://astroconda.readthedocs.io.
 
-After Ureka is installed, open a new Ureka session (either click on the 
-Ureka icon on the desktop, or open a new terminal window and type either 
-``ur_setup`` or ``ssbrel``, depending on your installation details).
+After AstroConda is installed, open a new session (open a new Bash terminal and type 
+``source activate astroconda``).
 
-To install the ``stis-cti`` package and dependencies, run:
+To install the ``stis_cti`` package and dependencies, run:
 
 ::
   
-  pip install stis-cti
+  pip install stis_cti
 
 Or, to upgrade from a previous version, run:
 
 ::
   
-  pip install --upgrade --no-deps stis-cti
-  pip install stis-cti
+  pip install --upgrade --no-deps stis_cti
+  pip install stis_cti
   pip install --upgrade --no-deps refstis
   pip install refstis
 
-After that, open a brand new Ureka session (see above), and continue there.  
+After that, open a brand new AstroConda session (see above), and continue there.  
 Create a working directory where the data will reside, and also create the 
 necessary sub-directories.  For example, our disk here is called ``/Users``, 
 and the account is ``biretta``, and we might use the proposal number ``13542``, 
@@ -47,7 +46,7 @@ so our working directory was ``/Users/biretta/13542``.
 
 ::
   
-  ur_setup
+  source activate astroconda
   mkdir /Users/biretta/13542
   cd    /Users/biretta/13542
   mkdir darks
@@ -119,15 +118,18 @@ Check ``[sftp the data]``
 
   (put your computer password)
 
+Alternatively, you may stage and retrieve files from the archive's ftp server.
+
 File options: check ``Calibrated`` (it will probably checked already by default)
 
 Click ``[Send retrieval request to ST-DADS]``
 
 Then wait for the dark frames to be delivered by the HST archive....
 After you receive an email from archive.stsci.edu that the request has
-completed successfully, run ``stis_cti`` again.  This time it should run
-to completion.  On a typical Mac laptop, it might take an hour to
-run.  Make sure you are in the science directory still, and then:
+completed successfully, put the darks in the ``darks/`` directory and run 
+``stis_cti`` again.  This time it should run to completion.  On a typical Mac 
+laptop, it might take an hour to run.  Make sure you are in the science 
+directory still, and then:
 
 ::
   
@@ -142,7 +144,7 @@ When you get the message that looks like:
    stis_cti.py complete!
 
 
-...it is done running.  You should find the output files in the science 
+...it is done running.  You should find the output files in the ``science/`` 
 directory with names like ``*_cte.fits``, ``*_flc.fits``, ``*_crc.fits``, etc.
 
 .. Warning::

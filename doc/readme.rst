@@ -10,7 +10,7 @@ Please send any feedback to the COS/STIS team at help@stsci.edu.
 
 Introduction
 ============
-The ``stis-cti`` package implements the Anderson & Bedin (`PASP 2010, 122: 1035-1064 
+The ``stis_cti`` package implements the Anderson & Bedin (`PASP 2010, 122: 1035-1064 
 <http://adsabs.harvard.edu//abs/2010PASP..122.1035A>`_) pixel-based Charge Transfer 
 Inefficiency (CTI)-correction on HST/STIS CCD data.  It performs bias corrections on the 
 data, calls ``StisPixCteCorr()`` on the intermediate products, and finishes running the 
@@ -27,32 +27,32 @@ before the STIS recovery of May 2009.
 
 System Requirements
 ===================
-This package is designed to run on top of the Ureka software suite on the UNIX/Linux and 
-MacOS X operating systems.
+This package is designed to run on top of the AstroConda channel (with legacy IRAF support) 
+of the Anaconda Python environment on the UNIX/Linux and MacOS X operating systems.  It 
+currently supports Python 2.7.
 
-Some components in older Ureka installations may be out of date and require updating 
-(including ``astropy``), or a reinstallation of the Ureka package.
+AstroConda is available at http://astroconda.readthedocs.io.
 
 Installation
 ============
-First, launch Ureka (available via http://ssb.stsci.edu/ureka/):
+First, launch the AstroConda (with legacy IRAF support) environment:
 
 ::
    
-   ur_setup
+   source activate astroconda
 
-Then, install the requiered packages within the Ureka environment:
+Then, install the required packages within the AstroConda environment:
 
 ::
    
-   pip install stis-cti
+   pip install stis_cti
 
 Or, to upgrade from a previous installation:
 
 ::
   
-  pip install --upgrade --no-deps stis-cti
-  pip install stis-cti
+  pip install --upgrade --no-deps stis_cti
+  pip install stis_cti
   pip install --upgrade --no-deps refstis
   pip install refstis
 
@@ -97,10 +97,9 @@ Specifying ``--clean_all`` will force the script to recreate super-darks and re-
 CTI-correction on all needed component darks.
 
 If the ``--crds_update`` option is not selected, then the ``$oref`` shell variable must 
-be set before launching the script (including the trailing ``'/'``)::
+be set before launching the script (including the trailing ``'/'``).  In Bash::
 
-  In tcsh:  setenv oref /path/to/oref/  
-  In bash:  export oref='/path/to/oref/'
+  export oref="/path/to/oref/"
 
 This directory must contain the needed reference files specified in the science and 
 component dark headers, as is typical for running ``CalSTIS``.
@@ -110,10 +109,11 @@ Command-line Usage
 The easiest way to invoke the correction is from the ``UNIX`` shell.
 
 Note that running this script requires an internet connection to the MAST archive site.
+The Archive status may be checked at http://archive.stsci.edu/help/archive_status.html.
 
 ::
 
-  ur_setup
+  source activate astroconda
   stis_cti --help
 
 ::
@@ -197,6 +197,8 @@ this ahead of time:
   Download darks via this link:
   
   http://archive.stsci.edu/hst/search.php?sci_instrume=STIS&sci_instrument_config=STIS%2FCCD&sci_targname=DARK&sci_aec=C&resolve=don%27tresolve&sci_data_set_name=OC4W6XH3Q%2COC4W6YHBQ%2COC4W6ZP2Q%2COC4W70PCQ%2COC4W71TEQ%2COC4W72TOQ%2COC4W73X8Q%2COC4W74XJQ%2COC4W75D0Q%2COC4W76DCQ%2COC4W77HHQ%2COC4W78I0Q%2COC4W79A5Q%2COC4W7AADQ%2COC4W7BFGQ%2COC4W7CF9Q%2COC4W7DJNQ%2COC4W7EJRQ%2COC4W7FOAQ%2COC4W7GO4Q%2COC4W7HSNQ%2COC4W7ISUQ%2COC4W7JXEQ%2COC4W7KXAQ%2COC4W7LGRQ%2COC4W7MGWQ%2COC4W7NA1Q%2COC4W7OA8Q%2COC4W7PM6Q%2COC4W7QMDQ%2COC4W7RTJQ%2COC4W7STNQ%2COC4W7TX4Q%2COC4W7UXDQ%2COC4W7VIKQ%2COC4W7WIRQ%2COC4W7XNJQ%2COC4W7YNRQ%2COC4W7ZSZQ%2COC4W80TMQ%2COC4W81A4Q%2COC4W82AGQ%2COC4W83NMQ%2COC4W84O1Q%2COC4W85SRQ%2COC4W86SZQ%2COC4W87XWQ%2COC4W88YHQ%2COC4W89D6Q%2COC4W8ADJQ%2COC4W8BHWQ%2COC4W8CI2Q%2COC4W8DNUQ%2COC4W8EOAQ%2COC4W8FBPQ%2COC4W8GBTQ&max_records=50000&max_rpp=5000&ordercolumn1=sci_start_time&action=Search
+
+Place these darks in the ``DARK_DIR`` directory.
 
 Alternatively, a list of the component darks comprising each annealing period is maintained
 at http://www.stsci.edu/~STIS/monitors/anneals/anneal_periods.html.  Note that it does
@@ -291,7 +293,7 @@ herringbone-corrected_ data files).
 
 .. _herringbone-corrected: http://stis2.sese.asu.edu/
 
-The ``stis-cti`` package will ordinarily create a CTI-corrected super-dark automatically, 
+The ``stis_cti`` package will ordinarily create a CTI-corrected super-dark automatically, 
 assuming updated super-dark files have been applied to pipeline data (this is typically 
 done in the months following an observation).  To create your own super-dark from 
 component darks of your own choosing, you may follow the procedure outlined below.
@@ -325,9 +327,8 @@ component darks of your own choosing, you may follow the procedure outlined belo
   fits.setval('weekdark_drk.fits', 'PCTECORR', value='COMPLETE')
   
   # Point the science files at the new weekdark:
-  # Define $stisref to point to the directory containing the weekdark in the shell.
-  #   In tcsh:  setenv stisref /path/to/my_dir/
-  #   In bash:  export stisref='/path/to/my_dir/'
+  # Define $stisref to point to the directory containing the weekdark in the (Bash) shell.
+  #   export stisref='/path/to/my_dir/'
   # 
   # Then, on each science file:
   fits.setval('science/filename_raw.fits', 'DARKFILE', value='stisref$weekdark_drk.fits')
@@ -362,7 +363,7 @@ common local CRDS cache of reference files to avoid redundancy and save disk spa
 
 PCTETAB Updates
 ---------------
-The ``stis-cti`` package includes the ``v0.1`` ``PCTETAB`` reference file, which 
+The ``stis_cti`` package includes the ``v0.1`` ``PCTETAB`` reference file, which 
 specifies the parameters necessary to run the pixel-based correction on STIS data.  If 
 this file is updated, or if an advanced user wishes to modify the file to run the 
 correction differently, the new version may be placed in the ``ref/`` directory.  (If 
