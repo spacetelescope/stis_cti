@@ -4,7 +4,7 @@ STIS Pixel-Based CTI-Correction Tutorial
 Please note that AURA/STScI is not responsible for any damage resulting from the use of 
 this software.
 
-Please send any feedback to the COS/STIS team at help@stsci.edu.
+Please send any feedback to the STIS team at help@stsci.edu.
 
 **Update:**  See the `Known Issues`_ section.
 
