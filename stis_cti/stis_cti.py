@@ -13,7 +13,7 @@ import StisPixCteCorr
 from crds.bestrefs import BestrefsScript
 
 __author__  = 'Sean Lockwood'
-__version__ = '1.0'
+__version__ = '1.1'
 
 crds_server_url = 'https://hst-crds.stsci.edu'
 
@@ -25,7 +25,7 @@ class VersionError(Exception):
 
 def stis_cti(science_dir, dark_dir, ref_dir, num_processes, pctetab=None, 
              all_weeks_flag=False, allow=False, clean=False, clean_all=False, 
-             crds_update=False, verbose=1):
+             crds_update=False, ignore_missing=False, verbose=1):
     '''
     Runs the HST/STIS/CCD pixel-based CTI-correction on science data and 
     component darks, generating and applying a CTI-corrected super-dark in 
@@ -63,6 +63,9 @@ def stis_cti(science_dir, dark_dir, ref_dir, num_processes, pctetab=None,
     :param crds_update:
         Runs crds.bestrefs script to update science file headers and download 
         pipeline reference files.
+    :param ignore_missing:
+        Ignore missing dark files.  This is useful for when annealing month contains
+        amp=A RAW files, but no associated FLT files.
     :param verbose:
         Verbosity of text printed to the screen and saved in the log file.
     
@@ -76,6 +79,7 @@ def stis_cti(science_dir, dark_dir, ref_dir, num_processes, pctetab=None,
     :type clean: bool, optional
     :type clean_all: bool, optional
     :type crds_update: bool, optional
+    :type ignore_missing: bool, optional, default=False
     :type verbose: int {0,1,2}, optional, default=1
     
     .. note::
@@ -110,6 +114,8 @@ def stis_cti(science_dir, dark_dir, ref_dir, num_processes, pctetab=None,
         print '--clean_all'
     if crds_update:
         print '--crds_update'
+    if ignore_missing:
+        print '--ignore_missing'
     if verbose:
         print 'verbose mode:                   {}'.format(verbose)
 
@@ -225,7 +231,7 @@ def stis_cti(science_dir, dark_dir, ref_dir, num_processes, pctetab=None,
     
     # Check science files for uncorrected super-darks:
     populate_darkfiles(raw_files, dark_dir, ref_dir, pctetab, num_processes, all_weeks_flag, 
-        clean_all, crds_update, verbose)
+        clean_all, crds_update, ignore_missing, verbose)
     log.flush()
     
     # Bias-correct the science files:
@@ -863,7 +869,7 @@ def generate_weekdark(files, outname, pctetab, basedark, num_cpu, clean_all=Fals
 
 
 def populate_darkfiles(raw_files, dark_dir, ref_dir, pctetab, num_processes, all_weeks_flag=False, 
-    clean_all=False, crds_update=False, verbose=False):
+    clean_all=False, crds_update=False, ignore_missing=False, verbose=False):
     '''Check science files for uncorrected super-darks; and, if necessary, generate them and
        populate the science file headers.'''
     
@@ -992,12 +998,16 @@ def populate_darkfiles(raw_files, dark_dir, ref_dir, pctetab, num_processes, all
         missing_darks.sort()
         print 'ERROR:  These FLT component darks are missing from {}:'.format(dark_dir)
         print ', '.join(missing_darks) + '\n'
-        print 'Please download the missing darks (calibrated FLTs) via this link:'
-        print '(or specify the proper dark_dir [{}])\n'.format(dark_dir)
-        print archive_dark_query.darks_url(missing_darks) + '\n'
-        sys.exit(1)
-    
-    if verbose:
+        if not ignore_missing:
+            print 'Please download the missing darks (calibrated FLTs) via this link:'
+            print '(or specify the proper dark_dir [{}])\n'.format(dark_dir)
+            print 'If missing files are expected (e.g. amp=A darks), then run with'
+            print '--ignore_missing flag.\n'
+            print archive_dark_query.darks_url(missing_darks) + '\n'
+            sys.exit(1)
+        else:
+            print '"--ignore_missing" flag set:  Ignoring these missing FLT files...'
+    elif verbose:
         print 'All required component dark FLT files for annealing periods have been located on disk.\n'
     
     # Determine week_num time boundaries (approximate for now):
@@ -1092,7 +1102,7 @@ def populate_darkfiles(raw_files, dark_dir, ref_dir, pctetab, num_processes, all
         basedark = os.path.join(ref_dir, 'basedark_{}{}_drk.fits'.format( \
             weekdarks[weekdark_tag]['amp'].strip().lower(), weekdarks[weekdark_tag]['anneal_num']))
         anneal = [a for a in anneals if a['index'] == weekdarks[weekdark_tag]['anneal_num']][0]
-        files = [f['file'] for f in anneal['darks'] if f['CCDAMP'] == weekdarks[weekdark_tag]['amp']]
+        files = [f['file'] for f in anneal['darks'] if f.get('CCDAMP') == weekdarks[weekdark_tag]['amp']]
         if clean_all and basedark not in already_deleted:
             clean_this = True
             already_deleted.add(basedark)
@@ -1177,7 +1187,7 @@ def map_outputs(rootnames, science_dir, output_mapping, verbose=False):
                 # Handle gzipped filenames:
                 if ext[-3:] in ['.gz', '.GZ']:
                     gzip = ext[-3:]
-                    ext = ext[-3:]
+                    ext = ext[:-3]
                 else:
                     gzip = ''
                 
@@ -1204,12 +1214,15 @@ class Logger(object):
        source: http://stackoverflow.com/a/24583265
        Modified to include STDERR.
     '''
-    def __init__(self, filename='cti_{}.log'.format(datetime.datetime.now().isoformat('_')), mode="a", buff=0):
-        self.stdout = sys.stdout
-        self.stderr = sys.stderr
-        self.file = open(filename, mode, buff)
-        sys.stdout = self
-        sys.stderr = self
+    def __init__(self, filename='cti_{}.log'.format(datetime.datetime.now().isoformat('_')), mode="a", buff=0, disable=False):
+        self.disable = disable
+        
+        if not self.disable:
+            self.stdout = sys.stdout
+            self.stderr = sys.stderr
+            self.file = open(filename, mode, buff)
+            sys.stdout = self
+            sys.stderr = self
     
     def __del__(self):
         self.close()
@@ -1221,24 +1234,27 @@ class Logger(object):
         pass
     
     def write(self, message):
-        self.stdout.write(message)  # Both STDOUT and STDERR get directed to STDOUT!
-        self.file.write(message)
+        if not self.disable:
+            self.stdout.write(message)  # Both STDOUT and STDERR get directed to STDOUT!
+            self.file.write(message)
     
     def flush(self):
-        self.stdout.flush()
-        self.stderr.flush()
-        self.file.flush()
-        os.fsync(self.file.fileno())
+        if not self.disable:
+            self.stdout.flush()
+            self.stderr.flush()
+            self.file.flush()
+            os.fsync(self.file.fileno())
     
     def close(self):
-        if self.stdout != None:
-            sys.stdout = self.stdout
-            self.stdout = None
-        
-        if self.stderr != None:
-            sys.stderr = self.stderr
-            self.stderr = None
-        
-        if self.file != None:
-            self.file.close()
-            self.file = None
+        if not self.disable:
+            if self.stdout != None:
+                sys.stdout = self.stdout
+                self.stdout = None
+            
+            if self.stderr != None:
+                sys.stderr = self.stderr
+                self.stderr = None
+            
+            if self.file != None:
+                self.file.close()
+                self.file = None
