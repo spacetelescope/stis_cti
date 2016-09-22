@@ -120,13 +120,13 @@ The Archive status may be checked at http://archive.stsci.edu/help/archive_statu
 
   usage: stis_cti [-h] [-d DARK_DIR] [-r REF_DIR] [-n NUM_PROCESSES]
                   [-p PCTETAB] [--crds_update] [--clean] [--clean_all]
-                  [-v VERBOSE_LEVEL]
+                  [--ignore_missing] [-v VERBOSE_LEVEL]
                   [SCIENCE_DIR]
   
   Run STIS/CCD pixel-based CTI-correction on data specified in SCIENCE_DIR.
   Uncorrected component darks are read from DARK_DIR, and corrected component
   darks are written there too. Corrected super-darks are read from and stored to
-  REF_DIR.
+  REF_DIR. See documentation at http://pythonhosted.org/stis_cti/
   
   positional arguments:
     SCIENCE_DIR       directory containing RAW science data (default="./")
@@ -147,9 +147,10 @@ The Archive status may be checked at http://archive.stsci.edu/help/archive_statu
                       of this script ('*.txt' files are skipped and clobbered)
     --clean_all       '--clean' + remove previous super-darks and CTI-corrected
                       component darks
+    --ignore_missing  process data even with an incomplete set of dark FLTs
     -v VERBOSE_LEVEL  verbosity ({0,1,2}; default=1)
   
-  Author: Sean Lockwood; Version: 1.0
+  Author: Sean Lockwood; Version: 1.1
 
 The script is designed to run the pixel-based correction in parallel on the component 
 darks, and in parallel on the science files.  The maximum number of processes may be 
@@ -383,6 +384,13 @@ Known Issues
 .. Warning::
    If you use ``stistools.x1d.x1d()`` to manually extract your spectra, we recommend using 
    the argument ``ctecorr="OMIT"`` for pixel-based CTI-corrected data.
+
+- Some annealing months contain non-standard amplifier=A dark files (typical 
+  observations are taken with amp=D).  These files do not produce ``FLT`` files in the
+  Archive, but are still expected by ``stis_cti`` (even though they are excluded from any 
+  amp=D super-darks).  As of v1.1, users may bypass the missing file check by specifying 
+  the ``--ignore_missing`` flag.  Care should be taken that only intended dark files are
+  excluded.
 
 - The primary FITS header keyword ``FILENAME`` does not get updated in CTI-corrected 
   output products.
