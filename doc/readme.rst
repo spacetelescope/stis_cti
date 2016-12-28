@@ -154,7 +154,7 @@ The Archive status may be checked at http://archive.stsci.edu/help/archive_statu
 
 The script is designed to run the pixel-based correction in parallel on the component 
 darks, and in parallel on the science files.  The maximum number of processes may be 
-specified via the '``-n #``' option.
+specified via the ``-n #`` option.
 
 A typical call looks like::
 
@@ -385,10 +385,15 @@ Known Issues
    If you use ``stistools.x1d.x1d()`` to manually extract your spectra, we recommend using 
    the argument ``ctecorr="OMIT"`` for pixel-based CTI-corrected data.
 
+- The ``--crds_update`` option breaks with ``CRDS v7.0.10``.  Until this is fixed, users 
+  may manually downgrade to the earlier ``CRDS v7.0.7`` package with the command:
+  
+  ``conda install crds=7.0.7``
+
 - Some annealing months contain non-standard amplifier=A dark files (typical 
   observations are taken with amp=D).  These files do not produce ``FLT`` files in the
   Archive, but are still expected by ``stis_cti`` (even though they are excluded from any 
-  amp=D super-darks).  As of v1.1, users may bypass the missing file check by specifying 
+  amp=D super-darks).  As of ``v1.1``, users may bypass the missing file check by specifying 
   the ``--ignore_missing`` flag.  Care should be taken that only intended dark files are
   excluded.
 
