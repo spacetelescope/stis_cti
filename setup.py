@@ -15,7 +15,7 @@ StisPixCteCorr_module = Extension('stis_cti.StisPixCte_FixY',
 setup(
     name = 'stis_cti',
     url = 'http://www.stsci.edu/instruments/stis/',
-    version = '1.1',
+    version = '1.2',
     description = 'Pixel-based CTI-correction for HST/STIS CCD data',
     long_description = long_description,
     author = 'Sean Lockwood, Phil Hodge, Pey Lian Lim, W.J. Hack, J. Anderson, Matt Davis',
@@ -35,7 +35,7 @@ setup(
                    'Topic :: Software Development :: Libraries :: Python Modules'],
     packages = ['stis_cti'],
     install_requires = ['setuptools', 'numpy', 'astropy>= 1.0.1', 'stistools>= 1.0.2', 
-        'refstis>= 0.5.1', 'crds>= 1.3.0', 'stsci.tools>= 3.2.2'],
+        'refstis>= 0.5.1', 'crds>= 1.3.0', 'stsci.tools>= 3.2.2', 'six'],
     scripts = ['scripts/stis_cti', 'scripts/archive_dark_query'],
     package_data = {'stis_cti': ['data/*.fits']},  # To do: Use entry_points instead
     ext_modules = [StisPixCteCorr_module],

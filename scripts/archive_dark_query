@@ -33,17 +33,16 @@ if __name__ == '__main__':
     
     if args.pickle_file != None:
         if args.min_exptime is not None:
-            print 'Error!  Pickle file does not support non-default min_exptime.'
+            print('Error!  Pickle file does not support non-default min_exptime.')
             sys.exit()
         anneal_data = pickle.load(open(args.pickle_file, 'rb'))
         if verbose:
-            print 'Reading anneal_data from pickle file:  ' + args.pickle_file
-            print
+            print('Reading anneal_data from pickle file:  {}\n'.format(args.pickle_file))
     else:
         anneal_data = None
     
     if len(args.file) <= 0:
-        print 'Error:  No files found!'
+        print('Error:  No files found!')
         sys.exit()
     
     tmp = archive_dark_query(args.file, anneal_data=anneal_data, 

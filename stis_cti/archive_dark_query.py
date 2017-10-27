@@ -2,11 +2,11 @@ from astropy.io import fits
 import glob
 from collections import Counter
 import datetime
-import urllib, urllib2
 from numpy import size, shape
+from six.moves.urllib import request as urlrequest, parse as urlparse, error as urlerror    
 
 __author__  = 'Sean Lockwood'
-__version__ = '0.1.2'
+__version__ = '0.2.0'
 
 
 # Data container for our dark exposure search results:
@@ -37,7 +37,7 @@ def get_proposal_ids(abstract='stis, +ccd', title='dark, +monitor'):
     '''
     
     url = 'http://archive.stsci.edu/hst/abstract.html'
-    form_data = urllib.urlencode({
+    form_data = urlparse.urlencode({
         'abstract': abstract,      # String to be searched for within the abstract
         'atitle':   title,         # String to be searched for within the title
         'checkbox': 'no',          # Display abstract?
@@ -45,16 +45,16 @@ def get_proposal_ids(abstract='stis, +ccd', title='dark, +monitor'):
     
     # Submit POST request:
     try:
-        response = urllib2.urlopen(url, form_data)  # Needs better error handling!
+        response = urlrequest.urlopen(url, form_data)  # Needs better error handling!
         text = response.read().split('\n')
         response.close()
-    except (urllib2.URLError, urllib2.HTTPError) as e:
-        print 'Please check your internet connection!'
+    except (urlerror.URLError, urlerror.HTTPError) as e:
+        print('Please check your internet connection!')
         raise e
     
     # Parse returned text for proposal IDs:
-    text = filter(lambda x: 'proposal_search.php' in x, text)
-    proposals = map(lambda y: int(y.split('>')[1].split('<')[0]), text)
+    text = [x for x in text if 'proposal_search.php' in x]
+    proposals = [int(y.split('>')[1].split('<')[0]) for y in text]
     
     return proposals
 
@@ -65,7 +65,7 @@ def read_dark_exposures():
     '''
     
     # URL for HTTP GET request to the HST archive:
-    url = 'http://archive.stsci.edu/hst/search.php?' + urllib.urlencode([
+    url = 'http://archive.stsci.edu/hst/search.php?' + urlparse.urlencode([
         ('sci_instrume'         , 'STIS'                                         ),
         ('sci_instrument_config', 'STIS/CCD'                                     ),
         ('sci_targname'         , 'DARK'                                         ),
@@ -87,11 +87,11 @@ def read_dark_exposures():
     
     # Submit HTTP GET request:
     try:
-        response = urllib2.urlopen(url)
+        response = urlrequest.urlopen(url)
         data = response.readlines()
         response.close()
-    except (urllib2.URLError, urllib2.HTTPError) as e:
-        print 'Please check your internet connection!'
+    except (urlerror.URLError, urlerror.HTTPError) as e:
+        print('Please check your internet connection!')
         raise e
     
     darks = []
@@ -117,10 +117,9 @@ def get_anneal_boundaries(delta_days=5, min_exptime=None, verbose=False):
         min_exptime = float(min_exptime)
     
     if verbose:
-        print 'Minimum exposure time = ', min_exptime, ' s'
-        print
+        print('Minimum exposure time = {} s\n'.format(min_exptime))
     
-    print 'Querying MAST archive for dark and anneal program IDs...'
+    print('Querying MAST archive for dark and anneal program IDs...')
     dark_programs = get_proposal_ids()
     dark_programs.extend([7092, 7601, 7802, 7926, 7948, 7949])  # Older programs that didn't match this search pattern
     dark_programs = list(set(dark_programs))
@@ -130,21 +129,18 @@ def get_anneal_boundaries(delta_days=5, min_exptime=None, verbose=False):
     anneal_programs.sort()
     
     if verbose:
-        print
-        print 'Dark proposal IDs:       '
-        print ', '.join(map(lambda x: str(x), dark_programs))
-        print
-        print 'Annealing proposal IDs:  '
-        print ', '.join(map(lambda x: str(x), anneal_programs))
-        print
+        print('\nDark proposal IDs:       ')
+        print(', '.join([str(x) for x in dark_programs]))
+        print('\nAnnealing proposal IDs:  ')
+        print(', '.join([str(x) for x in anneal_programs]))
+        print()
     
-    print 'Querying MAST archive for darks...' 
+    print('Querying MAST archive for darks...') 
     darks = read_dark_exposures()
     
-    print 'Parsing archive results...'
-    print
+    print('Parsing archive results...\n')
     
-    anneal_exposures = filter(lambda x: x['proposid'] in anneal_programs, darks)
+    anneal_exposures = [x for x in darks if x['proposid'] in anneal_programs]
     
     # Find delta time between neighboring anneal exposures:
     anneal_start_boundary = [anneal_exposures[0]['datetime'] - datetime.timedelta(days=60)]
@@ -166,36 +162,35 @@ def get_anneal_boundaries(delta_days=5, min_exptime=None, verbose=False):
     anneals = []
     
     for i, (a, b) in enumerate(zip(anneal_start_boundary, anneal_end_boundary)):
-        darks_within_anneal = filter( \
-            lambda x: x['datetime'] >= a and 
+        darks_within_anneal = [x for x in darks if \
+                      x['datetime'] >= a and 
                       x['datetime'] < b  and
                       x['proposid'] in dark_programs and
-                      x['exptime'] >= min_exptime,
-            darks)
+                      x['exptime'] >= min_exptime]
         
         anneals.append(annealType(index=i, start=a, end=b, darks=list(darks_within_anneal)))
     
     if (verbose >= 2):
         # Print information about all annealing periods:
-        print "Dark data found for all annealing periods:"
+        print("Dark data found for all annealing periods:")
         for i, a in enumerate(anneals):
-            print ('{i:3d} {start:} - {end:} ({length:4d} days), {total_exposures:3d} total: ' + \
+            print(('{i:3d} {start:} - {end:} ({length:4d} days), {total_exposures:3d} total: ' + \
                    '{exptimes} {proposals}').format( 
                 i = i, 
                 start = a['start'].isoformat(' '), 
                 end = a['end'].isoformat(' '), 
                 length = (a['end'] - a['start']).days, 
                 total_exposures = shape(a['darks'])[0], 
-                exptimes = Counter(map(lambda x: int(x['exptime']), a['darks'])), 
-                proposals = list(set(map(lambda x: x['proposid'], a['darks']))))
-        print
+                exptimes = Counter([int(x['exptime']) for x in a['darks']]), 
+                proposals = list(set([x['proposid'] for x in a['darks']]))))
+        print()
     
     return anneals
 
 
 def darks_url(exposures):
     # Build a URL to retrieve matched datasets from MAST:
-    url = 'http://archive.stsci.edu/hst/search.php?' + urllib.urlencode([
+    url = 'http://archive.stsci.edu/hst/search.php?' + urlparse.urlencode([
         ('sci_instrume'         , 'STIS'              ),
         ('sci_instrument_config', 'STIS/CCD'          ),
         ('sci_targname'         , 'DARK'              ),
@@ -227,10 +222,10 @@ def archive_dark_query(files, anneal_data=None, min_exptime=None, verbose=False,
     files = files_parsed
     
     if verbose:
-        print 'Input files:'
+        print('Input files:')
         for f in files:
-            print f
-        print
+            print(f)
+        print()
     
     if len(files) == 0:
         raise IOError('No files specified/found.')
@@ -241,8 +236,7 @@ def archive_dark_query(files, anneal_data=None, min_exptime=None, verbose=False,
         anneal_data = get_anneal_boundaries(verbose=verbose, min_exptime=min_exptime)
     else:
        if verbose:
-           print 'Skipping re-population of anneal_data.'
-           print
+           print('Skipping re-population of anneal_data.\n')
     
     # Populate matched exposures uniquely:
     matches = list()
@@ -259,20 +253,20 @@ def archive_dark_query(files, anneal_data=None, min_exptime=None, verbose=False,
             matches.append(match)
             
             if verbose:
-                print file
-                print 'Annealing period:  ', match
+                print(file)
+                print('Annealing period:  ', match)
                 if verbose >= 2:
-                    print ', '.join([str(i) for i in match['darks']])
-                print
+                    print(', '.join([str(i) for i in match['darks']]))
+                print()
     
     # Remove duplicate entries based on the index field:
-    matches = dict((item['index'], item) for item in matches).values()
+    matches = list(dict((item['index'], item) for item in matches).values())
     matches.sort(key=lambda x: x['index'])
     
     if verbose:
-        print 'Unique annealing periods (' + str(shape(matches)[0]) + '):'
-        print '\n'.join([str(i) for i in matches])
-        print
+        print('Unique annealing periods (' + str(shape(matches)[0]) + '):')
+        print('\n'.join([str(i) for i in matches]))
+        print()
     
     # Get the unique list of exposure names:
     all_exposures = set()
@@ -283,15 +277,14 @@ def archive_dark_query(files, anneal_data=None, min_exptime=None, verbose=False,
     all_exposures.sort()
     
     if verbose:
-        print 'Unique exposures (' + str(shape(all_exposures)[0]) + '):'
-        print ', '.join(all_exposures)
-        print
+        print('Unique exposures (' + str(shape(all_exposures)[0]) + '):')
+        print(', '.join(all_exposures))
+        print()
     
     if print_url:
         url = darks_url(all_exposures)
-        print 'Download darks via this link:'
-        print
-        print url
-        print
+        print('Download darks via this link:\n')
+        print(url)
+        print()
     
     return matches

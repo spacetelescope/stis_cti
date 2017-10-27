@@ -8,12 +8,12 @@ from collections import defaultdict
 from copy import deepcopy
 import refstis
 from stistools import basic2d, calstis
-import archive_dark_query
-import StisPixCteCorr
+from . import archive_dark_query
+from . import StisPixCteCorr
 from crds.bestrefs import BestrefsScript
 
 __author__  = 'Sean Lockwood'
-__version__ = '1.1'
+__version__ = '1.2'
 
 crds_server_url = 'https://hst-crds.stsci.edu'
 
@@ -105,21 +105,21 @@ def stis_cti(science_dir, dark_dir, ref_dir, num_processes, pctetab=None,
     start_time = datetime.datetime.now()
     
     # Print system information:
-    print 'Running CTI-correction script:  {} v{}'.format(os.path.basename(__file__), __version__)
-    print 'System:                         {}'.format(sys_info)
-    print 'Number of parallel processes:   {}'.format(num_processes)
+    print('Running CTI-correction script:  {} v{}'.format(os.path.basename(__file__), __version__))
+    print('System:                         {}'.format(sys_info))
+    print('Number of parallel processes:   {}'.format(num_processes))
     if clean:
-        print '--clean'
+        print('--clean')
     if clean_all:
-        print '--clean_all'
+        print('--clean_all')
     if crds_update:
-        print '--crds_update'
+        print('--crds_update')
     if ignore_missing:
-        print '--ignore_missing'
+        print('--ignore_missing')
     if verbose:
-        print 'verbose mode:                   {}'.format(verbose)
+        print('verbose mode:                   {}'.format(verbose))
 
-    print 'Start time:                     {}\n'.format(start_time.isoformat(' '))
+    print('Start time:                     {}\n'.format(start_time.isoformat(' ')))
     
     # Check that directories exist:
     if not os.path.isdir(science_dir):
@@ -150,16 +150,16 @@ def stis_cti(science_dir, dark_dir, ref_dir, num_processes, pctetab=None,
                     ref_dir, os.path.dirname(default_pcte_str)))
             package_pctes.sort()
             pctetab = package_pctes[-1]
-            print 'WARNING:  Using package-default PCTETAB:\n{}\n'.format(pctetab)
+            print('WARNING:  Using package-default PCTETAB:\n{}\n'.format(pctetab))
     if not os.path.exists(pctetab):
         raise FileError('PCTETAB does not exist:  ' + pctetab)
     
     if verbose:
-        print 'cwd         = {}'.format(os.getcwd() + os.path.sep)
-        print 'science_dir = {}'.format(science_dir)
-        print 'dark_dir    = {}'.format(dark_dir)
-        print 'ref_dir     = {}'.format(ref_dir)
-        print 'PCTETAB     = {}\n'.format(pctetab)
+        print('cwd         = {}'.format(os.getcwd() + os.path.sep))
+        print('science_dir = {}'.format(science_dir))
+        print('dark_dir    = {}'.format(dark_dir))
+        print('ref_dir     = {}'.format(ref_dir))
+        print('PCTETAB     = {}\n'.format(pctetab))
     log.flush()
     
     # Put dark_dir and PCTETAB's dir in environmental variables:
@@ -185,7 +185,7 @@ def stis_cti(science_dir, dark_dir, ref_dir, num_processes, pctetab=None,
         raise OSError('Cannot read $oref directory!\n    {}\n'.format(oref) + \
             '    Please set $oref environmental variable appropriately or run with --crds_update.')
     if verbose:
-        print '$oref      = {}\n'.format(oref)
+        print('$oref      = {}\n'.format(oref))
     
     raw_files = determine_input_science(science_dir, allow, verbose)
     log.flush()
@@ -224,7 +224,7 @@ def stis_cti(science_dir, dark_dir, ref_dir, num_processes, pctetab=None,
         crds_files.extend(wav_files)
         
         if verbose:
-            print 'Running crds.BestrefsScript on science and wav files...'
+            print('Running crds.BestrefsScript on science and wav files...')
         errors = BestrefsScript('BestrefsScript --update-bestrefs -s 1 -f ' + ' '.join(crds_files))()
         if int(errors) > 0:
             raise Exception('CRDS BestrefsScript:  Call returned errors!')
@@ -251,9 +251,9 @@ def stis_cti(science_dir, dark_dir, ref_dir, num_processes, pctetab=None,
     log.flush()
     
     end_time = datetime.datetime.now()
-    print '\nCompletion time:                {}'.format(end_time.isoformat(' '))
-    print 'Run time:                       {}'.format(end_time - start_time)
-    print 'stis_cti.py complete!\n'
+    print('\nCompletion time:                {}'.format(end_time.isoformat(' ')))
+    print('Run time:                       {}'.format(end_time - start_time))
+    print('stis_cti.py complete!\n')
     log.close()
 
 
@@ -275,8 +275,8 @@ def setup_crds(ref_dir, verbose=False):
         os.environ['CRDS_SERVER_URL'] = crds_server_url
     
     if verbose:
-        print 'Setting up CRDS environmental variables...'
-        print '$CRDS_SERVER_URL = {}'.format(os.environ['CRDS_SERVER_URL'])
+        print('Setting up CRDS environmental variables...')
+        print('$CRDS_SERVER_URL = {}'.format(os.environ['CRDS_SERVER_URL']))
     
     ref_dir = resolve_iraf_file(ref_dir)
     
@@ -300,8 +300,8 @@ def setup_crds(ref_dir, verbose=False):
                                  os.path.sep
         elif not os.access(os.environ.get('CRDS_PATH'), os.R_OK | os.W_OK):
             # $CRDS_PATH was already defined by the user, but is NOT read/writable:
-            print 'WARNING:  Local $CRDS_PATH is not read/writable.'
-            print "         Using 'ref' directory for local CRDS cache."
+            print('WARNING:  Local $CRDS_PATH is not read/writable.')
+            print("         Using 'ref' directory for local CRDS cache.")
             os.environ['CRDS_PATH'] = os.path.abspath(ref_dir)
             os.environ['oref'] = os.path.join(os.environ['CRDS_PATH'], 'references', 'hst', 'stis') + \
                                  os.path.sep
@@ -324,10 +324,10 @@ def setup_crds(ref_dir, verbose=False):
             try:
                 os.makedirs(os.path.abspath(os.environ.get('oref')))
                 if verbose:
-                    print 'Created $oref directory.'
+                    print('Created $oref directory.')
             except OSError as err:
-                print 'Could not create directory structure:'
-                print '    {}'.format(os.path.abspath(os.environ.get('oref')))
+                print('Could not create directory structure:')
+                print('    {}'.format(os.path.abspath(os.environ.get('oref'))))
                 raise err
         
         # Check that local $CRDS_PATH and $oref are read/writable:
@@ -347,7 +347,7 @@ def setup_crds(ref_dir, verbose=False):
         raise OSError('Cannot read $oref!\n    {}'.format(os.environ['oref']))
     
     if verbose:
-        print '$CRDS_PATH = {}'.format(os.environ.get('CRDS_PATH'))
+        print('$CRDS_PATH = {}'.format(os.environ.get('CRDS_PATH')))
     
     return True
 
@@ -356,19 +356,19 @@ def determine_input_science(science_dir, allow=False, verbose=False):
     # Find science rootnames:
     raw_files = glob.glob(os.path.join(science_dir, '*_raw.fits*'))
     if verbose:
-        print 'Input _raw.fits files:'
-        print '   ' + '\n   '.join(raw_files) + '\n'
+        print('Input _raw.fits files:')
+        print('   ' + '\n   '.join(raw_files) + '\n')
     
     if allow:
         # Allow any HST/STIS non-acqs:
         if verbose:
-            print 'Leniently filtering input _raw.fits files...'
+            print('Leniently filtering input _raw.fits files...')
         filtered_raw_files = [file for file in raw_files if \
             viable_ccd_file( file, \
                 earliest_date_allowed = datetime.datetime(1990,1,1,0,0,0), \
                 amplifiers_allowed = ['A','B','C','D'], \
                 gains_allowed = [1,2,4,8], \
-                offsts_allowed = range(9))]
+                offsts_allowed = list(range(9)))]
     else:
         # Normal filtering on files:
         filtered_raw_files = [file for file in raw_files if viable_ccd_file(file)]
@@ -376,8 +376,8 @@ def determine_input_science(science_dir, allow=False, verbose=False):
     not_correcting = list(set(raw_files) - set(filtered_raw_files))
     if len(not_correcting) > 0:
         not_correcting.sort()
-        print 'WARNING:  Not running the correction on these files:'
-        print '   ' + '\n   '.join(not_correcting) + '\n'
+        print('WARNING:  Not running the correction on these files:')
+        print('   ' + '\n   '.join(not_correcting) + '\n')
     
     # Make sure some files exist:
     if len(filtered_raw_files) == 0:
@@ -391,8 +391,8 @@ def determine_input_science(science_dir, allow=False, verbose=False):
                         '   -- Full-frame and not binned')
     
     if verbose:
-        print 'Input _raw.fits files being corrected:'
-        print '   ' + '\n   '.join(filtered_raw_files) + '\n'
+        print('Input _raw.fits files being corrected:')
+        print('   ' + '\n   '.join(filtered_raw_files) + '\n')
     
     # Check to see if IMPHTTAB is defined for files that will run PHOTCORR:
     missing_imphttab = []
@@ -406,7 +406,7 @@ def determine_input_science(science_dir, allow=False, verbose=False):
                       '   ' + '\n   '.join(missing_imphttab) + \
                       '\nPlease set the IMPHTTAB keyword in files that will perform PHOTCORR.')
     if verbose:
-        print 'All files running PHOTCORR have the IMPHTTAB set.\n'
+        print('All files running PHOTCORR have the IMPHTTAB set.\n')
     
     return filtered_raw_files
 
@@ -470,7 +470,7 @@ def viable_ccd_file(file,
 
 def bias_correct_science_files(raw_files, verbose=False):
     if verbose:
-        print 'Bias-correcting science files...\n'
+        print('Bias-correcting science files...\n')
     
     outnames = [f.replace('_raw.fits', '_blt.fits', 1) for f in raw_files]
     trailers = [os.path.abspath(os.path.expandvars(f.replace('_raw.fits', '_blt_tra.txt', 1))) for f in raw_files]
@@ -482,7 +482,7 @@ def bias_correct_science_files(raw_files, verbose=False):
     
     for raw_file, outname, trailer in zip(raw_files, outnames, trailers):
         if verbose:
-            print 'Running basic2d on {} --> {}.'.format(raw_file, outname)
+            print('Running basic2d on {} --> {}.'.format(raw_file, outname))
         if os.path.exists(trailer):
             os.remove(trailer)
         cwd = os.getcwd()
@@ -500,8 +500,8 @@ def bias_correct_science_files(raw_files, verbose=False):
         if verbose or status != 0:
             with open(os.path.expandvars(trailer)) as tra:
                 for line in tra.readlines():
-                    print '     ' + line.strip()
-            print
+                    print('     ' + line.strip())
+            print()
         
         if status != 0:
             raise RuntimeError('basic2d returned non-zero status on {}:  {}'.format(raw_file, status))
@@ -511,7 +511,7 @@ def bias_correct_science_files(raw_files, verbose=False):
 
 def run_calstis_on_science(files, verbose):
     if verbose:
-        print 'Running CalSTIS on science files...\n'
+        print('Running CalSTIS on science files...\n')
     
     # Note that outname is determined by CalSTIS, and not this function.
     outnames = [f.replace('_cte.fits', '_cte_flt.fits', 1) for f in files]  # Replicating CalSTIS' behavior
@@ -524,7 +524,7 @@ def run_calstis_on_science(files, verbose):
     
     for file, outname, trailer in zip(files, outnames, trailers):
         if verbose:
-            print 'Running calstis on {} --> {}.'.format(file, outname)
+            print('Running calstis on {} --> {}.'.format(file, outname))
         if os.path.exists(trailer):
             os.remove(trailer)
         
@@ -540,8 +540,8 @@ def run_calstis_on_science(files, verbose):
         if verbose or status != 0:
             with open(os.path.expandvars(trailer)) as tra:
                 for line in tra.readlines():
-                    print '     ' + line.strip()
-            print
+                    print('     ' + line.strip())
+            print()
         
         if status != 0:
             raise RuntimeError('CalSTIS returned non-zero status on {}:  {}'.format(file, status))
@@ -608,7 +608,7 @@ def check_pctetab_version(pctetab, verbose=False, version_min='0.1', version_max
             'Please upgrade this code!\n').format(pctetab))\
     
     if verbose:
-        print 'Version of PCTETAB:  {}\n'.format(pctetab_version_raw)
+        print('Version of PCTETAB:  {}\n'.format(pctetab_version_raw))
     
     return True
 
@@ -689,12 +689,12 @@ def perform_cti_correction(files, pctetab, num_cpu=1, clean_all=False, verbose=F
         
         if clean_all and os.path.exists(outname):
             if verbose:
-                print 'Deleting file:  {}'.format(outname)
+                print('Deleting file:  {}'.format(outname))
             os.remove(outname)
         
         if os.path.exists(outname) and (superdark_hash(pctetab=pctetab, files=[]) == superdark_hash(superdark=outname, files=[])):
             if verbose:
-                print 'Skipping regeneration of CTI-corrected file:  {}'.format(outname)
+                print('Skipping regeneration of CTI-corrected file:  {}'.format(outname))
         else:
             with fits.open(file, 'update') as f:
                 #Update PCTETAB header keyword:
@@ -710,10 +710,10 @@ def perform_cti_correction(files, pctetab, num_cpu=1, clean_all=False, verbose=F
                 
                 f.flush()
                 if verbose:
-                    print 'Updated hdr0 PCTETAB  of {}:  {} --> {}'.format(file, old_pctetab, pctetab)
+                    print('Updated hdr0 PCTETAB  of {}:  {} --> {}'.format(file, old_pctetab, pctetab))
                     if old_ctecorr != 'unknown':
-                        print 'Updated hdr0 CTECORR  of {}:  {} --> {}'.format(
-                            file, old_ctecorr, f[0].header['CTECORR'])
+                        print('Updated hdr0 CTECORR  of {}:  {} --> {}'.format(
+                            file, old_ctecorr, f[0].header['CTECORR']))
                 
                 # Run the pixel-based correction on these files:
                 perform_files.append(file)
@@ -779,17 +779,17 @@ def generate_basedark(files, outname, pctetab, num_cpu, clean_all=False, verbose
     if os.path.exists(os.path.expandvars(outname)):
         if clean_all:
             if verbose:
-                print 'Deleting basedark:  {}'.format(os.path.expandvars(outname))
+                print('Deleting basedark:  {}'.format(os.path.expandvars(outname)))
             os.remove(os.path.expandvars(outname))
         elif superdark_hash(pctetab=pctetab, files=files) == superdark_hash(superdark=outname):
             # Don't make a basedark if it already exists:
             if verbose:
-                print 'Skipping regeneration of basedark:  {}'.format(outname)
+                print('Skipping regeneration of basedark:  {}'.format(outname))
             return
     
     if verbose >= 2:
-        print 'Working on basedark {}:'.format(outname)
-        print '   ' + '\n   '.join(files) + '\n'
+        print('Working on basedark {}:'.format(outname))
+        print('   ' + '\n   '.join(files) + '\n')
     
     # Correct component darks, if necessary:
     corrected_files = perform_cti_correction(files, pctetab, num_cpu, clean_all, verbose)
@@ -799,11 +799,11 @@ def generate_basedark(files, outname, pctetab, num_cpu, clean_all=False, verbose
     
     if verbose:
         calstis_log = outname.replace('.fits','_joined_bd_calstis_log.txt', 1)
-        print 'Calstis log file for CRJ processing [{}]:'.format(calstis_log)
+        print('Calstis log file for CRJ processing [{}]:'.format(calstis_log))
         with open(os.path.expandvars(calstis_log), 'r') as cs_log:
             for line in cs_log.readlines():
-                print '     ' + line.strip()
-        print
+                print('     ' + line.strip())
+        print()
     
     # Copy the last file's ext=0 header into a variable to use in populating the basedark header:
     with fits.open(corrected_files[-1]) as file:
@@ -816,7 +816,7 @@ def generate_basedark(files, outname, pctetab, num_cpu, clean_all=False, verbose
     copy_dark_keywords(os.path.expandvars(outname), dark_hdr0, pctetab, history=history)
         
     if verbose:
-        print 'Basedark complete:  {}\n'.format(outname)
+        print('Basedark complete:  {}\n'.format(outname))
 
 
 def generate_weekdark(files, outname, pctetab, basedark, num_cpu, clean_all=False, verbose=False):
@@ -825,17 +825,17 @@ def generate_weekdark(files, outname, pctetab, basedark, num_cpu, clean_all=Fals
     if os.path.exists(os.path.expandvars(outname)):
         if clean_all:
             if verbose:
-                print 'Deleting weekdark:  {}'.format(os.path.expandvars(outname))
+                print('Deleting weekdark:  {}'.format(os.path.expandvars(outname)))
             os.remove(os.path.expandvars(outname))
         elif superdark_hash(pctetab=pctetab, files=files) == superdark_hash(superdark=outname):
             # Don't make a weekdark if it already exists:
             if verbose:
-                print 'Skipping regeneration of weekdark:  {}'.format(outname)
+                print('Skipping regeneration of weekdark:  {}'.format(outname))
             return
     
     if verbose >= 2:
-        print 'Working on weekdark {}:'.format(outname)
-        print '   ' + '\n   '.join(files) + '\n'
+        print('Working on weekdark {}:'.format(outname))
+        print('   ' + '\n   '.join(files) + '\n')
     
     # Correct component darks, if necessary:
     corrected_files = perform_cti_correction(files, pctetab, num_cpu, False, verbose)
@@ -847,11 +847,11 @@ def generate_weekdark(files, outname, pctetab, basedark, num_cpu, clean_all=Fals
     
     if verbose:
         calstis_log = outname.replace('.fits','_joined_bd_calstis_log.txt', 1)
-        print 'Calstis log file for CRJ processing [{}]:'.format(calstis_log)
+        print('Calstis log file for CRJ processing [{}]:'.format(calstis_log))
         with open(os.path.expandvars(calstis_log), 'r') as cs_log:
             for line in cs_log.readlines():
-                print '     ' + line.strip()
-        print
+                print('     ' + line.strip())
+        print()
     
     # Copy the last file's ext=0 header into a variable to use in populating the basedark header:
     with fits.open(corrected_files[-1]) as file:
@@ -865,7 +865,7 @@ def generate_weekdark(files, outname, pctetab, basedark, num_cpu, clean_all=Fals
     copy_dark_keywords(os.path.expandvars(outname), dark_hdr0, pctetab, history=history, basedark=basedark)
     
     if verbose:
-        print 'Weekdark complete:  {}\n'.format(outname)
+        print('Weekdark complete:  {}\n'.format(outname))
 
 
 def populate_darkfiles(raw_files, dark_dir, ref_dir, pctetab, num_processes, all_weeks_flag=False, 
@@ -885,33 +885,33 @@ def populate_darkfiles(raw_files, dark_dir, ref_dir, pctetab, num_processes, all
                 if hdr0.get('PCTECORR', default='unknown').strip().upper() == 'COMPLETE':
                     if not clean_all:
                         if verbose:
-                            print 'Superdark {} is already CTI-corrected.'.format(superdark_resolved)
+                            print('Superdark {} is already CTI-corrected.'.format(superdark_resolved))
                         pass
                     else:
                         if verbose:
-                            print 'Remaking CTI-corrected superdark {}'.format(superdark_resolved)
+                            print('Remaking CTI-corrected superdark {}'.format(superdark_resolved))
                         if os.path.abspath(os.path.dirname(superdark_resolved)) == os.path.abspath(ref_dir):
                             os.remove(superdark_resolved)
                             if verbose:
-                                print 'Deleted old superdark:  {}'.format(superdark_resolved)
+                                print('Deleted old superdark:  {}'.format(superdark_resolved))
                         superdark_remakes.extend(file)
                 else:
                     if verbose:
-                        print 'Superdark {} is not CTI-corrected.'.format(superdark_resolved)
+                        print('Superdark {} is not CTI-corrected.'.format(superdark_resolved))
                     superdark_remakes.extend(file)
         except IOError:
             if verbose:
-                print 'Superdark {} not found!  Will make a CTI-corrected version.'.format(superdark_resolved)
+                print('Superdark {} not found!  Will make a CTI-corrected version.'.format(superdark_resolved))
             superdark_remakes.extend(file)
     
     if len(superdark_remakes) == 0:
         if verbose:
-            print 'Not remaking any superdarks.\n'
+            print('Not remaking any superdarks.\n')
         return  # Nothing to remake!
     
     if verbose:
-        print 'Making superdarks for:'
-        print '   ' + '\n   '.join(raw_files) + '\n'
+        print('Making superdarks for:')
+        print('   ' + '\n   '.join(raw_files) + '\n')
     
     # Determine component darks used to make superdarks:
     anneal_data = archive_dark_query.get_anneal_boundaries()
@@ -921,7 +921,7 @@ def populate_darkfiles(raw_files, dark_dir, ref_dir, pctetab, num_processes, all
     # Get list of EXPNAMEs from files in the dark_dir.
     found_dark_files = glob.glob(os.path.join(dark_dir, '*_flt.fits*'))
     if verbose >= 2:
-        max_file_length = str(max(map(lambda x: len(x), found_dark_files) + [1]))
+        max_file_length = str(max([len(x) for x in found_dark_files] + [1]))
     
     found = {}
     for file in found_dark_files:
@@ -936,17 +936,17 @@ def populate_darkfiles(raw_files, dark_dir, ref_dir, pctetab, num_processes, all
     for anneal in anneals:
         # Populate file locations:
         for dark in anneal['darks']:
-            if found.has_key(dark['exposure']):
+            if dark['exposure'] in found:
                 dark['file'] = found[dark['exposure']][0]
             else:
                 missing_darks.add(dark['exposure'])
         
         # Update file headers:
         if crds_update:
-            dark_files_to_run = [d['file'] for d in anneal['darks'] if d.has_key('file')]
+            dark_files_to_run = [d['file'] for d in anneal['darks'] if 'file' in d]
             if len(dark_files_to_run) > 0:
                 if verbose:
-                    print 'Running crds.BestrefsScript on dark files from anneal {}...'.format(anneal)
+                    print('Running crds.BestrefsScript on dark files from anneal {}...'.format(anneal))
                 
                 errors = BestrefsScript('BestrefsScript --update-bestrefs -s 1 -f ' + ' '.join(dark_files_to_run))()
                 if int(errors) > 0:
@@ -954,7 +954,7 @@ def populate_darkfiles(raw_files, dark_dir, ref_dir, pctetab, num_processes, all
                 
                 # Update hdr0 data after BestrefsScript is run:
                 for dark in anneal['darks']:
-                    if dark.has_key('file'):
+                    if 'file' in dark:
                         file = dark['file']
                         with fits.open(file) as f:
                             hdr0 = f[0].header
@@ -964,7 +964,7 @@ def populate_darkfiles(raw_files, dark_dir, ref_dir, pctetab, num_processes, all
         # Get keywords about each dark:
         all_weeks = {'A':{}, 'B':{}, 'C':{}, 'D':{}}
         for dark in anneal['darks']:
-            if found.has_key(dark['exposure']):
+            if dark['exposure'] in found:
                 for get_keyword in get_keywords:
                     dark[get_keyword] = found[dark['exposure']][1][get_keyword]
                     try:
@@ -976,7 +976,7 @@ def populate_darkfiles(raw_files, dark_dir, ref_dir, pctetab, num_processes, all
                 # Determine week number (for weekdark separation) for each amp:
                 if len(all_weeks[dark['CCDAMP']]) == 0:
                     all_weeks[dark['CCDAMP']][dark['DARKFILE']] = 1
-                elif dark['DARKFILE'] not in all_weeks[dark['CCDAMP']].keys():
+                elif dark['DARKFILE'] not in all_weeks[dark['CCDAMP']]:
                     all_weeks[dark['CCDAMP']][dark['DARKFILE']] = len(all_weeks[dark['CCDAMP']]) + 1
                 dark['week_num'] = all_weeks[dark['CCDAMP']][dark['DARKFILE']]
                 # Construct a unique tag for each weekdark and assign it to the component darks:
@@ -984,31 +984,31 @@ def populate_darkfiles(raw_files, dark_dir, ref_dir, pctetab, num_processes, all
                 weekdark_types[dark['weekdark_tag']].append(dark)
                 
                 if verbose >= 2:
-                    print ('{:s} {:5s} {:' + max_file_length + 's} {} {} {} {} {:5.0f} {} {} {}').format( \
+                    print(('{:s} {:5s} {:' + max_file_length + 's} {} {} {} {} {:5.0f} {} {} {}').format( \
                         dark['exposure'], dark['DETECTOR'], dark['file'], dark['CCDAMP'], \
                         dark['CCDGAIN'], dark['CCDOFFST'], dark['datetime'].isoformat(' '), \
-                        dark['exptime'], dark['week_num'], dark['weekdark_tag'], dark['DARKFILE'])
+                        dark['exptime'], dark['week_num'], dark['weekdark_tag'], dark['DARKFILE']))
             else:
                 missing_darks.add(dark['exposure'])
     if verbose >= 2:
-        print
+        print()
     
     if len(missing_darks) != 0:
         missing_darks = list(missing_darks)
         missing_darks.sort()
-        print 'ERROR:  These FLT component darks are missing from {}:'.format(dark_dir)
-        print ', '.join(missing_darks) + '\n'
+        print('ERROR:  These FLT component darks are missing from {}:'.format(dark_dir))
+        print(', '.join(missing_darks) + '\n')
         if not ignore_missing:
-            print 'Please download the missing darks (calibrated FLTs) via this link:'
-            print '(or specify the proper dark_dir [{}])\n'.format(dark_dir)
-            print 'If missing files are expected (e.g. amp=A darks), then run with'
-            print '--ignore_missing flag.\n'
-            print archive_dark_query.darks_url(missing_darks) + '\n'
+            print('Please download the missing darks (calibrated FLTs) via this link:')
+            print('(or specify the proper dark_dir [{}])\n'.format(dark_dir))
+            print('If missing files are expected (e.g. amp=A darks), then run with')
+            print('--ignore_missing flag.\n')
+            print(archive_dark_query.darks_url(missing_darks) + '\n')
             sys.exit(1)
         else:
-            print '"--ignore_missing" flag set:  Ignoring these missing FLT files...'
+            print('"--ignore_missing" flag set:  Ignoring these missing FLT files...')
     elif verbose:
-        print 'All required component dark FLT files for annealing periods have been located on disk.\n'
+        print('All required component dark FLT files for annealing periods have been located on disk.\n')
     
     # Determine week_num time boundaries (approximate for now):
     weekdarks = {}
@@ -1044,14 +1044,14 @@ def populate_darkfiles(raw_files, dark_dir, ref_dir, pctetab, num_processes, all
     
     if verbose >= 2:
         # This should be after filtering by amp...
-        print 'Could make weekdarks for:'
+        print('Could make weekdarks for:')
         for weekdark_tag in weekdarks:
-            print '   {}:  {} - {}  [{}]'.format(
+            print('   {}:  {} - {}  [{}]'.format(
                 weekdark_tag, 
                 weekdarks[weekdark_tag]['start'], 
                 weekdarks[weekdark_tag]['end'], 
-                len(weekdarks[weekdark_tag]['darks']) )
-        print
+                len(weekdarks[weekdark_tag]['darks']) ))
+        print()
     
     weekdark = defaultdict(list)
     for file in raw_files:
@@ -1060,7 +1060,7 @@ def populate_darkfiles(raw_files, dark_dir, ref_dir, pctetab, num_processes, all
             
             dt = datetime.datetime.strptime( \
                 hdr0['TDATEOBS'].strip() + ' ' + hdr0['TTIMEOBS'].strip(), '%Y-%m-%d %H:%M:%S')
-            matched_weekdark_tags = [wd['weekdark_tag'] for wd in weekdarks.values() if \
+            matched_weekdark_tags = [wd['weekdark_tag'] for wd in list(weekdarks.values()) if \
                 wd['start'] <= dt and wd['end'] > dt and \
                 wd['amp'] == hdr0['CCDAMP']]
             if len(matched_weekdark_tags) == 0:
@@ -1078,21 +1078,21 @@ def populate_darkfiles(raw_files, dark_dir, ref_dir, pctetab, num_processes, all
             
             f.flush()
             if verbose:
-                print 'Updated hdr0 DARKFILE of {}:  {} --> {}'.format(file, old_darkfile, darkfile)
+                print('Updated hdr0 DARKFILE of {}:  {} --> {}'.format(file, old_darkfile, darkfile))
     
     if verbose:
-        print '\nWeekdarks needed:'
-        for weekdark_tag in weekdark.keys():
-            print '   {} [{}]:'.format(weekdark_tag, len(weekdarks[weekdark_tag]['darks']))
-            print '      ' + '\n      '.join(weekdark[weekdark_tag])
-        print
+        print('\nWeekdarks needed:')
+        for weekdark_tag in list(weekdark.keys()):
+            print('   {} [{}]:'.format(weekdark_tag, len(weekdarks[weekdark_tag]['darks'])))
+            print('      ' + '\n      '.join(weekdark[weekdark_tag]))
+        print()
     
     if all_weeks_flag:
-        weekdark_tags = weekdarks.keys()
+        weekdark_tags = list(weekdarks.keys())
         if verbose:
-            print 'Generating superdarks for all amps/weeks available.\n'
+            print('Generating superdarks for all amps/weeks available.\n')
     else:
-        weekdark_tags = weekdark.keys()  # Note the missing 's'
+        weekdark_tags = list(weekdark.keys())  # Note the missing 's'
     
     # Generate specified basedarks and weekdarks, based on weekdark_tags:
     already_deleted = set()
@@ -1127,7 +1127,7 @@ def check_for_old_output_files(rootnames, science_dir, output_mapping, clean=Fal
     
     # Combine rootnames with temporary and final output names:
     old_files = []
-    for ext in output_mapping.keys():
+    for ext in output_mapping:
         old_files.extend([f + '_' + ext for f in path_rootnames
                           if '.txt' not in ext])
         old_files.extend([f + '_' + output_mapping[ext] for f in path_rootnames
@@ -1144,7 +1144,7 @@ def check_for_old_output_files(rootnames, science_dir, output_mapping, clean=Fal
         if os.path.exists(old_file) or os.path.islink(old_file):
             if clean:
                 if verbose:
-                    print 'Removing old file:  {}'.format(old_file)
+                    print('Removing old file:  {}'.format(old_file))
                 os.remove(old_file)
             else:
                 error_files.append(old_file)
@@ -1154,7 +1154,7 @@ def check_for_old_output_files(rootnames, science_dir, output_mapping, clean=Fal
                       '   ' + '\n   '.join(error_files) + \
                       '\nYou might consider running with the \'--clean\' option specified.'))
     if verbose:
-        print 'The science_dir is clear of files from previous runs.\n'
+        print('The science_dir is clear of files from previous runs.\n')
     
     return True
 
@@ -1170,7 +1170,7 @@ def map_outputs(rootnames, science_dir, output_mapping, verbose=False):
     
     for rootname in rootnames:
         if verbose:
-            print 'Renaming files with rootname {}:'.format(rootname)
+            print('Renaming files with rootname {}:'.format(rootname))
         files = glob.glob(os.path.join(science_dir, rootname + '*'))
         for file in files:
             cwd = os.getcwd()
@@ -1192,18 +1192,18 @@ def map_outputs(rootnames, science_dir, output_mapping, verbose=False):
                     gzip = ''
                 
                 # Map action to file:
-                if ext not in output_mapping.keys():
+                if ext not in output_mapping:
                     pass
                 elif output_mapping[ext] == '<pass>':
                     pass
                 elif output_mapping[ext] == '<remove>':
                     if verbose:
-                        print 'Deleting:  {}'.format(file)
+                        print('Deleting:  {}'.format(file))
                     os.remove(file)
                 else:
                     new_file = rootname + '_' + output_mapping[ext] + gzip
                     if verbose:
-                        print 'Renaming:  {}\t-->\t{}'.format(file, new_file)
+                        print('Renaming:  {}\t-->\t{}'.format(file, new_file))
                     os.rename(file, new_file)
             finally:
                 os.chdir(cwd)

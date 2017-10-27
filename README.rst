@@ -1,4 +1,5 @@
 HST/STIS Pixel-Based CTI-Correction Scripts
+===========================================
 
 Utilities needed to correct for Charge Transfer Inefficiency (CTI) in the Hubble
 Space Telescope (HST) STIS CCD.

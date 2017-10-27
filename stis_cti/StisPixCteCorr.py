@@ -237,7 +237,7 @@ def YCte(inFits, outFits='', read_noise=None, noise_model=None,
     # Store in same path as input.
     outPath = os.path.dirname( os.path.abspath(inFits) ) + os.sep
     rootname = pyfits.getval(inFits, 'ROOTNAME')
-    print 'Performing pixel-based CTE correction on', rootname
+    print('Performing pixel-based CTE correction on', rootname)
     rootname = outPath + rootname
 
     # Construct output filename
@@ -257,7 +257,7 @@ def YCte(inFits, outFits='', read_noise=None, noise_model=None,
     
     ccdamp = pf_out['PRIMARY'].header.get('CCDAMP', default='D')
     if ccdamp != 'D':
-        print 'Non-standard amplifer %s being corrected!' % ccdamp
+        print('Non-standard amplifer {} being corrected!'.format(ccdamp))
         
     if ccdamp == 'A' or ccdamp == 'B':
         readout_dir = 1
@@ -356,7 +356,7 @@ def YCte(inFits, outFits='', read_noise=None, noise_model=None,
         cte_frac_arr /= 1024.
 
         # call CTE correction routine. data must be in units of electrons.
-        print 'Performing CTE correction for science extension %d.' % extn
+        print('Performing CTE correction for science extension {:d}.'.format(extn))
 
         t1 = time.time()
         cordata = pcfy.FixYCte(sigdata, sim_nit, shft_nit, oversub_thresh,
@@ -364,7 +364,7 @@ def YCte(inFits, outFits='', read_noise=None, noise_model=None,
                                chg_open_lt)
         t2 = time.time()
 
-        print 'FixYCte took {:.3f} seconds for science extension {:d}.'.format(t2-t1, extn)
+        print('FixYCte took {:.3f} seconds for science extension {:d}.'.format(t2-t1, extn))
 
         # add noise back in
         findata = cordata + nsedata
@@ -400,11 +400,11 @@ def YCte(inFits, outFits='', read_noise=None, noise_model=None,
     
     # Close output file
     pf_out.close()
-    print outFits, 'written'
+    print(outFits, 'written')
 
     # Stop timer
     timeEnd = time.time()
-    print 'Run time:  {:.3f} secs'.format(timeEnd - timeBeg)
+    print('Run time:  {:.3f} secs'.format(timeEnd - timeBeg))
 
 
 #--------------------------
@@ -468,7 +468,7 @@ def _PixCteParams(fitsTable, expstart):
     # Resolve path to PCTEFILE
     refFile = _ResolveRefFile(fitsTable)
     if not os.path.isfile(refFile):
-        raise IOError, 'PCTEFILE not found: %s' % refFile
+        raise IOError('PCTEFILE not found: {}'.format(refFile))
 
     # Open FITS table
     pf_ref = pyfits.open(refFile)
@@ -977,14 +977,14 @@ def AddYCte(infile, outfile, shift_nit=None, units=None):
         cte_frac_arr /= 1024.
 
         # call CTE blurring routine. data must be in units of electrons.
-        print 'Performing CTE blurring for science extension %d.' % extn
+        print('Performing CTE blurring for science extension {:d}.'.format(extn))
 
         t1 = time.time()
         cordata = _AddYCte(detector, scidata, cte_frac_arr, shft_nit,
                            levels, dpde_l, chg_leak_lt, chg_open_lt)
         t2 = time.time()
 
-        print 'AddYCte took {:.3f} seconds for science extension {:d}.'.format(t2-t1, extn)
+        print('AddYCte took {:.3f} seconds for science extension {:d}.'.format(t2-t1, extn))
 
         # convert blurred data back to DN
         cordata /= atodgain

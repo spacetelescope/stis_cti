@@ -6,8 +6,8 @@ import copy
 import datetime
 from astropy.io import fits
 
-from stis_cti import *
-from archive_dark_query import archive_dark_query
+from .stis_cti import *
+from .archive_dark_query import archive_dark_query
 
 # ----------------------------------------------------------------------------------------
 # These functions are used to write test files used by the unit tests
@@ -113,7 +113,7 @@ class TestPaths(object):
     def setup_class(cls):
         os.environ['toref'] = '/grp/hst/cdbs/oref/'
         # Undefine undoref if it exists:
-        if os.environ.has_key('undoref'):
+        if 'undoref' in os.environ:
             os.environ.pop('undoref')
     
     @classmethod
@@ -160,7 +160,7 @@ class TestFileFiltering(object):
             earliest_date_allowed = datetime.datetime(1990,1,1,0,0,0), \
             amplifiers_allowed = ['A','B','C','D'], \
             gains_allowed = [1,2,4,8], \
-            offsts_allowed = range(9))
+            offsts_allowed = list(range(9)))
     
     def test_acq_file_reject(self):
         fits.setval(self.test_file, 'OBSMODE', value='ACQ')
