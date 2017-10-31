@@ -419,8 +419,30 @@ static PyMethodDef StisPixCte_FixY_methods[] =
   
 };
 
+#if PY_MAJOR_VERSION >= 3
+static struct PyModuleDef StisPixCte_FixYmodule = {
+    PyModuleDef_HEAD_INIT,
+    "StisPixCte_FixY",   /* name of module */
+    NULL,                /* module documentation, may be NULL */
+    -1,                  /* size of per-interpreter state of the module,
+                            or -1 if the module keeps state in global variables. */
+    StisPixCte_FixY_methods,
+    NULL, NULL, NULL, NULL
+};
+
+PyMODINIT_FUNC PyInit_StisPixCte_FixY(void)
+{
+  PyObject *m;
+  m = PyModule_Create(&StisPixCte_FixYmodule);
+  import_array(); /* Must be present for NumPy ? */
+  return m;
+}
+
+#else
+
 PyMODINIT_FUNC initStisPixCte_FixY(void)
 {
   (void) Py_InitModule("StisPixCte_FixY", StisPixCte_FixY_methods);
   import_array(); /* Must be present for NumPy */
 }
+#endif

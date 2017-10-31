@@ -101,7 +101,7 @@ except:
 from stsci.tools import parseinput
 
 # Local modules
-import StisPixCte_FixY as pcfy # C extension
+from . import StisPixCte_FixY as pcfy # C extension
 
 
 __taskname__ = "StisPixCteCorr"
