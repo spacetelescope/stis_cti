@@ -8,7 +8,7 @@
 
 static PyObject * py_CalcCteFrac(PyObject *self, PyObject *args) {
   /* input variables */
-  const double mjd = 0.0;
+  double mjd;
   PyObject *opy_scale_mjd, *opy_scale_val;
   PyArrayObject *py_scale_mjd, *py_scale_val;
   
