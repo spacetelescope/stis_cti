@@ -253,9 +253,9 @@ def YCte(inFits, outFits='', read_noise=None, noise_model=None,
     # For checking that the detector is supported
     detector = pf_out['PRIMARY'].header['DETECTOR']
 
-    atodgain = pf_out['PRIMARY'].header.get('ATODGAIN', default=1.)
+    atodgain = pf_out['PRIMARY'].header.get('ATODGAIN', 1.)
     
-    ccdamp = pf_out['PRIMARY'].header.get('CCDAMP', default='D')
+    ccdamp = pf_out['PRIMARY'].header.get('CCDAMP', 'D')
     if ccdamp != 'D':
         print('Non-standard amplifer {} being corrected!'.format(ccdamp))
         
@@ -269,7 +269,7 @@ def YCte(inFits, outFits='', read_noise=None, noise_model=None,
     # For epoch-specific operations
     expstart = pf_out['PRIMARY'].header['TEXPSTRT']
 
-    nextend = pf_out['PRIMARY'].header.get('NEXTEND', default=EXTN_PER_IMSET)
+    nextend = pf_out['PRIMARY'].header.get('NEXTEND', EXTN_PER_IMSET)
     nimsets = nextend // EXTN_PER_IMSET
     if nextend != nimsets * EXTN_PER_IMSET:
         raise ValueError('Number of extensions is %d; must be a multiple'
@@ -893,12 +893,12 @@ def AddYCte(infile, outfile, shift_nit=None, units=None):
     # For checking that the detector is supported
     detector = pf_out['PRIMARY'].header['DETECTOR']
 
-    atodgain = pf_out['PRIMARY'].header.get('ATODGAIN', default=1.)
+    atodgain = pf_out['PRIMARY'].header.get('ATODGAIN', 1.)
 
     # For epoch-specific operations
     expstart = pf_out['PRIMARY'].header['TEXPSTRT']
     
-    nextend = pf_out['PRIMARY'].header.get('NEXTEND', default=EXTN_PER_IMSET)
+    nextend = pf_out['PRIMARY'].header.get('NEXTEND', EXTN_PER_IMSET)
     nimsets = nextend // EXTN_PER_IMSET
     if nextend != nimsets * EXTN_PER_IMSET:
         raise ValueError('Number of extensions is %d; must be a multiple'
@@ -947,7 +947,7 @@ def AddYCte(infile, outfile, shift_nit=None, units=None):
       pcfy.FillLevelArrays(chg_leak_kt, chg_open_kt, dtde_q, levels)
     del chg_leak_kt, chg_open_kt, dtde_q
     
-    ccdamp = pf_out['PRIMARY'].header.get('CCDAMP', default='D')
+    ccdamp = pf_out['PRIMARY'].header.get('CCDAMP', 'D')
     if ccdamp == 'A' or ccdamp == 'B':
         readout_dir = 1
     elif ccdamp == 'C' or ccdamp == 'D':

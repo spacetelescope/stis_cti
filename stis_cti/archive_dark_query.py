@@ -3,7 +3,7 @@ import glob
 from collections import Counter
 import datetime
 from numpy import size, shape
-from six.moves.urllib import request as urlrequest, parse as urlparse, error as urlerror    
+from six.moves.urllib import request as urlrequest, parse as urlparse, error as urlerror
 
 __author__  = 'Sean Lockwood'
 __version__ = '0.2.0'
@@ -41,12 +41,14 @@ def get_proposal_ids(abstract='stis, +ccd', title='dark, +monitor'):
         'abstract': abstract,      # String to be searched for within the abstract
         'atitle':   title,         # String to be searched for within the title
         'checkbox': 'no',          # Display abstract?
-        'submit':   'submit'})
+        'submit':   'submit'}).encode()
     
     # Submit POST request:
     try:
         response = urlrequest.urlopen(url, form_data)  # Needs better error handling!
-        text = response.read().split('\n')
+        lines = response.readlines()
+        lines = [line.decode('utf-8') for line in lines]
+        text = [line.rsplit('\n',1)[0] for line in lines]
         response.close()
     except (urlerror.URLError, urlerror.HTTPError) as e:
         print('Please check your internet connection!')
@@ -96,6 +98,7 @@ def read_dark_exposures():
     
     darks = []
     for line in data:
+        line = line.decode('utf-8')
         if line != '\n' and 'Dataset' not in line and 'string' not in line:
             exposure, proposid, time, exptime = line.split(',')
             exptime = float(exptime.split('\n')[0])
@@ -247,7 +250,7 @@ def archive_dark_query(files, anneal_data=None, min_exptime=None, verbose=False,
             date = hdr0['TDATEOBS']
             time = hdr0['TTIMEOBS']
             dt = datetime.datetime.strptime(date + ' ' + time, '%Y-%m-%d %H:%M:%S')
-            match = filter(lambda x: dt >= x['start'] and dt < x['end'], anneal_data)[0]
+            match = [x for x in anneal_data if dt >= x['start'] and dt < x['end']][0]
             
             #matches.add(match)  # WON'T WORK WITH MUTABLE SUB-TYPES! ***
             matches.append(match)

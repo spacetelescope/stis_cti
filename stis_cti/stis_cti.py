@@ -107,6 +107,7 @@ def stis_cti(science_dir, dark_dir, ref_dir, num_processes, pctetab=None,
     # Print system information:
     print('Running CTI-correction script:  {} v{}'.format(os.path.basename(__file__), __version__))
     print('System:                         {}'.format(sys_info))
+    print('python:                         {}'.format(sys.version.replace('\n', '\n'+' '*32)))
     print('Number of parallel processes:   {}'.format(num_processes))
     if clean:
         print('--clean')
@@ -180,7 +181,7 @@ def stis_cti(science_dir, dark_dir, ref_dir, num_processes, pctetab=None,
         setup_crds(ref_dir, verbose)
     
     # Test that $oref is properly defined:
-    oref = os.environ.get('oref', failobj='Undefined')
+    oref = os.environ.get('oref', 'Undefined')
     if oref is 'Undefined' or not os.access(oref, os.R_OK):
         raise OSError('Cannot read $oref directory!\n    {}\n'.format(oref) + \
             '    Please set $oref environmental variable appropriately or run with --crds_update.')
@@ -215,7 +216,7 @@ def stis_cti(science_dir, dark_dir, ref_dir, num_processes, pctetab=None,
         wav_files = []
         for file in raw_files:
             with fits.open(file) as f:
-                wav_files.append(f[0].header.get('WAVECAL', default='N/A').strip())
+                wav_files.append(f[0].header.get('WAVECAL', 'N/A').strip())
         wav_files = [file for file in wav_files if 'N/A' not in file]
         wav_files = [os.path.join(raw_path, file) for file in wav_files]
         wav_files = [file for file in wav_files if os.path.exists(file)]
@@ -398,8 +399,8 @@ def determine_input_science(science_dir, allow=False, verbose=False):
     missing_imphttab = []
     for file in filtered_raw_files:
         with fits.open(file) as f:
-            if (f[0].header.get('PHOTCORR', default='').strip() == 'PERFORM' and \
-                f[0].header.get('IMPHTTAB', default=None) is None):
+            if (f[0].header.get('PHOTCORR', '').strip() == 'PERFORM' and \
+                f[0].header.get('IMPHTTAB', None) is None):
                 missing_imphttab.append(file)
     if len(missing_imphttab) > 0:
         raise IOError('These files will fail CalSTIS reduction:\n' + \
@@ -586,7 +587,7 @@ def check_pctetab_version(pctetab, verbose=False, version_min='0.1', version_max
     
     # Read header keyword VERSION and strip anything after '_':
     with fits.open(pctetab) as p:
-        pctetab_version_raw = p[0].header.get('PCTE_VER', default='').strip()
+        pctetab_version_raw = p[0].header.get('PCTE_VER', '').strip()
         pctetab_version = pctetab_version_raw.split('_')[0]
     
     if pctetab_version == '':
@@ -630,12 +631,12 @@ def superdark_hash(sim_nit=None, shft_nit=None, rn_clip=None, nsemodel=None, sub
             raise IOError('Must specify file list with pctetab.')
     elif superdark is not None:
         with fits.open(os.path.expandvars(superdark)) as f:
-            sim_nit  = f[0].header.get('PCTESMIT', default='undefined')
-            shft_nit = f[0].header.get('PCTESHFT', default='undefined')
-            rn_clip  = f[0].header.get('PCTERNCL', default='undefined')
-            nsemodel = f[0].header.get('PCTENSMD', default='undefined')
-            subthrsh = f[0].header.get('PCTETRSH', default='undefined')
-            pcte_ver = f[0].header.get('PCTE_VER', default='0.0').strip()
+            sim_nit  = f[0].header.get('PCTESMIT', 'undefined')
+            shft_nit = f[0].header.get('PCTESHFT', 'undefined')
+            rn_clip  = f[0].header.get('PCTERNCL', 'undefined')
+            nsemodel = f[0].header.get('PCTENSMD', 'undefined')
+            subthrsh = f[0].header.get('PCTETRSH', 'undefined')
+            pcte_ver = f[0].header.get('PCTE_VER', '0.0').strip()
             if files is None:
                 # Parse superdark header for files used:
                 hist = f[0].header['HISTORY']
@@ -698,11 +699,11 @@ def perform_cti_correction(files, pctetab, num_cpu=1, clean_all=False, verbose=F
         else:
             with fits.open(file, 'update') as f:
                 #Update PCTETAB header keyword:
-                old_pctetab = f[0].header.get('PCTETAB', default=None)
+                old_pctetab = f[0].header.get('PCTETAB', None)
                 f[0].header.set('PCTETAB', pctetab, 'Pixel-based CTI param table', after='DARKFILE')
                 
                 # Turn off the empirical CTI correction flag if it is set to PERFORM:
-                old_ctecorr = f[0].header.get('CTECORR', default='unknown').strip()
+                old_ctecorr = f[0].header.get('CTECORR', 'unknown').strip()
                 if old_ctecorr == 'COMPLETE':
                     raise ValueError('Empirical CTI correction correction flag, CTECORR, is set in file {}.'.format(file))
                 elif old_ctecorr == 'PERFORM':
@@ -748,7 +749,7 @@ def copy_dark_keywords(superdark, dark_hdr0, pctetab, history=None, basedark=Non
     
     with fits.open(os.path.expandvars(superdark), 'update') as s:
         for keyword in keywords:
-            value = dark_hdr0.get(keyword, default='unknown')
+            value = dark_hdr0.get(keyword, 'unknown')
             try:
                 comment = dark_hdr0.comments[keyword]
             except KeyError:
@@ -882,7 +883,7 @@ def populate_darkfiles(raw_files, dark_dir, ref_dir, pctetab, num_processes, all
         try:
             with fits.open(superdark_resolved) as sd:
                 hdr0 = sd[0].header
-                if hdr0.get('PCTECORR', default='unknown').strip().upper() == 'COMPLETE':
+                if hdr0.get('PCTECORR', 'unknown').strip().upper() == 'COMPLETE':
                     if not clean_all:
                         if verbose:
                             print('Superdark {} is already CTI-corrected.'.format(superdark_resolved))
@@ -1031,7 +1032,7 @@ def populate_darkfiles(raw_files, dark_dir, ref_dir, pctetab, num_processes, all
         weeks = list(amp_anneal_data)
         weeks.sort(key=lambda x: x['week_num'])
         # Extend start/end boundaries to anneal boundaries:
-        anneal = filter(lambda x: weeks[0]['anneal_num'] == x['index'], anneals)[0]
+        anneal = [x for x in anneals if weeks[0]['anneal_num'] == x['index']][0]
         weekdarks[weeks[ 0]['weekdark_tag']]['start'] = anneal['start']  # start of annealing period
         weekdarks[weeks[-1]['weekdark_tag']]['end']   = anneal['end']    # end of annealing period
         # Make inter-week boundaries contiguous:
@@ -1214,7 +1215,7 @@ class Logger(object):
        source: http://stackoverflow.com/a/24583265
        Modified to include STDERR.
     '''
-    def __init__(self, filename='cti_{}.log'.format(datetime.datetime.now().isoformat('_')), mode="a", buff=0, disable=False):
+    def __init__(self, filename='cti_{}.log'.format(datetime.datetime.now().isoformat('_')), mode="a", buff=1, disable=False):
         self.disable = disable
         
         if not self.disable:
