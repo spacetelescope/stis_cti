@@ -27,4 +27,4 @@ Other utilities:
 
 See documentation at http://pythonhosted.org/stis_cti/
 
-Project page:  http://www.stsci.edu/hst/stis/software/analyzing/scripts/pixel_based_CTI/
+Project page:  http://www.stsci.edu/hst/instrumentation/stis/data-analysis-and-software-tools/pixel-based-cti
