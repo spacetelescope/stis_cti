@@ -4,7 +4,7 @@ Quick Start Guide
 
 This section is intended to provide a dialogue and inputs which will give 
 good results for beginning users.  Please let us know how it goes, and ask 
-any questions you have.  Send feedback and questions to help@stsci.edu.
+any questions you have.  Send feedback and questions to https://hsthelp.stsci.edu.
 
 Please note that AURA/STScI is not responsible for any damages resulting 
 from use of this software.
@@ -16,8 +16,7 @@ from this file into your terminal window, if that helps you work
 faster.  Or you may want to copy blocks of text into a text file, 
 to create your own customized dialog and commands.
 
-If you don't have it already, you will need to install the AstroConda distribution with 
-legacy IRAF support available at 
+If you don't have it already, you will need to install the AstroConda distribution:
 http://astroconda.readthedocs.io.
 
 After AstroConda is installed, open a new session (open a new Bash terminal and type 
@@ -167,4 +166,4 @@ directory with names like ``*_cte.fits``, ``*_flc.fits``, ``*_crc.fits``, etc.
    yet.
 
 Good luck!  Let us know if you encounter problems, or need any assistance at 
-help@stsci.edu.
+https://hsthelp.stsci.edu.

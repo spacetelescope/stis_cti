@@ -60,7 +60,7 @@ for each input.
 
 :References:
 
-.. [Anderson] Anderson J. & Bedin, L.R., 2010, PASP, 122, 1035
+.. [Anderson] `Anderson J. & Bedin, L.R., 2010, PASP, 122, 1035 <https://doi.org/10.1086/656399>`_
 
 """
 
