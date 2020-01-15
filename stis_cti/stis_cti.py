@@ -451,6 +451,9 @@ def viable_ccd_file(file,
     with fits.open(file) as f:
         hdr0 = f[0].header
 
+    if hdr0['INSTRUME'].strip() != 'STIS':
+        raise ValueError('Not a STIS file!')
+
     # Parse date/time of observation:
     date = hdr0['TDATEOBS'].strip()
     time = hdr0['TTIMEOBS'].strip()

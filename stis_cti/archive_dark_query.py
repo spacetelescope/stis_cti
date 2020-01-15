@@ -259,6 +259,8 @@ def archive_dark_query(files, anneal_data=None, min_exptime=None, verbose=False,
     for file in files:
         with fits.open(file) as data:
             hdr0 = data[0].header
+            if hdr0['INSTRUME'].strip() != 'STIS':
+                raise ValueError('Not a STIS file!')
             date = hdr0['TDATEOBS']
             time = hdr0['TTIMEOBS']
             dt = datetime.datetime.strptime(date + ' ' + time, '%Y-%m-%d %H:%M:%S')
