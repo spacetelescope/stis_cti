@@ -106,19 +106,7 @@ Click ``[Submit marked data for retrieval from STSDAS]``
 This will bring up a new page.  Fill out your HST archive credentials,
 and the computer and directory where you want the files to be sent:
 
-Check ``[sftp the data]``
-
-::
-  
-  myserver.mydomain.edu (put your computer name here instead)
-
-  /Users/biretta/13542/darks  (use the darks directory that we created earlier)
-
-  biretta (put your computer account name)
-
-  (put your computer password)
-
-Alternatively, you may stage and retrieve files from the archive's ftp server.
+Stage and retrieve files from the archive's ftp server.
 
 File options: check ``Calibrated`` (it will probably checked already by default)
 
