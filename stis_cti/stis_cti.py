@@ -15,7 +15,7 @@ from multiprocessing import cpu_count
 
 
 __author__  = 'Sean Lockwood'
-__version__ = '1.2'
+__version__ = '1.3'
 
 crds_server_url = 'https://hst-crds.stsci.edu'
 
@@ -621,6 +621,7 @@ def superdark_hash(sim_nit=None, shft_nit=None, rn_clip=None, nsemodel=None, sub
                             pctetab=None,
                             superdark=None, files=None):
     from numpy import where
+    import re
 
     if pctetab is not None:
         with fits.open(resolve_iraf_file(pctetab)) as f:
@@ -643,9 +644,11 @@ def superdark_hash(sim_nit=None, shft_nit=None, rn_clip=None, nsemodel=None, sub
             if files is None:
                 # Parse superdark header for files used:
                 hist = f[0].header['HISTORY']
-                beginning = where(['The following input files were used:' in line for line in hist])[0][0] + 1
-                end = where([line == '' for line in hist[beginning:]])[0][0] + beginning
-                files = hist[beginning:end]
+                beginning = min([i for i, line in enumerate(hist) if \
+                                 re.match(r'^The following input (dark )?files were used:\s*$', line, re.IGNORECASE)]) + 1
+                end = min([i for i, line in enumerate(hist[beginning:]) if \
+                           (line.strip() == '') or ('renamed to' in line.lower())]) + beginning
+                files = list(hist[beginning:end])
     else:
         if sim_nit  == None or \
            shft_nit == None or \

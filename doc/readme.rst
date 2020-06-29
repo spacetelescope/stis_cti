@@ -150,7 +150,7 @@ The Archive status may be checked at http://archive.stsci.edu/help/archive_statu
     --ignore_missing  process data even with an incomplete set of dark FLTs
     -v VERBOSE_LEVEL  verbosity ({0,1,2}; default=1)
   
-  Author: Sean Lockwood; Version: 1.2
+  Author: Sean Lockwood; Version: 1.3
 
 The script is designed to run the pixel-based correction in parallel on the component 
 darks, and in parallel on the science files.  The maximum number of processes may be 
