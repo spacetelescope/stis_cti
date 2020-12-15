@@ -37,7 +37,7 @@ def get_proposal_ids(abstract='stis, +ccd', title='dark, +monitor'):
     '''
     Perform an HST Abstract search for STIS/CCD Dark Monitor programs.
     '''
-    url = 'http://archive.stsci.edu/hst/abstract.html'
+    url = 'https://archive.stsci.edu/hst/abstract.html'
     form_data = urlparse.urlencode({
         'abstract': abstract,      # String to be searched for within the abstract
         'atitle':   title,         # String to be searched for within the title
@@ -67,7 +67,7 @@ def read_dark_exposures():
     Query the HST archive for STIS/CCD dark exposures.
     '''
     # URL for HTTP GET request to the HST archive:
-    url = 'http://archive.stsci.edu/hst/search.php?' + urlparse.urlencode([
+    url = 'https://archive.stsci.edu/hst/search.php?' + urlparse.urlencode([
         ('sci_instrume'         , 'STIS'                                         ),
         ('sci_instrument_config', 'STIS/CCD'                                     ),
         ('sci_targname'         , 'DARK'                                         ),
@@ -193,7 +193,7 @@ def get_anneal_boundaries(delta_days=5, min_exptime=None, verbose=False):
 
 def darks_url(exposures):
     # Build a URL to retrieve matched datasets from MAST:
-    url = 'http://archive.stsci.edu/hst/search.php?' + urlparse.urlencode([
+    url = 'https://archive.stsci.edu/hst/search.php?' + urlparse.urlencode([
         ('sci_instrume'         , 'STIS'              ),
         ('sci_instrument_config', 'STIS/CCD'          ),
         ('sci_targname'         , 'DARK'              ),
