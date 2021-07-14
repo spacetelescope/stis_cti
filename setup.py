@@ -38,7 +38,7 @@ setup(
                    'Topic :: Software Development :: Libraries :: Python Modules'],
     packages = ['stis_cti'],
     install_requires = ['setuptools', 'numpy', 'astropy>= 4.0', 'stistools>= 1.2', 
-        'refstis>= 0.7.0a1', 'crds', 'stsci.tools>= 3.2.2', 'six'],
+        'refstis>= 0.8.1', 'crds', 'stsci.tools>= 3.2.2', 'six'],
     entry_points = {'console_scripts': [
         'stis_cti = stis_cti.stis_cti:call_stis_cti',
         'archive_dark_query = stis_cti.archive_dark_query:call_archive_dark_query', ]},
