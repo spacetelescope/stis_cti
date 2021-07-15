@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#! /usr/bin/env python
 
 from setuptools import setup, Extension
 import os
@@ -14,12 +14,15 @@ StisPixCteCorr_module = Extension('stis_cti.StisPixCte_FixY',
 
 setup(
     name = 'stis_cti',
-    url = 'http://www.stsci.edu/instruments/stis/',
-    version = '1.1',
+    url = 'http://www.stsci.edu/hst/instrumentation/stis/data-analysis-and-software-tools/pixel-based-cti',
+    project_urls={
+        'Documentation': 'https://pythonhosted.org/stis_cti/',
+        'Source Code': 'https://github.com/spacetelescope/stis_cti', },
+    version = '1.3',
     description = 'Pixel-based CTI-correction for HST/STIS CCD data',
     long_description = long_description,
     author = 'Sean Lockwood, Phil Hodge, Pey Lian Lim, W.J. Hack, J. Anderson, Matt Davis',
-    author_email = 'help@stsci.edu',
+    author_email = 'https://hsthelp.stsci.edu',
     maintainer = 'Sean Lockwood',
     maintainer_email = 'lockwood@stsci.edu',
     license = 'BSD-new',
@@ -34,9 +37,11 @@ setup(
                    'Topic :: Scientific/Engineering :: Physics',
                    'Topic :: Software Development :: Libraries :: Python Modules'],
     packages = ['stis_cti'],
-    install_requires = ['setuptools', 'numpy', 'astropy>= 1.0.1', 'stistools>= 1.0.2', 
-        'refstis>= 0.8.0', 'crds>= 1.3.0', 'stsci.tools>= 3.2.2'],
-    scripts = ['scripts/stis_cti', 'scripts/archive_dark_query'],
-    package_data = {'stis_cti': ['data/*.fits']},  # To do: Use entry_points instead
+    install_requires = ['setuptools', 'numpy', 'astropy>= 4.0', 'stistools>= 1.2', 
+        'refstis>= 0.8.1', 'crds', 'stsci.tools>= 3.2.2', 'six'],
+    entry_points = {'console_scripts': [
+        'stis_cti = stis_cti.stis_cti:call_stis_cti',
+        'archive_dark_query = stis_cti.archive_dark_query:call_archive_dark_query', ]},
+    package_data = {'stis_cti': ['data/*.fits']},
     ext_modules = [StisPixCteCorr_module],
     )

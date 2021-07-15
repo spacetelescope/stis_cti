@@ -8,7 +8,7 @@
 
 static PyObject * py_CalcCteFrac(PyObject *self, PyObject *args) {
   /* input variables */
-  const double mjd;
+  double mjd;
   PyObject *opy_scale_mjd, *opy_scale_val;
   PyArrayObject *py_scale_mjd, *py_scale_val;
   
@@ -77,7 +77,7 @@ static PyObject * py_InterpolatePsi(PyObject *self, PyObject *args) {
                           (double *) PyArray_DATA(py_chg_leak_interp),
                           (double *) PyArray_DATA(py_chg_open_interp));
   if (status != 0) {
-    PyErr_SetString(PyExc_StandardError, "An error occurred in InterpolatePsi.");
+    PyErr_SetString(PyExc_Exception, "An error occurred in InterpolatePsi.");
     return NULL;
   }
   
@@ -121,7 +121,7 @@ static PyObject * py_InterpolatePhi(PyObject *self, PyObject *args) {
                           (int *) PyArray_DATA(py_q_dtde), shft_nit,
                           (double *) PyArray_DATA(py_dtde_q));
   if (status != 0) {
-    PyErr_SetString(PyExc_StandardError, "An error occurred in InterpolatePhi.");
+    PyErr_SetString(PyExc_Exception, "An error occurred in InterpolatePhi.");
     return NULL;
   }
   
@@ -178,7 +178,7 @@ static PyObject * py_FillLevelArrays(PyObject *self, PyObject *args) {
                            (double *) PyArray_DATA(py_chg_open_lt),
                            (double *) PyArray_DATA(py_dpde_l));
   if (status != 0) {
-    PyErr_SetString(PyExc_StandardError, "An error occurred in FillLevelArrays.");
+    PyErr_SetString(PyExc_Exception, "An error occurred in FillLevelArrays.");
     return NULL;
   }
   
@@ -236,7 +236,7 @@ static PyObject * py_DecomposeRN(PyObject *self, PyObject *args) {
                        noise_model, (double *) PyArray_DATA(py_sig), 
                        (double *) PyArray_DATA(py_noise));
   if (status != 0) {
-    PyErr_SetString(PyExc_StandardError, "An error occurred in DecomposeRN.");
+    PyErr_SetString(PyExc_Exception, "An error occurred in DecomposeRN.");
     return NULL;
   }
   
@@ -311,7 +311,7 @@ static PyObject * py_FixYCte(PyObject *self, PyObject *args) {
                    (double *) PyArray_DATA(py_chg_leak_lt),
                    (double *) PyArray_DATA(py_chg_open_lt));
   if (status != 0) {
-    PyErr_SetString(PyExc_StandardError, "An error occurred in FixYCte.");
+    PyErr_SetString(PyExc_Exception, "An error occurred in FixYCte.");
     return NULL;
   }
   
@@ -390,7 +390,7 @@ static PyObject * py_AddYCte(PyObject *self, PyObject *args) {
                    (double *) PyArray_DATA(py_chg_leak_lt),
                    (double *) PyArray_DATA(py_chg_open_lt));
   if (status != 0) {
-    PyErr_SetString(PyExc_StandardError, "An error occurred in AddYCte.");
+    PyErr_SetString(PyExc_Exception, "An error occurred in AddYCte.");
     return NULL;
   }
   
@@ -419,8 +419,30 @@ static PyMethodDef StisPixCte_FixY_methods[] =
   
 };
 
+#if PY_MAJOR_VERSION >= 3
+static struct PyModuleDef StisPixCte_FixYmodule = {
+    PyModuleDef_HEAD_INIT,
+    "StisPixCte_FixY",   /* name of module */
+    NULL,                /* module documentation, may be NULL */
+    -1,                  /* size of per-interpreter state of the module,
+                            or -1 if the module keeps state in global variables. */
+    StisPixCte_FixY_methods,
+    NULL, NULL, NULL, NULL
+};
+
+PyMODINIT_FUNC PyInit_StisPixCte_FixY(void)
+{
+  PyObject *m;
+  m = PyModule_Create(&StisPixCte_FixYmodule);
+  import_array(); /* Must be present for NumPy ? */
+  return m;
+}
+
+#else
+
 PyMODINIT_FUNC initStisPixCte_FixY(void)
 {
   (void) Py_InitModule("StisPixCte_FixY", StisPixCte_FixY_methods);
   import_array(); /* Must be present for NumPy */
 }
+#endif

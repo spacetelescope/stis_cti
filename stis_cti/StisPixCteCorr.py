@@ -60,7 +60,7 @@ for each input.
 
 :References:
 
-.. [Anderson] Anderson J. & Bedin, L.R., 2010, PASP, 122, 1035
+.. [Anderson] `Anderson J. & Bedin, L.R., 2010, PASP, 122, 1035 <https://doi.org/10.1086/656399>`_
 
 """
 
@@ -101,7 +101,7 @@ except:
 from stsci.tools import parseinput
 
 # Local modules
-import StisPixCte_FixY as pcfy # C extension
+from . import StisPixCte_FixY as pcfy # C extension
 
 
 __taskname__ = "StisPixCteCorr"
@@ -237,7 +237,7 @@ def YCte(inFits, outFits='', read_noise=None, noise_model=None,
     # Store in same path as input.
     outPath = os.path.dirname( os.path.abspath(inFits) ) + os.sep
     rootname = pyfits.getval(inFits, 'ROOTNAME')
-    print 'Performing pixel-based CTE correction on', rootname
+    print('Performing pixel-based CTE correction on', rootname)
     rootname = outPath + rootname
 
     # Construct output filename
@@ -253,11 +253,11 @@ def YCte(inFits, outFits='', read_noise=None, noise_model=None,
     # For checking that the detector is supported
     detector = pf_out['PRIMARY'].header['DETECTOR']
 
-    atodgain = pf_out['PRIMARY'].header.get('ATODGAIN', default=1.)
+    atodgain = pf_out['PRIMARY'].header.get('ATODGAIN', 1.)
     
-    ccdamp = pf_out['PRIMARY'].header.get('CCDAMP', default='D')
+    ccdamp = pf_out['PRIMARY'].header.get('CCDAMP', 'D')
     if ccdamp != 'D':
-        print 'Non-standard amplifer %s being corrected!' % ccdamp
+        print('Non-standard amplifer {} being corrected!'.format(ccdamp))
         
     if ccdamp == 'A' or ccdamp == 'B':
         readout_dir = 1
@@ -269,7 +269,7 @@ def YCte(inFits, outFits='', read_noise=None, noise_model=None,
     # For epoch-specific operations
     expstart = pf_out['PRIMARY'].header['TEXPSTRT']
 
-    nextend = pf_out['PRIMARY'].header.get('NEXTEND', default=EXTN_PER_IMSET)
+    nextend = pf_out['PRIMARY'].header.get('NEXTEND', EXTN_PER_IMSET)
     nimsets = nextend // EXTN_PER_IMSET
     if nextend != nimsets * EXTN_PER_IMSET:
         raise ValueError('Number of extensions is %d; must be a multiple'
@@ -356,7 +356,7 @@ def YCte(inFits, outFits='', read_noise=None, noise_model=None,
         cte_frac_arr /= 1024.
 
         # call CTE correction routine. data must be in units of electrons.
-        print 'Performing CTE correction for science extension %d.' % extn
+        print('Performing CTE correction for science extension {:d}.'.format(extn))
 
         t1 = time.time()
         cordata = pcfy.FixYCte(sigdata, sim_nit, shft_nit, oversub_thresh,
@@ -364,7 +364,7 @@ def YCte(inFits, outFits='', read_noise=None, noise_model=None,
                                chg_open_lt)
         t2 = time.time()
 
-        print 'FixYCte took {:.3f} seconds for science extension {:d}.'.format(t2-t1, extn)
+        print('FixYCte took {:.3f} seconds for science extension {:d}.'.format(t2-t1, extn))
 
         # add noise back in
         findata = cordata + nsedata
@@ -400,11 +400,11 @@ def YCte(inFits, outFits='', read_noise=None, noise_model=None,
     
     # Close output file
     pf_out.close()
-    print outFits, 'written'
+    print(outFits, 'written')
 
     # Stop timer
     timeEnd = time.time()
-    print 'Run time:  {:.3f} secs'.format(timeEnd - timeBeg)
+    print('Run time:  {:.3f} secs'.format(timeEnd - timeBeg))
 
 
 #--------------------------
@@ -468,7 +468,7 @@ def _PixCteParams(fitsTable, expstart):
     # Resolve path to PCTEFILE
     refFile = _ResolveRefFile(fitsTable)
     if not os.path.isfile(refFile):
-        raise IOError, 'PCTEFILE not found: %s' % refFile
+        raise IOError('PCTEFILE not found: {}'.format(refFile))
 
     # Open FITS table
     pf_ref = pyfits.open(refFile)
@@ -893,12 +893,12 @@ def AddYCte(infile, outfile, shift_nit=None, units=None):
     # For checking that the detector is supported
     detector = pf_out['PRIMARY'].header['DETECTOR']
 
-    atodgain = pf_out['PRIMARY'].header.get('ATODGAIN', default=1.)
+    atodgain = pf_out['PRIMARY'].header.get('ATODGAIN', 1.)
 
     # For epoch-specific operations
     expstart = pf_out['PRIMARY'].header['TEXPSTRT']
     
-    nextend = pf_out['PRIMARY'].header.get('NEXTEND', default=EXTN_PER_IMSET)
+    nextend = pf_out['PRIMARY'].header.get('NEXTEND', EXTN_PER_IMSET)
     nimsets = nextend // EXTN_PER_IMSET
     if nextend != nimsets * EXTN_PER_IMSET:
         raise ValueError('Number of extensions is %d; must be a multiple'
@@ -947,7 +947,7 @@ def AddYCte(infile, outfile, shift_nit=None, units=None):
       pcfy.FillLevelArrays(chg_leak_kt, chg_open_kt, dtde_q, levels)
     del chg_leak_kt, chg_open_kt, dtde_q
     
-    ccdamp = pf_out['PRIMARY'].header.get('CCDAMP', default='D')
+    ccdamp = pf_out['PRIMARY'].header.get('CCDAMP', 'D')
     if ccdamp == 'A' or ccdamp == 'B':
         readout_dir = 1
     elif ccdamp == 'C' or ccdamp == 'D':
@@ -977,14 +977,14 @@ def AddYCte(infile, outfile, shift_nit=None, units=None):
         cte_frac_arr /= 1024.
 
         # call CTE blurring routine. data must be in units of electrons.
-        print 'Performing CTE blurring for science extension %d.' % extn
+        print('Performing CTE blurring for science extension {:d}.'.format(extn))
 
         t1 = time.time()
         cordata = _AddYCte(detector, scidata, cte_frac_arr, shft_nit,
                            levels, dpde_l, chg_leak_lt, chg_open_lt)
         t2 = time.time()
 
-        print 'AddYCte took {:.3f} seconds for science extension {:d}.'.format(t2-t1, extn)
+        print('AddYCte took {:.3f} seconds for science extension {:d}.'.format(t2-t1, extn))
 
         # convert blurred data back to DN
         cordata /= atodgain

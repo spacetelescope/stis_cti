@@ -123,4 +123,4 @@ def available_cpu_count():
     raise Exception('Can not determine number of CPUs on this system')
 
 if __name__ == '__main__':
-    print "Number of available CPU cores = ", available_cpu_count()
+    print('Number of available CPU cores = {}'.format(available_cpu_count()))

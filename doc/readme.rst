@@ -4,7 +4,7 @@ STIS Pixel-Based CTI-Correction Tutorial
 Please note that AURA/STScI is not responsible for any damage resulting from the use of 
 this software.
 
-Please send any feedback to the STIS team at help@stsci.edu.
+Please send any feedback to the STIS team at https://hsthelp.stsci.edu.
 
 **Update:**  See the `Known Issues`_ section.
 
@@ -27,15 +27,15 @@ before the STIS recovery of May 2009.
 
 System Requirements
 ===================
-This package is designed to run on top of the AstroConda channel (with legacy IRAF support) 
+This package is designed to run on top of the AstroConda channel 
 of the Anaconda Python environment on the UNIX/Linux and MacOS X operating systems.  It 
-currently supports Python 2.7.
+currently supports Python 3.
 
 AstroConda is available at http://astroconda.readthedocs.io.
 
 Installation
 ============
-First, launch the AstroConda (with legacy IRAF support) environment:
+First, launch the AstroConda environment:
 
 ::
    
@@ -150,7 +150,7 @@ The Archive status may be checked at http://archive.stsci.edu/help/archive_statu
     --ignore_missing  process data even with an incomplete set of dark FLTs
     -v VERBOSE_LEVEL  verbosity ({0,1,2}; default=1)
   
-  Author: Sean Lockwood; Version: 1.1
+  Author: Sean Lockwood; Version: 1.3
 
 The script is designed to run the pixel-based correction in parallel on the component 
 darks, and in parallel on the science files.  The maximum number of processes may be 
@@ -383,12 +383,11 @@ Known Issues
 
 .. Warning::
    If you use ``stistools.x1d.x1d()`` to manually extract your spectra, we recommend using 
-   the argument ``ctecorr="OMIT"`` for pixel-based CTI-corrected data.
+   the argument ``ctecorr="OMIT"`` for pixel-based CTI-corrected data to avoid applying 
+   the empirical flux correction on already-corrected data.
 
-- The ``--crds_update`` option breaks with ``CRDS v7.0.10``.  Until this is fixed, users 
-  may manually downgrade to the earlier ``CRDS v7.0.7`` package with the command:
-  
-  ``conda install crds=7.0.7``
+- The ``--crds_update`` option breaks with ``CRDS v7.0.10``.  Please use a more recent 
+  version.
 
 - Some annealing months contain non-standard amplifier=A dark files (typical 
   observations are taken with amp=D).  These files do not produce ``FLT`` files in the
