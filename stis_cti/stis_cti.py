@@ -15,7 +15,7 @@ from multiprocessing import cpu_count
 
 
 __author__  = 'Sean Lockwood'
-__version__ = '1.3'
+__version__ = '1.4'
 
 crds_server_url = 'https://hst-crds.stsci.edu'
 
@@ -645,10 +645,10 @@ def superdark_hash(sim_nit=None, shft_nit=None, rn_clip=None, nsemodel=None, sub
                 # Parse superdark header for files used:
                 hist = f[0].header['HISTORY']
                 beginning = min([i for i, line in enumerate(hist) if \
-                                 re.match(r'^The following input (dark )?files were used:\s*$', line, re.IGNORECASE)]) + 1
+                                 re.match(r'^\s*The following input (dark )?files were used:\s*$', line, re.IGNORECASE)]) + 1
                 end = min([i for i, line in enumerate(hist[beginning:]) if \
                            (line.strip() == '') or ('renamed to' in line.lower())]) + beginning
-                files = list(hist[beginning:end])
+                files = list(x.strip() for x in hist[beginning:end])
     else:
         if sim_nit  == None or \
            shft_nit == None or \
