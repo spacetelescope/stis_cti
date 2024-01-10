@@ -2,6 +2,7 @@ import os
 import sys
 import glob
 import multiprocessing
+import numpy
 import datetime
 from astropy.io import fits
 from collections import defaultdict
@@ -15,7 +16,7 @@ from multiprocessing import cpu_count
 
 
 __author__  = 'Sean Lockwood'
-__version__ = '1.3'
+__version__ = '1.4'
 
 crds_server_url = 'https://hst-crds.stsci.edu'
 
@@ -110,6 +111,7 @@ def stis_cti(science_dir, dark_dir, ref_dir, num_processes, pctetab=None,
     print('Running CTI-correction script:  {} v{}'.format(os.path.basename(__file__), __version__))
     print('System:                         {}'.format(sys_info))
     print('python:                         {}'.format(sys.version.replace('\n', '\n'+' '*32)))
+    print('numpy:                          {}'.format(numpy.__version__))
     print('Number of parallel processes:   {}'.format(num_processes))
     if clean:
         print('--clean')
@@ -730,7 +732,7 @@ def perform_cti_correction(files, pctetab, num_cpu=1, clean_all=False, verbose=F
     p = multiprocessing.Pool(processes = num_cpu)
     # Iterator of input/output files:
     file_args = ((x, y) for x, y in zip(perform_files, perform_outnames))
-    p.map_async(func_star, file_args)
+    p.map_async(func_star, file_args).get()
     p.close()
     p.join()
 
