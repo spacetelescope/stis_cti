@@ -333,8 +333,8 @@ def YCte(inFits, outFits='', read_noise=None, noise_model=None,
         # flip the data so the readout amp is closest to row 0, column 0
         # (this assumes STIS amp D was used)
         # Modified (SL):  Does readout_dir==+1 work for 'A' and 'B'?
-        scidata = pf_out[extn].data[::readout_dir,::readout_dir].copy().astype(numpy.float)
-        errdata = pf_out[extn+1].data[::readout_dir,::readout_dir].copy().astype(numpy.float)
+        scidata = pf_out[extn].data[::readout_dir,::readout_dir].copy().astype(float)
+        errdata = pf_out[extn+1].data[::readout_dir,::readout_dir].copy().astype(float)
 
         # convert to electrons
         scidata *= atodgain
@@ -378,9 +378,9 @@ def YCte(inFits, outFits='', read_noise=None, noise_model=None,
         errdata /= atodgain
 
         # copy corrected data back to image.
-        pf_out[extn].data[:,:] = findata.astype(numpy.float32)[::readout_dir,::readout_dir]
+        pf_out[extn].data[:,:] = findata.astype(float)[::readout_dir,::readout_dir]
 
-        pf_out[extn+1].data[:,:] = errdata.astype(numpy.float32)[::readout_dir,::readout_dir]
+        pf_out[extn+1].data[:,:] = errdata.astype(float)[::readout_dir,::readout_dir]
         # end for imset in range(nimsets)
 
     # Update header
@@ -515,7 +515,7 @@ def _PixCteParams(fitsTable, expstart):
         if (expstart >= mjd1) and (expstart < mjd2):
             # read chg_leak data from CHG_LEAK extension
             psi_node = pf_ref[n].data['NODE']
-            chg_leak = numpy.array(pf_ref[n].data.tolist(), dtype=numpy.float32)[:,1:]
+            chg_leak = numpy.array(pf_ref[n].data.tolist(), dtype=float)[:,1:]
             break
 
     # column-by-column CTE scaling
@@ -650,7 +650,7 @@ def _InterpolatePsi(chg_leak, psi_node):
 
     """
 
-    chg_leak, chg_open = pcfy.InterpolatePsi(chg_leak, psi_node.astype(numpy.int32))
+    chg_leak, chg_open = pcfy.InterpolatePsi(chg_leak, psi_node.astype(int))
 
     return chg_leak, chg_open
 
@@ -965,7 +965,7 @@ def AddYCte(infile, outfile, shift_nit=None, units=None):
         # the readout, since that's what the algorithm expects
         # (this assumes STIS amp D was used)
         # Modified (SL):  Does readout_dir==+1 work for 'A' and 'B'?
-        scidata = pf_out[extn].data[::readout_dir,::readout_dir].copy().astype(numpy.float)
+        scidata = pf_out[extn].data[::readout_dir,::readout_dir].copy().astype(float)
         # convert to electrons
         scidata *= atodgain
 
@@ -990,7 +990,7 @@ def AddYCte(infile, outfile, shift_nit=None, units=None):
         cordata /= atodgain
 
         # copy blurred data back to image, flipping to its original orientation
-        pf_out[extn].data[:,:] = cordata.astype(numpy.float32)[::readout_dir,::readout_dir]
+        pf_out[extn].data[:,:] = cordata.astype(float)[::readout_dir,::readout_dir]
         # end for imset in range(nimsets)
 
     # Update header
