@@ -1008,11 +1008,12 @@ def populate_darkfiles(raw_files, dark_dir, ref_dir, pctetab, num_processes, all
         print('ERROR:  These FLT component darks are missing from {}:'.format(dark_dir))
         print(', '.join(missing_darks) + '\n')
         if not ignore_missing:
-            print('Please download the missing darks (calibrated FLTs) via this link:')
+            print('Please download missing darks (calibrated FLTs) from MAST')
+            print('https://mast.stsci.edu/search/ui/#/hst')
             print('(or specify the proper dark_dir [{}])\n'.format(dark_dir))
-            print('If missing files are expected (e.g. amp=A darks), then run with')
+            print('If missing files are expected (e.g. amp=A darks in MAST), then run with')
             print('--ignore_missing flag.\n')
-            print(archive_dark_query.darks_url(missing_darks) + '\n')
+            print(', '.join(missing_darks) + '\n')
             sys.exit(1)
         else:
             print('"--ignore_missing" flag set:  Ignoring these missing FLT files...')
