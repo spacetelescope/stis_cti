@@ -22,7 +22,7 @@ setup(
     description = 'Pixel-based CTI-correction for HST/STIS CCD data',
     long_description = long_description,
     author = 'Sean Lockwood, Phil Hodge, Pey Lian Lim, W.J. Hack, J. Anderson, Matt Davis',
-    author_email = 'https://hsthelp.stsci.edu',
+    author_email = 'lockwood@stsci.edu',
     maintainer = 'Sean Lockwood',
     maintainer_email = 'lockwood@stsci.edu',
     license = 'BSD-new',
