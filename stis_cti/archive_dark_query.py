@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import sys
 import pickle
 from astropy.io import fits
@@ -8,7 +10,7 @@ from numpy import size, shape
 from six.moves.urllib import request as urlrequest, parse as urlparse, error as urlerror
 
 __author__  = 'Sean Lockwood'
-__version__ = '0.2.1'
+__version__ = '0.3.0'
 
 
 # Data container for our dark exposure search results:
@@ -208,7 +210,7 @@ def darks_url(exposures):
     return url
 
 
-def archive_dark_query(files, anneal_data=None, min_exptime=None, verbose=False, print_url=True):
+def archive_dark_query(files, anneal_data=None, min_exptime=None, verbose=False, print_results=True):
     '''
     Queries the MAST archive to determine which component darks are needed to 
     generate a CTI-corrected super-dark.
@@ -298,10 +300,10 @@ def archive_dark_query(files, anneal_data=None, min_exptime=None, verbose=False,
         print(', '.join(all_exposures))
         print()
 
-    if print_url:
-        url = darks_url(all_exposures)
-        print('Download darks via this link:\n')
-        print(url)
+    if print_results:
+        print(', '.join(all_exposures))
+        print('\nDownload dark FLT files via Astroquery or MAST form:')
+        print('https://mast.stsci.edu/search/ui/#/hst')
         print()
 
     return matches
@@ -347,4 +349,8 @@ def call_archive_dark_query():
         sys.exit()
 
     tmp = archive_dark_query(args.file, anneal_data=anneal_data, 
-        min_exptime=args.min_exptime, verbose=verbose, print_url=True)
+        min_exptime=args.min_exptime, verbose=verbose, print_results=True)
+
+
+if __name__ == '__main__':
+    call_archive_dark_query()
