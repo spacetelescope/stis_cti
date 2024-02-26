@@ -925,7 +925,7 @@ def populate_darkfiles(raw_files, dark_dir, ref_dir, pctetab, num_processes, all
     # Determine component darks used to make superdarks:
     anneal_data = archive_dark_query.get_anneal_boundaries()
     anneals = archive_dark_query.archive_dark_query( \
-                      raw_files, anneal_data=anneal_data, print_url=False)
+                      raw_files, anneal_data=anneal_data, print_results=False)
 
     # Get list of EXPNAMEs from files in the dark_dir.
     found_dark_files = glob.glob(os.path.join(dark_dir, '*_flt.fits*'))

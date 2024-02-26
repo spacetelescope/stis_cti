@@ -18,7 +18,7 @@ setup(
     project_urls={
         'Documentation': 'https://pythonhosted.org/stis_cti/',
         'Source Code': 'https://github.com/spacetelescope/stis_cti', },
-    version = '1.4',
+    version = '1.5',
     description = 'Pixel-based CTI-correction for HST/STIS CCD data',
     long_description = long_description,
     author = 'Sean Lockwood, Phil Hodge, Pey Lian Lim, W.J. Hack, J. Anderson, Matt Davis',
