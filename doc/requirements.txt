@@ -1,0 +1,8 @@
+refstis
+stistools
+stsci.tools
+astropy
+crds
+numpy
+six
+setuptools
