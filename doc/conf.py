@@ -186,7 +186,7 @@ htmlhelp_basename = 'stis_ctidoc'
 latex_elements = {
 'classoptions': ',openany,oneside',
 'babel': '\\usepackage[english]{babel}',
-'preamble': '''
+'preamble': r'''
 \usepackage[]{hyperref}
 \hypersetup{
     pdftitle={stis\_cti Documentation},
