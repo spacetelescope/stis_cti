@@ -6,3 +6,4 @@ crds
 numpy
 six
 setuptools
+mock
