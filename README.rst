@@ -25,6 +25,6 @@ Other utilities:
   * stis_cti.archive_dark_query(...) -- Utility to query MAST for needed component darks
   * stis_cti.custom_superdark_info() -- Print information on manually creating/implementing a corrected super-dark
 
-See documentation at http://pythonhosted.org/stis_cti/
+See documentation at https://stis-cti.readthedocs.io
 
 Project page:  http://www.stsci.edu/hst/instrumentation/stis/data-analysis-and-software-tools/pixel-based-cti

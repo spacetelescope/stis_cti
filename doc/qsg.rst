@@ -16,11 +16,11 @@ from this file into your terminal window, if that helps you work
 faster.  Or you may want to copy blocks of text into a text file, 
 to create your own customized dialog and commands.
 
-If you don't have it already, you will need to install the AstroConda distribution:
-http://astroconda.readthedocs.io.
+If you don't have it already, you will need to install the ``stenv`` conda distribution:
+https://stenv.readthedocs.io
 
-After AstroConda is installed, open a new session (open a new Bash terminal and type 
-``source activate astroconda``).
+After ``stenv`` is installed, open a new session (open a new Bash terminal and type 
+``conda activate stenv``).
 
 To install the ``stis_cti`` package and dependencies, run:
 
@@ -37,7 +37,6 @@ Or, to upgrade from a previous version, run:
   pip install --upgrade --no-deps refstis
   pip install refstis
 
-After that, open a brand new AstroConda session (see above), and continue there.  
 Create a working directory where the data will reside, and also create the 
 necessary sub-directories.  For example, our disk here is called ``/Users``, 
 and the account is ``biretta``, and we might use the proposal number ``13542``, 
@@ -45,7 +44,7 @@ so our working directory was ``/Users/biretta/13542``.
 
 ::
   
-  source activate astroconda
+  conda activate stenv
   mkdir /Users/biretta/13542
   cd    /Users/biretta/13542
   mkdir darks
@@ -77,45 +76,38 @@ missing, and then stop:
    .
    .
    .
-   Please download the missing darks (calibrated FLTs) via this link:
-  
-   http://archive.stsci.edu/hst/search.php?sci_instrume=STIS&sci_instrument_config=
-   STIS%2FCCD&sci_targname=DARK&sci_aec=C&resolve=don%27tresolve&sci_data_set_name=
-   OC4W6XH3Q%2COC4W6YHBQ%2COC4W6ZP2Q%2COC4W70PCQ%2COC4W71TEQ%2COC4W72TOQ%2COC4W73X8Q%
-   2COC4W74XJQ%2COC4W75D0Q%2COC4W76DCQ%2COC4W77HHQ%2COC4W78I0Q%2COC4W79A5Q%2COC4W7AADQ%
-   2COC4W7BFGQ%2COC4W7CF9Q%2COC4W7DJNQ%2COC4W7EJRQ%2COC4W7FOAQ%2COC4W7GO4Q%2COC4W7HSNQ%
-   2COC4W7ISUQ%2COC4W7JXEQ%2COC4W7KXAQ%2COC4W7LGRQ%2COC4W7MGWQ%2COC4W7NA1Q%2COC4W7OA8Q%
-   2COC4W7PM6Q%2COC4W7QMDQ%2COC4W7RTJQ%2COC4W7STNQ%2COC4W7TX4Q%2COC4W7UXDQ%2COC4W7VIKQ%
-   2COC4W7WIRQ%2COC4W7XNJQ%2COC4W7YNRQ%2COC4W7ZSZQ%2COC4W80TMQ%2COC4W81A4Q%2COC4W82AGQ%
-   2COC4W83NMQ%2COC4W84O1Q%2COC4W85SRQ%2COC4W86SZQ%2COC4W87XWQ%2COC4W88YHQ%2COC4W89D6Q%
-   2COC4W8ADJQ%2COC4W8BHWQ%2COC4W8CI2Q%2COC4W8DNUQ%2COC4W8EOAQ%2COC4W8FBPQ%2COC4W8GBTQ&
-   max_records=50000&max_rpp=5000&ordercolumn1=sci_start_time&action=Search
+   Please download missing darks (calibrated FLTs) from MAST
+   https://mast.stsci.edu/search/ui/#/hst
+   (or specify the proper dark_dir [darks/])
+   
+   If missing files are expected (e.g. amp=A darks in MAST), then run with
+   --ignore_missing flag.
+   
+   OC4W6XH3Q, OC4W6YHBQ, OC4W6ZP2Q, OC4W70PCQ, OC4W71TEQ, OC4W72TOQ, OC4W73X8Q, OC4W74XJQ,
+   OC4W75D0Q, OC4W76DCQ, OC4W77HHQ, OC4W78I0Q, OC4W79A5Q, OC4W7AADQ, OC4W7BFGQ, OC4W7CF9Q,
+   OC4W7DJNQ, OC4W7EJRQ, OC4W7FOAQ, OC4W7GO4Q, OC4W7HSNQ, OC4W7ISUQ, OC4W7JXEQ, OC4W7KXAQ,
+   OC4W7LGRQ, OC4W7MGWQ, OC4W7NA1Q, OC4W7OA8Q, OC4W7PM6Q, OC4W7QMDQ, OC4W7RTJQ, OC4W7STNQ,
+   OC4W7TX4Q, OC4W7UXDQ, OC4W7VIKQ, OC4W7WIRQ, OC4W7XNJQ, OC4W7YNRQ, OC4W7ZSZQ, OC4W80TMQ,
+   OC4W81A4Q, OC4W82AGQ, OC4W83NMQ, OC4W84O1Q, OC4W85SRQ, OC4W86SZQ, OC4W87XWQ, OC4W88YHQ,
+   OC4W89D6Q, OC4W8ADJQ, OC4W8BHWQ, OC4W8CI2Q, OC4W8DNUQ, OC4W8EOAQ, OC4W8FBPQ, OC4W8GBTQ
+   
+Next we need to get the missing dark frames.  Copy the filenames which 
+the script generated, and paste it into the "Dataset Name=" field on
+the MAST search page.
+Select "Observations" = "All"
 
-Next we need to get the missing dark frames.  Copy the entire URL which 
-the script generated, and paste it into a web browser (e.g. on a Mac 
-highlight the URL with the cursor, and hit ``command-c``, move the cursor 
-to the web browser URL bar, and hit ``command-v``).  Then hit ``return``.  
-This will generate an HST archive request for the missing dark files.  
-Then do this on the archive web page:
+Click the box in the upper-left to select all rows
 
-Click ``[Mark all]``
+Click "Download Selected" --> "Choose which files to download"
 
-Click ``[Submit marked data for retrieval from STSDAS]``
+Under "File category" select "Calibrated" --> "FLT"
 
-This will bring up a new page.  Fill out your HST archive credentials,
-and the computer and directory where you want the files to be sent:
+Click the "Start Download" button.  A typical anneal month will be ~600 MB.
 
-Stage and retrieve files from the archive's ftp server.
-
-File options: check ``Calibrated`` (it will probably checked already by default)
-
-Click ``[Send retrieval request to ST-DADS]``
-
-Then wait for the dark frames to be delivered by the HST archive....
-After you receive an email from archive.stsci.edu that the request has
-completed successfully, put the darks in the ``darks/`` directory and run 
+Once the dark FLT files are downloaded, locate them in your download directory,
+unzip the archive, and move the files into the ``darks/`` directory and run 
 ``stis_cti`` again.  This time it should run to completion.  On a typical Mac 
-laptop, it might take an hour to run.  Make sure you are in the science 
+laptop, it might take 15 minutes to run.  Make sure you are in the science 
 directory still, and then:
 
 ::
@@ -155,3 +147,5 @@ directory with names like ``*_cte.fits``, ``*_flc.fits``, ``*_crc.fits``, etc.
 
 Good luck!  Let us know if you encounter problems, or need any assistance at 
 https://hsthelp.stsci.edu.
+
+Continue to `the full documentation <readme.html>`_...
