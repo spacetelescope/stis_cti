@@ -34,7 +34,7 @@ def stis_cti(science_dir, dark_dir, ref_dir, num_processes, pctetab=None,
     component darks, generating and applying a CTI-corrected super-dark in 
     the process.
 
-    Documentation is available at http://pythonhosted.org/stis_cti/
+    Documentation is available at https://stis-cti.readthedocs.io
 
     :param science_dir:
         Directory containing uncalibrated science data to be corrected.
@@ -186,7 +186,7 @@ def stis_cti(science_dir, dark_dir, ref_dir, num_processes, pctetab=None,
 
     # Test that $oref is properly defined:
     oref = os.environ.get('oref', 'Undefined')
-    if oref is 'Undefined' or not os.access(oref, os.R_OK):
+    if oref == 'Undefined' or not os.access(oref, os.R_OK):
         raise OSError('Cannot read $oref directory!\n    {}\n'.format(oref) + \
             '    Please set $oref environmental variable appropriately or run with --crds_update.')
     if verbose:
@@ -1285,7 +1285,7 @@ def call_stis_cti():
                     'Uncorrected component darks are read from DARK_DIR, and '
                     'corrected component darks are written there too. '
                     'Corrected super-darks are read from and stored to REF_DIR. '
-                    'See documentation at http://pythonhosted.org/stis_cti/', 
+                    'See documentation at https://stis-cti.readthedocs.io', 
         epilog='Written by {}; v{}'.format(__author__, __version__))
     parser.add_argument(dest='science_dir', action='store', default='./', nargs='?', 
                         metavar='SCIENCE_DIR', 

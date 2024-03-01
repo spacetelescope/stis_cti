@@ -27,21 +27,21 @@ before the STIS recovery of May 2009.
 
 System Requirements
 ===================
-This package is designed to run on top of the AstroConda channel 
+This package is designed to run on top of the ``stenv`` channel 
 of the Anaconda Python environment on the UNIX/Linux and MacOS X operating systems.  It 
 currently supports Python 3.
 
-AstroConda is available at http://astroconda.readthedocs.io.
+``stenv`` is available at https://stenv.readthedocs.io.
 
 Installation
 ============
-First, launch the AstroConda environment:
+First, launch the ``stenv`` environment:
 
 ::
    
-   source activate astroconda
+   conda activate stenv
 
-Then, install the required packages within the AstroConda environment:
+Then, install the required packages within the ``stenv`` environment:
 
 ::
    
@@ -113,7 +113,7 @@ The Archive status may be checked at http://archive.stsci.edu/help/archive_statu
 
 ::
 
-  source activate astroconda
+  conda activate stenv
   stis_cti --help
 
 ::
@@ -126,19 +126,19 @@ The Archive status may be checked at http://archive.stsci.edu/help/archive_statu
   Run STIS/CCD pixel-based CTI-correction on data specified in SCIENCE_DIR.
   Uncorrected component darks are read from DARK_DIR, and corrected component
   darks are written there too. Corrected super-darks are read from and stored to
-  REF_DIR. See documentation at http://pythonhosted.org/stis_cti/
-  
+  REF_DIR. See documentation at https://stis-cti.readthedocs.io
+
   positional arguments:
     SCIENCE_DIR       directory containing RAW science data (default="./")
-  
-  optional arguments:
+
+  options:
     -h, --help        show this help message and exit
     -d DARK_DIR       directory of dark FLT data
                       (default="[SCIENCE_DIR]/../darks/")
     -r REF_DIR        directory of CTI-corrected reference files
                       (default="[SCIENCE_DIR]/../ref/")
-    -n NUM_PROCESSES  maximum number of parallel processes to run (default=15);
-                      number of available CPU cores on your system = 40
+    -n NUM_PROCESSES  maximum number of parallel processes to run (default=8);
+                      number of available CPU cores on your system = 10
     -p PCTETAB        name of PCTETAB to use in pixel-based correction
                       (default="[REF_DIR]/[MOST_RECENT]_pcte.fits" or package's
                       default PCTETAB)
@@ -149,8 +149,8 @@ The Archive status may be checked at http://archive.stsci.edu/help/archive_statu
                       component darks
     --ignore_missing  process data even with an incomplete set of dark FLTs
     -v VERBOSE_LEVEL  verbosity ({0,1,2}; default=1)
-  
-  Author: Sean Lockwood; Version: 1.3
+
+  Written by Sean Lockwood; v1.5
 
 The script is designed to run the pixel-based correction in parallel on the component 
 darks, and in parallel on the science files.  The maximum number of processes may be 
@@ -188,16 +188,23 @@ While ``stis_cti`` will tell you what component darks are needed, you can also d
 this ahead of time:
 
 .. parsed-literal::
-  
+
   archive_dark_query data/\*_raw.fits
-  
+
   Querying MAST archive for dark and anneal program IDs...
   Querying MAST archive for darks...
   Parsing archive results...
-  
-  Download darks via this link:
-  
-  http://archive.stsci.edu/hst/search.php?sci_instrume=STIS&sci_instrument_config=STIS%2FCCD&sci_targname=DARK&sci_aec=C&resolve=don%27tresolve&sci_data_set_name=OC4W6XH3Q%2COC4W6YHBQ%2COC4W6ZP2Q%2COC4W70PCQ%2COC4W71TEQ%2COC4W72TOQ%2COC4W73X8Q%2COC4W74XJQ%2COC4W75D0Q%2COC4W76DCQ%2COC4W77HHQ%2COC4W78I0Q%2COC4W79A5Q%2COC4W7AADQ%2COC4W7BFGQ%2COC4W7CF9Q%2COC4W7DJNQ%2COC4W7EJRQ%2COC4W7FOAQ%2COC4W7GO4Q%2COC4W7HSNQ%2COC4W7ISUQ%2COC4W7JXEQ%2COC4W7KXAQ%2COC4W7LGRQ%2COC4W7MGWQ%2COC4W7NA1Q%2COC4W7OA8Q%2COC4W7PM6Q%2COC4W7QMDQ%2COC4W7RTJQ%2COC4W7STNQ%2COC4W7TX4Q%2COC4W7UXDQ%2COC4W7VIKQ%2COC4W7WIRQ%2COC4W7XNJQ%2COC4W7YNRQ%2COC4W7ZSZQ%2COC4W80TMQ%2COC4W81A4Q%2COC4W82AGQ%2COC4W83NMQ%2COC4W84O1Q%2COC4W85SRQ%2COC4W86SZQ%2COC4W87XWQ%2COC4W88YHQ%2COC4W89D6Q%2COC4W8ADJQ%2COC4W8BHWQ%2COC4W8CI2Q%2COC4W8DNUQ%2COC4W8EOAQ%2COC4W8FBPQ%2COC4W8GBTQ&max_records=50000&max_rpp=5000&ordercolumn1=sci_start_time&action=Search
+
+  OC4W6XH3Q, OC4W6YHBQ, OC4W6ZP2Q, OC4W70PCQ, OC4W71TEQ, OC4W72TOQ, OC4W73X8Q, OC4W74XJQ,
+  OC4W75D0Q, OC4W76DCQ, OC4W77HHQ, OC4W78I0Q, OC4W79A5Q, OC4W7AADQ, OC4W7BFGQ, OC4W7CF9Q,
+  OC4W7DJNQ, OC4W7EJRQ, OC4W7FOAQ, OC4W7GO4Q, OC4W7HSNQ, OC4W7ISUQ, OC4W7JXEQ, OC4W7KXAQ,
+  OC4W7LGRQ, OC4W7MGWQ, OC4W7NA1Q, OC4W7OA8Q, OC4W7PM6Q, OC4W7QMDQ, OC4W7RTJQ, OC4W7STNQ,
+  OC4W7TX4Q, OC4W7UXDQ, OC4W7VIKQ, OC4W7WIRQ, OC4W7XNJQ, OC4W7YNRQ, OC4W7ZSZQ, OC4W80TMQ,
+  OC4W81A4Q, OC4W82AGQ, OC4W83NMQ, OC4W84O1Q, OC4W85SRQ, OC4W86SZQ, OC4W87XWQ, OC4W88YHQ,
+  OC4W89D6Q, OC4W8ADJQ, OC4W8BHWQ, OC4W8CI2Q, OC4W8DNUQ, OC4W8EOAQ, OC4W8FBPQ, OC4W8GBTQ
+
+  Download dark FLT files via Astroquery or MAST form:
+  https://mast.stsci.edu/search/ui/#/hst
 
 Place these darks in the ``DARK_DIR`` directory.
 
