@@ -21,7 +21,7 @@ setup(
         'Help Desk': 'https://hsthelp.stsci.edu',
         'Source Code': 'https://github.com/spacetelescope/stis_cti',
         'Issues': 'https://github.com/spacetelescope/stis_cti/issues',}
-    version = '1.5',
+    version = '1.5.1',
     description = 'Pixel-based CTI-correction for HST/STIS CCD data',
     long_description = long_description,
     author = 'Sean Lockwood, Phil Hodge, Pey Lian Lim, W.J. Hack, J. Anderson, Matt Davis',
