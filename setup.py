@@ -20,7 +20,7 @@ setup(
         'Documentation': 'https://pythonhosted.org/stis_cti/',
         'Help Desk': 'https://hsthelp.stsci.edu',
         'Source Code': 'https://github.com/spacetelescope/stis_cti',
-        'Issues': 'https://github.com/spacetelescope/stis_cti/issues',}
+        'Issues': 'https://github.com/spacetelescope/stis_cti/issues',},
     version = '1.5.1',
     description = 'Pixel-based CTI-correction for HST/STIS CCD data',
     long_description = long_description,
