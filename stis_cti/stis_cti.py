@@ -16,7 +16,7 @@ from multiprocessing import cpu_count
 
 
 __author__  = 'Sean Lockwood'
-__version__ = '1.5.1'
+__version__ = '1.5.2'
 
 crds_server_url = 'https://hst-crds.stsci.edu'
 

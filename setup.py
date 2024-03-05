@@ -17,11 +17,11 @@ setup(
     url = 'https://www.stsci.edu/hst/instrumentation/stis/data-analysis-and-software-tools/pixel-based-cti',
     project_urls={
         'Homepage': 'https://www.stsci.edu/hst/instrumentation/stis/data-analysis-and-software-tools/pixel-based-cti',
-        'Documentation': 'https://pythonhosted.org/stis_cti/',
+        'Documentation': 'https://stis-cti.readthedocs.io',
         'Help Desk': 'https://hsthelp.stsci.edu',
         'Source Code': 'https://github.com/spacetelescope/stis_cti',
         'Issues': 'https://github.com/spacetelescope/stis_cti/issues',},
-    version = '1.5.1',
+    version = '1.5.2',
     description = 'Pixel-based CTI-correction for HST/STIS CCD data',
     long_description = long_description,
     author = 'Sean Lockwood, Phil Hodge, Pey Lian Lim, W.J. Hack, J. Anderson, Matt Davis',
