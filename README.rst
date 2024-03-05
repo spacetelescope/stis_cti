@@ -28,3 +28,5 @@ Other utilities:
 See documentation at https://stis-cti.readthedocs.io
 
 Project page:  http://www.stsci.edu/hst/instrumentation/stis/data-analysis-and-software-tools/pixel-based-cti
+
+Code repository:  https://github.com/spacetelescope/stis_cti
