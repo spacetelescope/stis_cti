@@ -14,10 +14,13 @@ StisPixCteCorr_module = Extension('stis_cti.StisPixCte_FixY',
 
 setup(
     name = 'stis_cti',
-    url = 'http://www.stsci.edu/hst/instrumentation/stis/data-analysis-and-software-tools/pixel-based-cti',
+    url = 'https://www.stsci.edu/hst/instrumentation/stis/data-analysis-and-software-tools/pixel-based-cti',
     project_urls={
+        'Homepage': 'https://www.stsci.edu/hst/instrumentation/stis/data-analysis-and-software-tools/pixel-based-cti',
         'Documentation': 'https://pythonhosted.org/stis_cti/',
-        'Source Code': 'https://github.com/spacetelescope/stis_cti', },
+        'Help Desk': 'https://hsthelp.stsci.edu',
+        'Source Code': 'https://github.com/spacetelescope/stis_cti',
+        'Issues': 'https://github.com/spacetelescope/stis_cti/issues',}
     version = '1.5',
     description = 'Pixel-based CTI-correction for HST/STIS CCD data',
     long_description = long_description,
@@ -27,7 +30,7 @@ setup(
     maintainer_email = 'lockwood@stsci.edu',
     license = 'BSD-new',
     keywords = ['astronomy'],
-    classifiers = ['Programming Language :: Python',
+    classifiers = ['Programming Language :: Python :: 3',
                    'Programming Language :: C',
                    'Development Status :: 5 - Production/Stable',
                    'Operating System :: OS Independent',
