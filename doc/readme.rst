@@ -150,7 +150,7 @@ The Archive status may be checked at http://archive.stsci.edu/help/archive_statu
     --ignore_missing  process data even with an incomplete set of dark FLTs
     -v VERBOSE_LEVEL  verbosity ({0,1,2}; default=1)
 
-  Written by Sean Lockwood; v1.5.2
+  Written by Sean Lockwood; v1.6.0
 
 The script is designed to run the pixel-based correction in parallel on the component 
 darks, and in parallel on the science files.  The maximum number of processes may be 
@@ -392,6 +392,10 @@ Known Issues
    If you use ``stistools.x1d.x1d()`` to manually extract your spectra, we recommend using 
    the argument ``ctecorr="OMIT"`` for pixel-based CTI-corrected data to avoid applying 
    the empirical flux correction on already-corrected data.
+
+- ``stis_cti <= 1.5.2`` fails to process data taken after MJD 60000 (2023-February-25) 
+  due to a hard-coded date in the PCTETAB = ``a01_stis_pcte.fits``.  This date has been 
+  corrected in the new default PCTETAB = ``a02_stis_pcte.fits`` (v0.2) available in ``stis_cti >= 1.6.0``.
 
 - The ``--crds_update`` option breaks with ``CRDS v7.0.10``.  Please use a more recent 
   version.
