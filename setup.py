@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/env python
 
 from setuptools import setup, Extension
 import os
@@ -21,7 +21,7 @@ setup(
         'Help Desk': 'https://hsthelp.stsci.edu',
         'Source Code': 'https://github.com/spacetelescope/stis_cti',
         'Issues': 'https://github.com/spacetelescope/stis_cti/issues',},
-    version = '1.5.2',
+    version = '1.6.0',
     description = 'Pixel-based CTI-correction for HST/STIS CCD data',
     long_description = long_description,
     author = 'Sean Lockwood, Phil Hodge, Pey Lian Lim, W.J. Hack, J. Anderson, Matt Davis',
