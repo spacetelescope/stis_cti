@@ -26,14 +26,14 @@ To install the ``stis_cti`` package and dependencies, run:
 
 ::
   
-  pip install stis_cti
+  pip install --no-cache-dir stis_cti
 
 Or, to upgrade from a previous version, run:
 
 ::
   
-  pip install --upgrade --no-deps stis_cti
-  pip install stis_cti
+  pip install --upgrade --no-deps --no-cache-dir stis_cti
+  pip install --no-cache-dir stis_cti
   pip install --upgrade --no-deps refstis
   pip install refstis
 

@@ -45,14 +45,17 @@ Then, install the required packages within the ``stenv`` environment:
 
 ::
    
-   pip install stis_cti
+   pip install --no-cache-dir stis_cti
+
+Note that the ``--no-cache-dir`` option is required to build a version of ``stis_cti``
+that is compatible with ``numpy 2.X.X`` if you have previously compiled this package.
 
 Or, to upgrade from a previous installation:
 
 ::
   
-  pip install --upgrade --no-deps stis_cti
-  pip install stis_cti
+  pip install --upgrade --no-deps --no-cache-dir stis_cti
+  pip install --no-cache-dir stis_cti
   pip install --upgrade --no-deps refstis
   pip install refstis
 
