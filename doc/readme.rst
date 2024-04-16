@@ -39,6 +39,10 @@ currently supports Python 3.
 
 ``stenv`` is available at https://stenv.readthedocs.io.
 
+If building a minimalist environment instead, you will need to install
+the `HSTCAL <https://github.com/spacetelescope/hstcal>`_ binaries in addition to
+the pip installation dependencies.
+
 Installation
 ============
 First, launch the ``stenv`` environment:
