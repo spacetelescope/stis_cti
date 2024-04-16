@@ -10,7 +10,8 @@ with open(os.path.join(here, 'README.rst')) as f:
 
 StisPixCteCorr_module = Extension('stis_cti.StisPixCte_FixY',
     sources=['src/StisFixYCte.c', 'src/StisPixCteCorr_funcs.c', 'src/StisPixCte_FixY.c'],
-    include_dirs=[numpy.get_include(), 'src/'])
+    include_dirs=[numpy.get_include(), 'src/'],
+    define_macros=[('NPY_NO_DEPRECATED_API', 'NPY_1_7_API_VERSION')],)
 
 setup(
     name = 'stis_cti',
