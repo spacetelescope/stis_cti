@@ -1,6 +1,12 @@
 ========================================
 STIS Pixel-Based CTI-Correction Tutorial
 ========================================
+`Project Homepage`_ — `GitHub`_ — `PyPI`_
+
+.. _GitHub: https://github.com/spacetelescope/stis_cti
+.. _Project Homepage: https://www.stsci.edu/hst/instrumentation/stis/data-analysis-and-software-tools/pixel-based-cti
+.. _PyPI: https://pypi.org/project/stis-cti
+
 Please note that AURA/STScI is not responsible for any damage resulting from the use of 
 this software.
 
