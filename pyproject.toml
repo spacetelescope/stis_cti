@@ -14,7 +14,7 @@ dynamic = ["version", "description", "readme", "license", "dependencies", "keywo
 
 [project.optional-dependencies]
 docs = ["sphinx",]
-test = ["pytest", "pytest-cov"]
+test = ["pytest"]
 
 [tool.setuptools_scm]
 version_scheme = "post-release"
