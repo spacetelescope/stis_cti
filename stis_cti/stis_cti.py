@@ -14,10 +14,7 @@ from . import StisPixCteCorr
 from crds.bestrefs import BestrefsScript
 from multiprocessing import cpu_count
 
-
 __author__  = 'Sean Lockwood'
-__version__ = '1.6.1'
-
 crds_server_url = 'https://hst-crds.stsci.edu'
 
 class FileError(Exception):
@@ -26,12 +23,11 @@ class FileError(Exception):
 class VersionError(Exception):
     pass
 
-def stis_cti(science_dir, dark_dir, ref_dir, num_processes, pctetab=None, 
-             all_weeks_flag=False, allow=False, clean=False, clean_all=False, 
+def stis_cti(science_dir, dark_dir, ref_dir, num_processes, pctetab=None,
+             all_weeks_flag=False, allow=False, clean=False, clean_all=False,
              crds_update=False, ignore_missing=False, verbose=1):
-    '''
-    Runs the HST/STIS/CCD pixel-based CTI-correction on science data and 
-    component darks, generating and applying a CTI-corrected super-dark in 
+    '''Runs the HST/STIS/CCD pixel-based CTI-correction on science data and
+    component darks, generating and applying a CTI-corrected super-dark in
     the process.
 
     Documentation is available at https://stis-cti.readthedocs.io
@@ -45,26 +41,26 @@ def stis_cti(science_dir, dark_dir, ref_dir, num_processes, pctetab=None,
         Directory where CTI-corrected super-darks are placed.  These will be
         used again unless they are deleted or clean_all=True.
     :param num_processes:
-        Max number of parallel processes to use when running the CTI-correction 
+        Max number of parallel processes to use when running the CTI-correction
         algorithm.
     :param pctetab:
-        The path + name of the PCTETAB reference file to use in the CTI-correction.  
-        If not specified, one is selected from (1) the ref_dir, or (2) from the 
+        The path + name of the PCTETAB reference file to use in the CTI-correction.
+        If not specified, one is selected from (1) the ref_dir, or (2) from the
         package data directory.  The last file (alphabetically) is chosen.
     :param all_weeks_flag:
-        UNTESTED.  Generates weekdarks for all weeks within each annealing period 
+        UNTESTED.  Generates weekdarks for all weeks within each annealing period
         to be processed.
     :param allow:
-        UNTESTED.  Use more lenient filtering when determining which files should 
+        UNTESTED.  Use more lenient filtering when determining which files should
         be allowed to be corrected.
     :param clean:
-        Remove intermediate and final products in the science_dir from previous 
+        Remove intermediate and final products in the science_dir from previous
         runs of this script.
     :param clean_all:
-        'clean' + remove CTI-corrected super-darks and component darks before 
+        'clean' + remove CTI-corrected super-darks and component darks before
         reprocessing.
     :param crds_update:
-        Runs crds.bestrefs script to update science file headers and download 
+        Runs crds.bestrefs script to update science file headers and download
         pipeline reference files.
     :param ignore_missing:
         Ignore missing dark files.  This is useful for when annealing month contains
@@ -76,7 +72,7 @@ def stis_cti(science_dir, dark_dir, ref_dir, num_processes, pctetab=None,
     :type dark_dir: str
     :type ref_dir: str
     :type num_processes: int
-    :type pctetab: str, optional 
+    :type pctetab: str, optional
     :type all_weeks_flag: bool, optional
     :type allow: bool, optional
     :type clean: bool, optional
@@ -86,12 +82,14 @@ def stis_cti(science_dir, dark_dir, ref_dir, num_processes, pctetab=None,
     :type verbose: int {0,1,2}, optional, default=1
 
     .. note::
-      Unless crds_update is True, the $oref shell variable must be set to the directory of 
+      Unless crds_update is True, the $oref shell variable must be set to the directory of
       STIS standard pipeline reference files.
 
     .. note::
       Note that the `all_week_flag` and `allow` options have not been thoroughly tested.
     '''
+    from stis_cti import __version__
+
     # Open a log file and copy {STDOUT, STDERR} to it:
     log = Logger(os.path.join(science_dir, 'cti_{}.log'.format(datetime.datetime.now().isoformat('_'))))
 
@@ -104,7 +102,7 @@ def stis_cti(science_dir, dark_dir, ref_dir, num_processes, pctetab=None,
         sys_info = '{}; {}'.format(node(), platform())
     except ImportError:
         sys_info = 'Indeterminate'
-    
+
     start_time = datetime.datetime.now()
 
     # Print system information:
@@ -235,7 +233,7 @@ def stis_cti(science_dir, dark_dir, ref_dir, num_processes, pctetab=None,
             raise Exception('CRDS BestrefsScript:  Call returned errors!')
 
     # Check science files for uncorrected super-darks:
-    populate_darkfiles(raw_files, dark_dir, ref_dir, pctetab, num_processes, all_weeks_flag, 
+    populate_darkfiles(raw_files, dark_dir, ref_dir, pctetab, num_processes, all_weeks_flag,
         clean_all, crds_update, ignore_missing, verbose)
     log.flush()
 
@@ -265,14 +263,14 @@ def stis_cti(science_dir, dark_dir, ref_dir, num_processes, pctetab=None,
 def setup_crds(ref_dir, verbose=False):
     '''
     Setup $CRDS_PATH and $oref environmental variables to house CRDS reference files.
-    
+
     Sets the $CRDS_PATH environmental variable according to:
         (1) If undefined, Central Store location (if possible)
         (2) If not on Central Store (local), read/writable directory defined by system's $CRDS_PATH
         (3) If local and system's $CRDS_PATH directory not read/writable, nested within 'ref'
-    
+
     Unless $CRDS_PATH is on Central Store, $oref is redefined to be nested within new $CRDS_PATH.
-    
+
     $oref value must end in the path separator (e.g. '/'), so this is appended if necessary.
     '''
     if os.environ.get('CRDS_SERVER_URL') is None:
@@ -316,10 +314,10 @@ def setup_crds(ref_dir, verbose=False):
             # instrument-specific cache:
             if os.path.abspath(os.environ.get('oref')) not in \
                 [os.path.abspath(os.path.join(os.environ.get('CRDS_PATH'), \
-                                              'references', 'hst')), 
+                                              'references', 'hst')),
                  os.path.abspath(os.path.join(os.environ.get('CRDS_PATH'), \
                                               'references', 'hst', 'stis'))]:
-                raise OSError('$oref is not properly defined within $CRDS_PATH.\n' + 
+                raise OSError('$oref is not properly defined within $CRDS_PATH.\n' +
                               '    Consider fixing $oref or running without --crds_update option.')
         else:
             raise Exception('Unexpected condition.')
@@ -337,8 +335,8 @@ def setup_crds(ref_dir, verbose=False):
         # Check that local $CRDS_PATH and $oref are read/writable:
         if not os.access(os.environ.get('CRDS_PATH'), os.R_OK | os.W_OK) or \
            not os.access(os.environ.get('oref'), os.R_OK | os.W_OK):
-            raise OSError(('Local $CRDS_PATH and/or $oref are not read/writable!\n' + 
-                           '    $CRDS_PATH = {}\n' + 
+            raise OSError(('Local $CRDS_PATH and/or $oref are not read/writable!\n' +
+                           '    $CRDS_PATH = {}\n' +
                            '    $oref      = {}\n' +
                            '    Either fix these or run without --crds_update option.').format( \
                            os.environ.get('CRDS_PATH'), os.environ.get('oref')))
@@ -415,10 +413,10 @@ def determine_input_science(science_dir, allow=False, verbose=False):
     return filtered_raw_files
 
 
-def viable_ccd_file(file, 
-                    earliest_date_allowed=None, 
-                    amplifiers_allowed=None, 
-                    gains_allowed=None, 
+def viable_ccd_file(file,
+                    earliest_date_allowed=None,
+                    amplifiers_allowed=None,
+                    gains_allowed=None,
                     offsts_allowed=None):
     '''
     :param earliest_date_allowed: Beginning datetime allowed.
@@ -495,10 +493,10 @@ def bias_correct_science_files(raw_files, verbose=False):
         try:
             # Need to change to science directory to find associated epc files.
             os.chdir(os.path.dirname(raw_file))
-            status = basic2d.basic2d(os.path.basename(raw_file), output=os.path.basename(outname), 
-                dqicorr='perform', atodcorr='omit', blevcorr='perform', biascorr='perform', 
-                doppcorr='omit', lorscorr='omit', glincorr='omit', lflgcorr='omit', 
-                darkcorr='omit', flatcorr='omit', shadcorr='omit', photcorr='omit', 
+            status = basic2d.basic2d(os.path.basename(raw_file), output=os.path.basename(outname),
+                dqicorr='perform', atodcorr='omit', blevcorr='perform', biascorr='perform',
+                doppcorr='omit', lorscorr='omit', glincorr='omit', lflgcorr='omit',
+                darkcorr='omit', flatcorr='omit', shadcorr='omit', photcorr='omit',
                 statflag=True, verbose=(verbose >= 2), timestamps=False, trailer=trailer)
         finally:
             os.chdir(cwd)
@@ -538,7 +536,7 @@ def run_calstis_on_science(files, verbose):
         try:
             # Need to change to science directory to find associated wavecals.
             os.chdir(os.path.dirname(file))
-            status = calstis.calstis(os.path.basename(file), verbose=(verbose >= 2), 
+            status = calstis.calstis(os.path.basename(file), verbose=(verbose >= 2),
                 timestamps=False, trailer=trailer)
         finally:
             os.chdir(cwd)
@@ -581,7 +579,7 @@ def check_pctetab_version(pctetab, verbose=False, version_min='0.1', version_max
     '''
     Make sure the version keyword in the PCTETAB is within the acceptable boundaries
     for this version of the stis_cti.py code.
-    
+
     This comparison works for version = "<int>.<int>" (e.g. "1.10" > "1.1").
     '''
     if type(version_min) != str or type(version_max) != str:
@@ -604,7 +602,7 @@ def check_pctetab_version(pctetab, verbose=False, version_min='0.1', version_max
     if (pctetab_version_major   < int(version_min.split('.')[0])  or
         (pctetab_version_major == int(version_min.split('.')[0]) and
          pctetab_version_minor  < int(version_min.split('.')[1]))):
-        raise VersionError(('Version mismatch between PCTETAB {} and stis_cti.py code.\n' + 
+        raise VersionError(('Version mismatch between PCTETAB {} and stis_cti.py code.\n' +
             'Please download a more recent version of this reference file!\n').format(pctetab))
 
     if (pctetab_version_major   > int(version_max.split('.')[0])  or
@@ -750,7 +748,7 @@ def copy_dark_keywords(superdark, dark_hdr0, pctetab, history=None, basedark=Non
     '''Copy header keywords from a used component dark to the new super-dark.
     '''
     # Copy these keywords from the last component dark to the new superdark:
-    keywords = ['PCTECORR', 'PCTETAB', 'PCTEFRAC', 'PCTERNCL', 'PCTERNCL', 'PCTENSMD', 
+    keywords = ['PCTECORR', 'PCTETAB', 'PCTEFRAC', 'PCTERNCL', 'PCTERNCL', 'PCTENSMD',
                 'PCTETRSH', 'PCTESMIT', 'PCTESHFT', 'CTE_NAME', 'CTE_VER', 'PCTE_VER']
     # Note:  PCTEFRAC is time-dependent; PCTECORR = COMPLETE
     keywords.reverse()
@@ -821,7 +819,7 @@ def generate_basedark(files, outname, pctetab, num_cpu, clean_all=False, verbose
     # Update keywords in new basedark from component dark:
     history = [
         'Basedark created from CTI-corrected component darks by script',
-        'stis_cti.py on {}.'.format(datetime.datetime.now().isoformat(' ')) ]
+        'stis_cti.py on {}.'.format(datetime.datetime.now().isoformat(' '))]
     copy_dark_keywords(os.path.expandvars(outname), dark_hdr0, pctetab, history=history)
 
     if verbose:
@@ -851,7 +849,7 @@ def generate_weekdark(files, outname, pctetab, basedark, num_cpu, clean_all=Fals
       # Don't delete component darks here, as this has already been done in generate_basedark().
 
     # Make a weekdark from the corrected darks:
-    refstis.weekdark.make_weekdark(corrected_files, os.path.normpath(os.path.expandvars(outname)), 
+    refstis.weekdark.make_weekdark(corrected_files, os.path.normpath(os.path.expandvars(outname)),
         os.path.abspath(os.path.expandvars(basedark)))
 
     if verbose:
@@ -877,7 +875,7 @@ def generate_weekdark(files, outname, pctetab, basedark, num_cpu, clean_all=Fals
         print('Weekdark complete:  {}\n'.format(outname))
 
 
-def populate_darkfiles(raw_files, dark_dir, ref_dir, pctetab, num_processes, all_weeks_flag=False, 
+def populate_darkfiles(raw_files, dark_dir, ref_dir, pctetab, num_processes, all_weeks_flag=False,
     clean_all=False, crds_update=False, ignore_missing=False, verbose=False):
     '''Check science files for uncorrected super-darks; and, if necessary, generate them and
        populate the science file headers.'''
@@ -1024,19 +1022,19 @@ def populate_darkfiles(raw_files, dark_dir, ref_dir, pctetab, num_processes, all
     weekdarks = {}
     for weekdark_tag in weekdark_types:
         weekdarks[weekdark_tag] = {
-            'amp'          : weekdark_tag[0].upper(), 
-            'start'        : min([x['datetime'] for x in weekdark_types[weekdark_tag]]), 
-            'end'          : max([x['datetime'] for x in weekdark_types[weekdark_tag]]), 
-            'darks'        : list(weekdark_types[weekdark_tag]), 
-            'anneal_num'   : int(weekdark_tag[1:4]), 
-            'week_num'     : int(weekdark_tag[5]), 
-            'weekdark_tag' : weekdark_tag }
+            'amp'          : weekdark_tag[0].upper(),
+            'start'        : min([x['datetime'] for x in weekdark_types[weekdark_tag]]),
+            'end'          : max([x['datetime'] for x in weekdark_types[weekdark_tag]]),
+            'darks'        : list(weekdark_types[weekdark_tag]),
+            'anneal_num'   : int(weekdark_tag[1:4]),
+            'week_num'     : int(weekdark_tag[5]),
+            'weekdark_tag' : weekdark_tag,}
 
     # Loop over each {amp, anneal_num} combination and adjust week boundaries:
     amps_anneals = list(set([(weekdarks[x]['amp'], weekdarks[x]['anneal_num']) for x in weekdarks]))
     for amp_anneal in amps_anneals:
         # Determine which data matches the (amp, anneal) specified in loop iteration:
-        amp_anneal_data = [weekdarks[x] for x in weekdarks 
+        amp_anneal_data = [weekdarks[x] for x in weekdarks
             if weekdarks[x]['amp'] == amp_anneal[0] and weekdarks[x]['anneal_num'] == amp_anneal[1]]
         weeks = list(amp_anneal_data)
         weeks.sort(key=lambda x: x['week_num'])
@@ -1057,10 +1055,10 @@ def populate_darkfiles(raw_files, dark_dir, ref_dir, pctetab, num_processes, all
         print('Could make weekdarks for:')
         for weekdark_tag in weekdarks:
             print('   {}:  {} - {}  [{}]'.format(
-                weekdark_tag, 
-                weekdarks[weekdark_tag]['start'], 
-                weekdarks[weekdark_tag]['end'], 
-                len(weekdarks[weekdark_tag]['darks']) ))
+                weekdark_tag,
+                weekdarks[weekdark_tag]['start'],
+                weekdarks[weekdark_tag]['end'],
+                len(weekdarks[weekdark_tag]['darks'])))
         print()
 
     weekdark = defaultdict(list)
@@ -1170,14 +1168,13 @@ def check_for_old_output_files(rootnames, science_dir, output_mapping, clean=Fal
 
 
 def map_outputs(rootnames, science_dir, output_mapping, verbose=False):
-    '''
-    Rename outputs according to output_mapping dictionary.
-    
+    '''Rename outputs according to output_mapping dictionary.
+
     Special commands for output products:
         '<pass>'   -- Don't do anything with product; denotes it as an intermediate product.
         '<remove>' -- Delete the intermediate product.
     '''
-    
+
     for rootname in rootnames:
         if verbose:
             print('Renaming files with rootname {}:'.format(rootname))
@@ -1272,6 +1269,7 @@ class Logger(object):
 
 def call_stis_cti():
     import argparse
+    from stis_cti import __version__
 
     # Get information about the user's system:
     num_available_cores = cpu_count()
@@ -1280,19 +1278,19 @@ def call_stis_cti():
     default_max_cores = 15
     default_cores = min([max([1, num_available_cores - 2]), default_max_cores])
 
-    parser = argparse.ArgumentParser( 
+    parser = argparse.ArgumentParser(
         description='Run STIS/CCD pixel-based CTI-correction on data specified in SCIENCE_DIR. '
                     'Uncorrected component darks are read from DARK_DIR, and '
                     'corrected component darks are written there too. '
                     'Corrected super-darks are read from and stored to REF_DIR. '
-                    'See documentation at https://stis-cti.readthedocs.io', 
+                    'See documentation at https://stis-cti.readthedocs.io',
         epilog='Written by {}; v{}'.format(__author__, __version__))
-    parser.add_argument(dest='science_dir', action='store', default='./', nargs='?', 
-                        metavar='SCIENCE_DIR', 
+    parser.add_argument(dest='science_dir', action='store', default='./', nargs='?',
+                        metavar='SCIENCE_DIR',
                         help='directory containing RAW science data (default=\"./\")')
-    parser.add_argument('-d', dest='dark_dir', action='store', default=None, 
+    parser.add_argument('-d', dest='dark_dir', action='store', default=None,
                         help='directory of dark FLT data (default=\"[SCIENCE_DIR]/../darks/\")')
-    parser.add_argument('-r', dest='ref_dir', action='store', default=None, 
+    parser.add_argument('-r', dest='ref_dir', action='store', default=None,
                         help='directory of CTI-corrected reference files '
                              '(default=\"[SCIENCE_DIR]/../ref/\")')
     parser.add_argument('-n', dest='num_processes', action='store', default=default_cores,
@@ -1305,19 +1303,19 @@ def call_stis_cti():
                              '(default=\"[REF_DIR]/[MOST_RECENT]_pcte.fits\" or package\'s default PCTETAB)')
     parser.add_argument('--crds_update', dest='crds_update', action='store_true', default=False,
                         help='update and download $oref files')
-    parser.add_argument('--clean', dest='clean', action='store_true', default=False, 
+    parser.add_argument('--clean', dest='clean', action='store_true', default=False,
                         help='remove intermediate and final products from previous runs of '
                              'this script (\'*.txt\' files are skipped and clobbered)')
     parser.add_argument('--clean_all', dest='clean_all', action='store_true', default=False,
                         help='\'--clean\' + remove previous super-darks and CTI-corrected component darks')
     parser.add_argument('--ignore_missing', dest='ignore_missing', action='store_true', default=False,
                         help='process data even with an incomplete set of dark FLTs')
-    parser.add_argument('-v', dest='verbose', metavar='VERBOSE_LEVEL', choices=[0,1,2], 
+    parser.add_argument('-v', dest='verbose', metavar='VERBOSE_LEVEL', choices=[0,1,2],
                         action='store', type=int, default=1, help='verbosity ({0,1,2}; default=1)')
     # Allow any amp/gain/offst/date through processing (not well-tested):
-    parser.add_argument('--allow', dest='allow', action='store_true', default=False, 
+    parser.add_argument('--allow', dest='allow', action='store_true', default=False,
                         help=argparse.SUPPRESS)
-    parser.add_argument('--all_weeks', dest='all_weeks_flag', action='store_true', default=False, 
+    parser.add_argument('--all_weeks', dest='all_weeks_flag', action='store_true', default=False,
                         help=argparse.SUPPRESS)
     args = parser.parse_args()
 
@@ -1332,6 +1330,6 @@ def call_stis_cti():
     dark_dir    = os.path.normpath(args.dark_dir)    + os.path.sep
     ref_dir     = os.path.normpath(args.ref_dir)     + os.path.sep
 
-    stis_cti(science_dir, dark_dir, ref_dir, args.num_processes, args.pctetab, 
-        args.all_weeks_flag, args.allow, args.clean, args.clean_all, 
+    stis_cti(science_dir, dark_dir, ref_dir, args.num_processes, args.pctetab,
+        args.all_weeks_flag, args.allow, args.clean, args.clean_all,
         args.crds_update, args.ignore_missing, args.verbose)

@@ -1,0 +1,22 @@
+[build-system]
+requires = [
+  "setuptools>=64",
+  "wheel",
+  "setuptools-scm",
+  "numpy>=1.21.0"  # Required at build time for headers
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "stis_cti"
+dynamic = ["version", "description", "readme", "license", "dependencies", "keywords",
+           "classifiers", "urls", "scripts", "authors", "maintainers"]
+
+[project.optional-dependencies]
+docs = ["sphinx",]
+test = ["pytest", "pytest-cov"]
+
+[tool.setuptools_scm]
+version_scheme = "post-release"
+local_scheme = "node-and-date"
+write_to = "stis_cti/_version.py"

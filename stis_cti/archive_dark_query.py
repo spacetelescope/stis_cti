@@ -10,7 +10,6 @@ from numpy import size, shape
 from six.moves.urllib import request as urlrequest, parse as urlparse, error as urlerror
 
 __author__  = 'Sean Lockwood'
-__version__ = '0.3.0'
 
 
 # Data container for our dark exposure search results:
@@ -48,7 +47,7 @@ def get_proposal_ids(abstract='stis, +ccd', title='dark, +monitor'):
 
     # Submit POST request:
     try:
-        response = urlrequest.urlopen(url, form_data)  # Needs better error handling!
+        response = urlrequest.urlopen(url, form_data)
         lines = response.readlines()
         lines = [line.decode('utf-8') for line in lines]
         text = [line.rsplit('\n',1)[0] for line in lines]
@@ -65,8 +64,7 @@ def get_proposal_ids(abstract='stis, +ccd', title='dark, +monitor'):
 
 
 def read_dark_exposures():
-    '''
-    Query the HST archive for STIS/CCD dark exposures.
+    '''Query the HST archive for STIS/CCD dark exposures.
     '''
     # URL for HTTP GET request to the HST archive:
     url = 'https://archive.stsci.edu/hst/search.php?' + urlparse.urlencode([
@@ -112,8 +110,7 @@ def read_dark_exposures():
 
 
 def get_anneal_boundaries(delta_days=5, min_exptime=None, verbose=False):
-    '''
-    Determines the annealing period boundaries and all associated darks within.
+    '''Determines the annealing period boundaries and all associated darks within.
     '''
 
     if min_exptime is None:
@@ -126,7 +123,8 @@ def get_anneal_boundaries(delta_days=5, min_exptime=None, verbose=False):
 
     print('Querying MAST archive for dark and anneal program IDs...')
     dark_programs = get_proposal_ids()
-    dark_programs.extend([7092, 7601, 7802, 7926, 7948, 7949])  # Older programs that didn't match this search pattern
+    # Older programs that didn't match this search pattern
+    dark_programs.extend([7092, 7601, 7802, 7926, 7948, 7949])
     dark_programs = list(set(dark_programs))
     dark_programs.sort()
 
@@ -140,7 +138,7 @@ def get_anneal_boundaries(delta_days=5, min_exptime=None, verbose=False):
         print(', '.join([str(x) for x in anneal_programs]))
         print()
 
-    print('Querying MAST archive for darks...') 
+    print('Querying MAST archive for darks...')
     darks = read_dark_exposures()
 
     print('Parsing archive results...\n')
@@ -168,11 +166,11 @@ def get_anneal_boundaries(delta_days=5, min_exptime=None, verbose=False):
 
     for i, (a, b) in enumerate(zip(anneal_start_boundary, anneal_end_boundary)):
         darks_within_anneal = [x for x in darks if \
-                      x['datetime'] >= a and 
+                      x['datetime'] >= a and
                       x['datetime'] < b  and
                       x['proposid'] in dark_programs and
                       x['exptime'] >= min_exptime]
-        
+
         anneals.append(annealType(index=i, start=a, end=b, darks=list(darks_within_anneal)))
 
     if (verbose >= 2):
@@ -180,13 +178,13 @@ def get_anneal_boundaries(delta_days=5, min_exptime=None, verbose=False):
         print("Dark data found for all annealing periods:")
         for i, a in enumerate(anneals):
             print(('{i:3d} {start:} - {end:} ({length:4d} days), {total_exposures:3d} total: ' + \
-                   '{exptimes} {proposals}').format( 
-                i = i, 
-                start = a['start'].isoformat(' '), 
-                end = a['end'].isoformat(' '), 
-                length = (a['end'] - a['start']).days, 
-                total_exposures = shape(a['darks'])[0], 
-                exptimes = Counter([int(x['exptime']) for x in a['darks']]), 
+                   '{exptimes} {proposals}').format(
+                i = i,
+                start = a['start'].isoformat(' '),
+                end = a['end'].isoformat(' '),
+                length = (a['end'] - a['start']).days,
+                total_exposures = shape(a['darks'])[0],
+                exptimes = Counter([int(x['exptime']) for x in a['darks']]),
                 proposals = list(set([x['proposid'] for x in a['darks']]))))
         print()
 
@@ -211,8 +209,7 @@ def darks_url(exposures):
 
 
 def archive_dark_query(files, anneal_data=None, min_exptime=None, verbose=False, print_results=True):
-    '''
-    Queries the MAST archive to determine which component darks are needed to 
+    '''Queries the MAST archive to determine which component darks are needed to
     generate a CTI-corrected super-dark.
 
     :param files: list of str, str
@@ -311,21 +308,21 @@ def archive_dark_query(files, anneal_data=None, min_exptime=None, verbose=False,
 
 def call_archive_dark_query():
     import argparse
+    from stis_cti import __version__
 
-    parser = argparse.ArgumentParser( 
-        description='Determines which STIS/CCD darks are necessary to regenerate a ' + 
-            'science dataset\'s super-dark.', 
-        epilog='Author:   ' + __author__ + '; ' + 
-               'Version:  ' + __version__)
-    parser.add_argument(dest='file', action='store', nargs='+', 
+    parser = argparse.ArgumentParser(
+        description="Determines which STIS/CCD darks are necessary to regenerate a "
+            "science dataset's super-dark.",
+        epilog=f'Author: {__author__}; Version: {__version__}')
+    parser.add_argument(dest='file', action='store', nargs='+',
                         help='Science files to re-reduce (or search string).')
-    parser.add_argument('-t', dest='min_exptime', action='store', default=None, 
+    parser.add_argument('-t', dest='min_exptime', action='store', default=None,
                         help='Minimum exposure time of component darks (in seconds) [default=960]')
-    parser.add_argument('-p', dest='pickle_file', action='store', default=None, 
+    parser.add_argument('-p', dest='pickle_file', action='store', default=None,
                         help='Optional pickle file containing anneal data (skip querying MAST)')
-    parser.add_argument('-v', '--verbose', dest='verbose', action='store_true', 
+    parser.add_argument('-v', '--verbose', dest='verbose', action='store_true',
                         help='Print more information about matching annealing periods.')
-    parser.add_argument('-vv', dest='very_verbose', action='store_true', 
+    parser.add_argument('-vv', dest='very_verbose', action='store_true',
                         help='Very verbose')
     args = parser.parse_args()
 
@@ -348,7 +345,7 @@ def call_archive_dark_query():
         print('Error:  No files found!')
         sys.exit()
 
-    tmp = archive_dark_query(args.file, anneal_data=anneal_data, 
+    tmp = archive_dark_query(args.file, anneal_data=anneal_data,
         min_exptime=args.min_exptime, verbose=verbose, print_results=True)
 
 

@@ -5,10 +5,12 @@ include scripts/*
 include src/*
 include stis_cti/*.py
 exclude stis_cti/available_cpu_count.py
-include stis_cti/data/a01_stis_pcte.fits
+recursive-include stis_cti/data *.fits
 include doc/*.rst
 include doc/*.py
 include doc/make.bat
 include doc/Makefile
 include doc/*.png
 global-exclude *.pyc
+exclude stis_cti/version.py
+exclude stis_cti/_version.py
