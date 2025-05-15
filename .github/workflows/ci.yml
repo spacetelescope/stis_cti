@@ -48,6 +48,10 @@ jobs:
           pip install --force-reinstall "numpy${{ matrix.numpy-version }}"
           pip install -e .[test]
 
+      - name: Print installed packages
+        run: |
+          pip list --format=columns
+
       - name: Run tests
         run: |
           pytest
