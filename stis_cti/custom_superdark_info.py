@@ -2,14 +2,14 @@ def custom_superdark_info():
     '''Prints informative text on manually applying the CTI-correction and creating custom
     super-darks.
     '''
-    from . import stis_cti
-    import pkg_resources
+    from importlib.resources import files as resources_files
+    from pathlib import Path
     import glob
     import os
+    from . import stis_cti
 
     # Find the stis_cti package's most recent PCTETAB:
-    pctetabs = glob.glob(pkg_resources.resource_filename(stis_cti.__name__, 'data/*_pcte.fits'))
-    pctetabs.sort()
+    pctetabs = sorted(Path(resources_files(stis_cti.__name__).joinpath('data')).glob('*_pcte.fits'))
     if len(pctetabs) > 0:
         pctetab = pctetabs[-1]
     pctetab_dir = os.path.dirname(pctetab) + os.path.sep

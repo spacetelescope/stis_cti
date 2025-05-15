@@ -1,6 +1,7 @@
 import os
 import sys
 import glob
+from importlib.resources import files as resources_files
 import multiprocessing
 import numpy
 import datetime
@@ -94,10 +95,6 @@ def stis_cti(science_dir, dark_dir, ref_dir, num_processes, pctetab=None,
     log = Logger(os.path.join(science_dir, 'cti_{}.log'.format(datetime.datetime.now().isoformat('_'))))
 
     try:
-        import pkg_resources
-    except ImportError:
-        pass
-    try:
         from platform import node, platform
         sys_info = '{}; {}'.format(node(), platform())
     except ImportError:
@@ -143,10 +140,7 @@ def stis_cti(science_dir, dark_dir, ref_dir, num_processes, pctetab=None,
             pctetab = pctetabs[-1]
         else:
             # Couldn't find PCTETAB in ref/ directory, so use the PCTETAB included with the stis_cti package:
-            try:
-                default_pcte_str = pkg_resources.resource_filename(stis_cti.__name__, 'data/*_pcte.fits')
-            except NameError:
-                default_pcte_str = os.path.join(os.path.dirname(stis_cti.__file__), 'data', '*_pcte.fits')
+            default_pcte_str = os.path.join(resources_files(stis_cti.__name__), 'data', '*_pcte.fits')
             package_pctes = glob.glob(default_pcte_str)
             if len(package_pctes) == 0:
                 raise FileError('Couldn\'t find a PCTETAB in {}\nor package default in {}'.format(
