@@ -8,6 +8,7 @@ import datetime
 from astropy.io import fits
 
 from .stis_cti import *
+from .custom_superdark_info import custom_superdark_info
 from .archive_dark_query import archive_dark_query
 
 # ----------------------------------------------------------------------------------------
@@ -499,6 +500,15 @@ class Test_check_for_old_output_files(object):
         assert check_for_old_output_files([self.rootname], self.test_dir,
             self.output_mapping, True, False)
 
+
+class Test_for_compilation(object):
+    def test_for_compiled_code(self):
+        from . import StisPixCte_FixY as pcfy  # compiled C extension
+
+
+class Test_info_text(object):
+    def test_custom_superdark_info(self):
+        custom_superdark_info()
 
 # ----------------------------------------------------------------------------------------
 if __name__ == '__main__':
