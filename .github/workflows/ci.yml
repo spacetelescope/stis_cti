@@ -21,10 +21,13 @@ jobs:
             numpy-version: ">=2"
           - os: ubuntu-latest
             python-version: "3.11"
+            numpy-version: ""
           - os: macos-latest
             python-version: "3.11"
+            numpy-version: ""
           - os: macos-latest
             python-version: "3.12"
+            numpy-version: ""
 
     steps:
       - name: Checkout source
@@ -42,9 +45,7 @@ jobs:
 
       - name: Install package with test dependencies
         run: |
-          {% if matrix.numpy-version is defined %}
           pip install --force-reinstall "numpy${{ matrix.numpy-version }}"
-          {% endif %}
           pip install -e .[test]
 
       - name: Run tests
