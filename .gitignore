@@ -3,3 +3,5 @@ dist/
 build/
 *.pyc
 doc/_build/
+stis_cti/_version.py
+stis_cti/*.so
