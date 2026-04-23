@@ -7,9 +7,11 @@ import copy
 import datetime
 from astropy.io import fits
 
-from .stis_cti import *
-from .custom_superdark_info import custom_superdark_info
-from .archive_dark_query import archive_dark_query
+from stis_cti import (
+    archive_dark_query, custom_superdark_info, determine_input_science, viable_ccd_file,
+    resolve_iraf_file, check_pctetab_version, superdark_hash, check_for_old_output_files,
+    VersionError, FileError
+)
 
 # ----------------------------------------------------------------------------------------
 # These functions are used to write test files used by the unit tests
@@ -503,7 +505,7 @@ class Test_check_for_old_output_files(object):
 
 class Test_for_compilation(object):
     def test_for_compiled_code(self):
-        from . import StisPixCte_FixY as pcfy  # compiled C extension
+        from stis_cti import StisPixCte_FixY as pcfy  # compiled C extension
 
 
 class Test_info_text(object):
