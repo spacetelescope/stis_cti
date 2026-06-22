@@ -42,7 +42,7 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
-          cache: pip
+          # cache: pip
 
       - name: Upgrade pip and install build tools
         run: |
