@@ -28,9 +28,6 @@ jobs:
             python-version: "3.14"
             numpy-version: ""
           - os: macos-latest
-            python-version: "3.13"
-            numpy-version: ""
-          - os: macos-latest
             python-version: "3.14"
             numpy-version: ""
 
