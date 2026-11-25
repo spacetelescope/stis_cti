@@ -45,7 +45,8 @@ def custom_superdark_info():
     print('First, manually separate the darks within the anneal month of interest and the week')
     print('surrounding the science files.  Then, run:')
 
-    print("    import refstis")
+    print("    from refstis.basedark import make_basedark")
+    print("    from refstis.weekdark import make_weekdark")
     print("    import glob\n")
     print("    month_files = glob.glob('annealing_month/*_cte.fits')")
     print("        # Assuming only the annealing month's darks are selected")
