@@ -200,7 +200,7 @@ def darks_url(exposures):
         ('sci_aec'              , 'C'                 ),
         ('resolve'              , 'don\'tresolve'     ),
         ('sci_data_set_name'    , ','.join(exposures) ),
-        ('max_records'          , '50000'             ),
+        ('max_records'          , '100000'            ),
         ('max_rpp'              , '5000'              ),
         ('ordercolumn1'         , 'sci_start_time'    ),
         ('action'               , 'Search'            )])
