@@ -8,7 +8,8 @@ import datetime
 from astropy.io import fits
 from collections import defaultdict
 from copy import deepcopy
-import refstis
+from refstis.basedark import make_basedark
+from refstis.weekdark import make_weekdark
 from stistools import basic2d, calstis
 from . import archive_dark_query
 from . import StisPixCteCorr
@@ -796,7 +797,7 @@ def generate_basedark(files, outname, pctetab, num_cpu, clean_all=False, verbose
     corrected_files = perform_cti_correction(files, pctetab, num_cpu, clean_all, verbose)
 
     # Make a basedark from the corrected darks:
-    refstis.basedark.make_basedark(corrected_files, refdark_name=os.path.normpath(os.path.expandvars(outname)))
+    make_basedark(corrected_files, refdark_name=os.path.normpath(os.path.expandvars(outname)))
 
     if verbose:
         calstis_log = outname.replace('.fits','_joined_bd_calstis_log.txt', 1)
@@ -843,7 +844,7 @@ def generate_weekdark(files, outname, pctetab, basedark, num_cpu, clean_all=Fals
       # Don't delete component darks here, as this has already been done in generate_basedark().
 
     # Make a weekdark from the corrected darks:
-    refstis.weekdark.make_weekdark(corrected_files, os.path.normpath(os.path.expandvars(outname)),
+    make_weekdark(corrected_files, os.path.normpath(os.path.expandvars(outname)),
         os.path.abspath(os.path.expandvars(basedark)))
 
     if verbose:
